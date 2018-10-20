@@ -1,1 +1,1 @@
-# oceanglider
+# oceanglider: handle oceanographic glider data
