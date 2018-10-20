@@ -1,0 +1,4 @@
+exportPattern("^[[:alpha:]]+")
+importFrom("utils", "download.file", "flush.console", "read.csv")
+
+
