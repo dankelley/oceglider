@@ -17,11 +17,13 @@ Read a Slocum Glider file
 }
 \examples{
 \dontrun{
-g <- read.glider("~/data/glider/m80_2017-12-16_view_sci_water.csv")
+g <- read.glider.slocum("~/data/glider/m80_2017-12-16_view_sci_water.csv")
 }
 }
 \seealso{
 Other functions for slocum gliders: \code{\link{download.glider.slocum}}
+
+Other functions to read glider data: \code{\link{read.glider.seaexplorer}}
 }
 \author{
 Dan Kelley

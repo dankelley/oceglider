@@ -2,7 +2,7 @@
 
 # http://gliders.oceantrack.org/data/slocum/m80_2017-12-16_view_sci_water.csv
 
-#' Download and Cache a Glider File
+#' Download and Cache a Slocum Glider File
 #'
 #' If the file is already present in \code{destdir}, then it is not
 #' downloaded again. The default \code{destdir} is the present directory,
@@ -87,7 +87,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #'
 #' @examples
 #'\dontrun{
-#' g <- read.glider("~/data/glider/m80_2017-12-16_view_sci_water.csv")
+#' g <- read.glider.slocum("~/data/glider/m80_2017-12-16_view_sci_water.csv")
 #'}
 #' @family functions for slocum gliders
 #' @family functions to read glider data

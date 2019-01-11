@@ -2,7 +2,7 @@
 % Please edit documentation in R/slocum.R
 \name{download.glider.slocum}
 \alias{download.glider.slocum}
-\title{Download and Cache a Glider File}
+\title{Download and Cache a Slocum Glider File}
 \usage{
 download.glider.slocum(mission = "m80", year = 2017, month = 12,
   day = 16, item = "view_sci_water.csv",
@@ -73,6 +73,8 @@ gfile <- download.glider.slocum(destddir="~/data/glider")
 }
 \seealso{
 Other functions for slocum gliders: \code{\link{read.glider.slocum}}
+
+Other functions to download data: \code{\link{download.glider.seaexplorer}}
 }
 \concept{functions for slocum gliders}
 \concept{functions to download data}
