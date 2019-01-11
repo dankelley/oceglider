@@ -1,14 +1,15 @@
 Package: oceanglider
 Type: Package
 Title: Analysis of Oceanographic Glider Data
-Version: 0.1.0
+Version: 0.1.2
 Author: Dan Kelley
 Authors@R: c(
     person(given="Dan", family="Kelley", email="Dan.Kelley@Dal.Ca", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0001-7808-5911")))
 Maintainer: Dan Kelley <dan.kelley@dal.ca>
-Depends: R (>= 2.15), utils
+Depends: R (>= 2.15), utils, oce
+Imports: methods
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

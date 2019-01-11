@@ -20,19 +20,21 @@
 #' @template debug
 #'
 #' @return A character value indicating the filename of the result; if
-#' there is a problem of any kind, the result will be the empty
-#' string.
+#' there is a problem, the result will be the empty string.
 #'
 #' @examples
 #'\dontrun{
 #' ## The download takes several seconds.
-#' library(glider)
-#' gfile <- download.glider(destddir="~/data/glider")
+#' library(oceanglider)
+#' gfile <- download.glider.slocum(destddir="~/data/glider")
 #'}
-download.glider <- function(mission="m80", year=2017, month=12, day=16, item="view_sci_water.csv",
-                            server="http://gliders.oceantrack.org/data/slocum",
-                            destdir=".", destfile, force=FALSE, dryrun=FALSE,
-                            debug=getOption("gliderDebug", 0))
+#' @family functions for slocum gliders
+#' @family functions to download data
+download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
+                                   item="view_sci_water.csv",
+                                   server="http://gliders.oceantrack.org/data/slocum",
+                                   destdir=".", destfile, force=FALSE, dryrun=FALSE,
+                                   debug=getOption("gliderDebug", 0))
 {
     destfile <- sprintf("%s_%04d-%02d-%02d_%s", mission, year, month, day, item)
     destpath <- paste(destdir, destfile, sep="/")
@@ -75,7 +77,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
     invisible()
 }
 
-#' Read a Glider file
+#' Read a Slocum Glider file
 #'
 #' @param name Character value giving the name of the file
 #'
@@ -87,10 +89,10 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #'\dontrun{
 #' g <- read.glider("~/data/glider/m80_2017-12-16_view_sci_water.csv")
 #'}
-read.glider <- function(name)
+#' @family functions for slocum gliders
+#' @family functions to read glider data
+read.glider.slocum <- function(name)
 {
-    if (!require("oce"))
-        stop("First, install the 'oce' package")
     rval <- new("oce")
     data <- read.csv(name, header=TRUE)
     names <- names(data)
@@ -109,6 +111,7 @@ read.glider <- function(name)
     data$salinity <- salinity
     data$time <- numberAsPOSIXct(data$unix_timestamp, "unix")
     rval@data <- data
+    rval@metadata$filename <- name
     rval
 }
 

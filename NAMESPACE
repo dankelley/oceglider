@@ -1,4 +1,5 @@
 exportPattern("^[[:alpha:]]+")
+importFrom("methods", "new")
 importFrom("utils", "download.file", "flush.console", "read.csv")
-
+importFrom("oce", "numberAsPOSIXct")
 
