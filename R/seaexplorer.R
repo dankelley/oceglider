@@ -1,24 +1,3 @@
-#' Read a Seaexplorer Glider file
-#'
-#' @param file File name.
-#'
-#' @param debug Integer indicating the debugging level; 0 for quiet
-#' action and higher values for more indications of the processing
-#' steps.
-#'
-#' @author Dan Kelley
-#'
-#' @family functions for seaexplorer gliders
-#' @family functions to read glider data
-#' @importFrom utils read.delim
-#' @export
-read.glider.seaexplorer <- function(file, debug=0)
-{
-    utils::read.delim(file, sep=";")
-}
-
-
-
 #' Download and Cache a Seaexplorer Glider File
 #'
 #' This function assumes some knowledge of the data being sought,
@@ -186,5 +165,25 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         filenames <- c(filenames, filename)
     }
     filenames
+}
+
+
+#' Read a Seaexplorer Glider file
+#'
+#' @param file File name.
+#'
+#' @param debug Integer indicating the debugging level; 0 for quiet
+#' action and higher values for more indications of the processing
+#' steps.
+#'
+#' @author Dan Kelley
+#'
+#' @family functions for seaexplorer gliders
+#' @family functions to read glider data
+#' @importFrom utils read.delim
+#' @export
+read.glider.seaexplorer <- function(file, debug=0)
+{
+    utils::read.delim(file, sep=";")
 }
 

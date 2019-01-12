@@ -74,7 +74,8 @@ gfile <- download.glider.slocum(destddir="~/data/glider")
 \seealso{
 Other functions for slocum gliders: \code{\link{read.glider.slocum}}
 
-Other functions to download data: \code{\link{download.glider.seaexplorer}}
+Other functions to download data: \code{\link{download.glider.seaexplorer}},
+  \code{\link{download.glider}}
 }
 \concept{functions for slocum gliders}
 \concept{functions to download data}
