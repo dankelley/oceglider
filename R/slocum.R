@@ -30,6 +30,8 @@
 #'}
 #' @family functions for slocum gliders
 #' @family functions to download data
+#' @importFrom utils download.file
+#' @export
 download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
                                    item="view_sci_water.csv",
                                    server="http://gliders.oceantrack.org/data/slocum",
@@ -40,7 +42,7 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
     destpath <- paste(destdir, destfile, sep="/")
     if (0 == length(list.files(path=destdir, pattern=paste("^", destfile, "$", sep="")))) {
         source <- sprintf("%s/%s", server, destfile)
-        bad <- download.file(source, destfile)
+        bad <- utils::download.file(source, destfile)
         if (!bad && destdir != ".")
             system(paste("mv", destfile, destpath))
     } else {
@@ -64,6 +66,8 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' @param unindent Number of levels to un-indent, e.g. for start and end lines
 #' from a called function.
 #' @author Dan Kelley
+#' @importFrom utils flush.console
+#' @export
 gliderDebug <- function(debug=0, ..., unindent=0)
 {
     debug <- if (debug > 4) 4 else max(0, floor(debug + 0.5))
@@ -73,7 +77,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
             cat(paste(rep("  ", n), collapse=""))
         cat(...)
     }
-    flush.console()
+    utils::flush.console()
     invisible()
 }
 
@@ -91,10 +95,14 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #'}
 #' @family functions for slocum gliders
 #' @family functions to read glider data
+#' @importFrom utils read.csv
+#' @importFrom methods new
+#' @importFrom oce numberAsPOSIXct swSCTp
+#' @export
 read.glider.slocum <- function(name)
 {
-    rval <- new("oce")
-    data <- read.csv(name, header=TRUE)
+    rval <- methods::new("oce")
+    data <- utils::read.csv(name, header=TRUE)
     names <- names(data)
     print(names)
     names <- gsub("sci_water_cond", "conductivity", names)
@@ -106,10 +114,10 @@ read.glider.slocum <- function(name)
     names(data) <- names
     print(names)
     salinity <- with(data,
-                     swSCTp(conductivity, temperature, pressure,
-                            conductivityUnit="S/m", eos="unesco"))
+                     oce::swSCTp(conductivity, temperature, pressure,
+                                 conductivityUnit="S/m", eos="unesco"))
     data$salinity <- salinity
-    data$time <- numberAsPOSIXct(data$unix_timestamp, "unix")
+    data$time <- oce::numberAsPOSIXct(data$unix_timestamp, "unix")
     rval@data <- data
     rval@metadata$filename <- name
     rval

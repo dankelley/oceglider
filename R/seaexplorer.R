@@ -10,9 +10,11 @@
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data
+#' @importFrom utils read.delim
+#' @export
 read.glider.seaexplorer <- function(file, debug=0)
 {
-    read.delim(file, sep=";")
+    utils::read.delim(file, sep=";")
 }
 
 
@@ -67,6 +69,9 @@ read.glider.seaexplorer <- function(file, debug=0)
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to download data
+#' @importFrom RCurl getURL
+#' @importFrom utils download.file
+#' @export
 download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
                                         stream="realData",
                                         glider="SEA024",
@@ -86,7 +91,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
             stop("must set url= before can use stream=\"?\"")
         if (substr(url, nchar(url), nchar(url)) != "\"")
             url <- paste(url, "/", sep="")
-        streams <- strsplit(getURL(url, ftp.use.epsv=FALSE, dirlistonly=TRUE), "\n")[[1]]
+        streams <- strsplit(RCurl::getURL(url, ftp.use.epsv=FALSE, dirlistonly=TRUE), "\n")[[1]]
         cat("possible stream values: \"", paste(streams, collapse="\", \""), "\"\n", sep="")
         return(invisible(streams))
     }
@@ -98,7 +103,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         directory <- paste(url, stream, sep="/")
         if ("/" != substr(directory, nchar(directory), nchar(directory)))
             directory <- paste(directory, "/", sep="")
-        gliders <- getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
+        gliders <- RCurl::getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
         gliders <- strsplit(gliders, "\n")[[1]]
         gliders <- gliders[grep("^[a-zA-Z].*$", gliders)]
         gliders <- gliders[grep(".*(.msn)$", gliders, invert=TRUE)]
@@ -115,7 +120,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         directory <- paste(url, stream, glider, sep="/")
         if ("/" != substr(directory, nchar(directory), nchar(directory)))
             directory <- paste(directory, "/", sep="")
-        missions <- getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
+        missions <- RCurl::getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
         missions <- strsplit(missions, "\n")[[1]]
         missions <- missions[grep("^[a-zA-Z].*$", missions)]
         missions <- missions[grep(".*(msn)$", missions, invert=TRUE)]
@@ -139,7 +144,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         if ("/" != substr(directory, nchar(directory), nchar(directory)))
             directory <- paste(directory, "/", sep="")
         gliderDebug(debug, "directory='", directory, "' (after ensuring trailing /)\n", sep="")
-        yos <- getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
+        yos <- RCurl::getURL(directory, ftp.use.epsv=FALSE, dirlistonly=TRUE)
         gliderDebug(debug, "got data\n")
         yos <- strsplit(yos, "\n")[[1]]
         gliderDebug(debug, "split data\n")
@@ -169,7 +174,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         gliderDebug(debug, "plan: '", source, "' -> '", filename, "'\n", sep="")
         ##return(list.files(path=path))
         if (!file.exists(filename))
-            download.file(source, filename)
+            utils::download.file(source, filename)
         filenames <- c(filenames, filename)
     }
     filenames
