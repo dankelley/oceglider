@@ -62,9 +62,9 @@ read.glider.seaexplorer <- function(file, debug=0)
 #' \dontrun{
 #' # Download and read a file (default server, mission, etc)
 #' filename <- download.glider.seaexplorer(yo=2)
-#' yo2 <- read.glider.seaxplorer(filename)
+#' yo2 <- read.glider.seaexplorer(filename)
 #' # Download (or use cache for) a set files
-#' download.glider.seaxplorer(yo=download.glider.seaexplorer(yo="?"))
+#' download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 #' }
 #'
 #' @family functions for seaexplorer gliders
@@ -81,6 +81,14 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
                                         debug=0)
 {
     ## ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25/
+    gliderDebug(debug, 'download.glider.seaexplorer(url="', url, '"',
+                ', stream="', stream, '"',
+                ', glider="', glider, '"',
+                ', mission="', mission, '"',
+                ', yo=c(', paste(yo, collapse=","), ')',
+                ', type="', type, '"',
+                ', debug=', debug, ')\n', sep="")
+
     if ("?" == url) {
         guess <- "ftp://ftp.dfo-mpo.gc.ca/glider"
         cat("try using url=\"", guess, "\" (or not specifying url, because this is the default)\n", sep="")
@@ -98,8 +106,8 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
     if ("?" == glider) {
         if ("?" == url)
             stop("must set url= before can use glider=\"?\"")
-        if ("?" == mode)
-            stop("must set mode= before can use glider=\"?\"")
+        if ("?" == stream)
+            stop("must set stream= before can use glider=\"?\"")
         directory <- paste(url, stream, sep="/")
         if ("/" != substr(directory, nchar(directory), nchar(directory)))
             directory <- paste(directory, "/", sep="")
@@ -107,14 +115,14 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         gliders <- strsplit(gliders, "\n")[[1]]
         gliders <- gliders[grep("^[a-zA-Z].*$", gliders)]
         gliders <- gliders[grep(".*(.msn)$", gliders, invert=TRUE)]
-        cat("possible glider values: \"", paste(gliders, collapse="\", \""), "\"", sep="")
+        cat("possible glider values: \"", paste(gliders, collapse="\", \""), "\"\n", sep="")
         return(invisible(gliders))
     }
     if ("?" == mission) {
         if ("?" == url)
             stop("must set url= before can use mission=\"?\"")
-        if ("?" == mode)
-            stop("must set mode= before can use mission=\"?\"")
+        if ("?" == stream)
+            stop("must set stream= before can use mission=\"?\"")
         if ("?" == glider)
             stop("must set glider= before can use mission=\"?\"")
         directory <- paste(url, stream, glider, sep="/")
@@ -127,14 +135,14 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         missions <- missions[grep(".*(cfg)$", missions, invert=TRUE)]
         missions <- missions[grep(".*(dat)$", missions, invert=TRUE)]
         missions <- missions[grep(".*(log)$", missions, invert=TRUE)]
-        cat("possible missionName values: \"", paste(missions, collapse="\", \""), "\"", sep="")
+        cat("possible missionName values: \"", paste(missions, collapse="\", \""), "\"\n", sep="")
         return(invisible(missions))
     }
     if ("?" == yo[1]) {
         if ("?" == url)
             stop("must set url= before can use yo=\"?\"")
-        if ("?" == mode)
-            stop("must set mode= before can use yo=\"?\"")
+        if ("?" == stream)
+            stop("must set stream= before can use yo=\"?\"")
         if ("?" == glider)
             stop("must set glider= before can use yo=\"?\"")
         if ("?" == mission)
@@ -151,13 +159,13 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         ## EG sea024.25.pld1.sub.465.gz
         ## EG sea024.25.gli.sub.465.gz
         ##. yos0<<-yos
-        yos <- yos[grep(mode, yos)]
-        gliderDebug(debug, "subsetted for mode '", mode, "'\n", sep="")
+        yos <- yos[grep(type, yos)]
+        gliderDebug(debug, "subsetted for type '", type, "'\n", sep="")
         ##. yos1<<-yos
         yos <- sort(as.numeric(gsub(".*\\.([0-9]*)\\.gz", "\\1", yos)))
         gliderDebug(debug, "ordered\n")
         ##. yos2<<-yos
-        cat("possible yo values: ", paste(yos, collapse=" "), sep="")
+        cat("possible yo values: ", paste(yos, collapse=" "), "\n", sep="")
         return(invisible(yos))
     }
     if (!(type %in% c("pld1", "gli")))

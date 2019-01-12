@@ -4,20 +4,74 @@
 \alias{read.glider.slocum}
 \title{Read a Slocum Glider file}
 \usage{
-read.glider.slocum(name)
+read.glider.slocum(filename, nameMap = list(conductivity =
+  "sci_water_cond", temperature = "sci_water_temp", pressure =
+  "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
+  "i_depth"), debug = getOption("gliderDebug", 0))
 }
 \arguments{
-\item{name}{Character value giving the name of the file}
+\item{filename}{Character value giving the name of the file.}
+
+\item{nameMap}{List used to rename data columns. See 
+\dQuote{Details}.}
+
+\item{debug}{an integer specifying whether debugging information is
+to be printed during processing. The printing is done by
+a call to \code{\link{gliderDebug}}.  Setting \code{debug=0}
+turns off this form of debugging, while higher values yield
+more information. If one \code{glider} function calls another, it
+passes the value of \code{debug} but decreased by 1, which means
+that the value of \code{debug} controls not just the breadth
+of debugging, but also the depth.}
 }
 \value{
-An oce object holding the data.
+An oce object holding the data, with variables renamed as
+described in \dQuote{Details}, and with \code{salinity} added,
+as calculated by \code{oce::\link[oce]{swSCTp}} which uses the UNESCO
+algorithm and assumes that the conductivity values are stored in S/m
+units.
 }
 \description{
-Read a Slocum Glider file
+These files do not use standard names for variables, but
+the \code{nameMap} argument facilitates renaming for storage
+in the returned object. (Renaming simplifies later analysis, e.g.
+permitting direct use of algorithms in the \code{oce} package,
+which assume that salinity is named \code{"salinity"}, etc.)
+The original names of data items are retained in the metadata
+of the returned object, so that the \code{[[} operator in the \code{oce}
+package can retrieve the data using either the original name
+(e.g. \code{x[["sci_water_temp"]]}) or the more standard
+name (e.g. \code{x[["temperature"]]}).
 }
 \examples{
-\dontrun{
-g <- read.glider.slocum("~/data/glider/m80_2017-12-16_view_sci_water.csv")
+if (file.exists("~/slocum.csv")) {
+    g <- read.glider.slocum("~/slocum.csv")
+    summary(g)
+
+    # 1. Plot time-depth trace, colour-coded for temperature
+    par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
+    cm <- colormap(z=g[['temperature']])
+    drawPalette(colormap=cm, cex=3/4)
+    t <- g[["time"]]
+    p <- g[["depth"]]
+    plot(t, p, ylim=rev(range(p)), xlab="Time", ylab="Pressure [dbar]",
+         col=cm$zcol, cex=1/2, pch=20)
+    mtext(paste("Temperature, from", t[1]), cex=3/4)
+
+    # 2. Plot distance-depth trace, colour-coded for temperature
+    dist <- geodDist(g[['longitude']],g[['latitude']],alongPath=TRUE)
+    par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
+    cm <- colormap(z=g[['temperature']])
+    drawPalette(colormap=cm, cex=3/4)
+    p <- g[["depth"]]
+    plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
+         col=cm$zcol, cex=1/2, pch=20)
+    mtext(paste("Temperature, from", t[1]), cex=3/4)
+
+    # 3. Plot first two yos in CTD format, with yos isolated crudely.
+    yos <- ctdFindProfiles(as.ctd(g))
+    plot(yos[[1]])
+    plot(yos[[2]])
 }
 }
 \seealso{

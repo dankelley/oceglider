@@ -49,9 +49,9 @@ will be interrogated to try to determine possible choices.
 \dontrun{
 # Download and read a file (default server, mission, etc)
 filename <- download.glider.seaexplorer(yo=2)
-yo2 <- read.glider.seaxplorer(filename)
+yo2 <- read.glider.seaexplorer(filename)
 # Download (or use cache for) a set files
-download.glider.seaxplorer(yo=download.glider.seaexplorer(yo="?"))
+download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 }
 
 }

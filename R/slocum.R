@@ -51,47 +51,63 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
     if (destdir == ".") destfile else destpath
 }
 
-
-#' Print a debugging message
-#'
-#' Many glider functions decrease the \code{debug} level by 1 when they call other
-#' functions, so the effect is a nesting, with more space for deeper function
-#' level.
-#'
-#' @param debug an integer, less than or equal to zero for no message, and
-#' greater than zero for increasing levels of debugging.  Values greater than 4
-#' are treated like 4.
-#' @param \dots items to be supplied to \code{\link{cat}}, which does the
-#' printing.  Almost always, this should include a trailing newline.
-#' @param unindent Number of levels to un-indent, e.g. for start and end lines
-#' from a called function.
-#' @author Dan Kelley
-#' @importFrom utils flush.console
-#' @export
-gliderDebug <- function(debug=0, ..., unindent=0)
-{
-    debug <- if (debug > 4) 4 else max(0, floor(debug + 0.5))
-    if (debug > 0) {
-        n <- 5 - debug - unindent
-        if (n > 0)
-            cat(paste(rep("  ", n), collapse=""))
-        cat(...)
-    }
-    utils::flush.console()
-    invisible()
-}
-
 #' Read a Slocum Glider file
 #'
-#' @param name Character value giving the name of the file
+#' These files do not use standard names for variables, but
+#' the \code{nameMap} argument facilitates renaming for storage
+#' in the returned object. (Renaming simplifies later analysis, e.g.
+#' permitting direct use of algorithms in the \code{oce} package,
+#' which assume that salinity is named \code{"salinity"}, etc.)
+#' The original names of data items are retained in the metadata
+#' of the returned object, so that the \code{[[} operator in the \code{oce}
+#' package can retrieve the data using either the original name
+#' (e.g. \code{x[["sci_water_temp"]]}) or the more standard
+#' name (e.g. \code{x[["temperature"]]}).
 #'
-#' @return An oce object holding the data.
+#' @param filename Character value giving the name of the file.
+#'
+#' @param nameMap List used to rename data columns. See 
+#' \dQuote{Details}.
+#'
+#' @template debug
+#'
+#' @return An oce object holding the data, with variables renamed as
+#' described in \dQuote{Details}, and with \code{salinity} added,
+#' as calculated by \code{oce::\link[oce]{swSCTp}} which uses the UNESCO
+#' algorithm and assumes that the conductivity values are stored in S/m
+#' units.
 #'
 #' @author Dan Kelley
 #'
 #' @examples
-#'\dontrun{
-#' g <- read.glider.slocum("~/data/glider/m80_2017-12-16_view_sci_water.csv")
+#' if (file.exists("~/slocum.csv")) {
+#'     g <- read.glider.slocum("~/slocum.csv")
+#'     summary(g)
+#'
+#'     # 1. Plot time-depth trace, colour-coded for temperature
+#'     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
+#'     cm <- colormap(z=g[['temperature']])
+#'     drawPalette(colormap=cm, cex=3/4)
+#'     t <- g[["time"]]
+#'     p <- g[["depth"]]
+#'     plot(t, p, ylim=rev(range(p)), xlab="Time", ylab="Pressure [dbar]",
+#'          col=cm$zcol, cex=1/2, pch=20)
+#'     mtext(paste("Temperature, from", t[1]), cex=3/4)
+#'
+#'     # 2. Plot distance-depth trace, colour-coded for temperature
+#'     dist <- geodDist(g[['longitude']],g[['latitude']],alongPath=TRUE)
+#'     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
+#'     cm <- colormap(z=g[['temperature']])
+#'     drawPalette(colormap=cm, cex=3/4)
+#'     p <- g[["depth"]]
+#'     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
+#'          col=cm$zcol, cex=1/2, pch=20)
+#'     mtext(paste("Temperature, from", t[1]), cex=3/4)
+#'
+#'     # 3. Plot first two yos in CTD format, with yos isolated crudely.
+#'     yos <- ctdFindProfiles(as.ctd(g))
+#'     plot(yos[[1]])
+#'     plot(yos[[2]])
 #'}
 #' @family functions for slocum gliders
 #' @family functions to read glider data
@@ -99,27 +115,41 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #' @importFrom methods new
 #' @importFrom oce numberAsPOSIXct swSCTp
 #' @export
-read.glider.slocum <- function(name)
+read.glider.slocum <- function(filename,
+                               nameMap=list(conductivity="sci_water_cond",
+                                            temperature="sci_water_temp",
+                                            pressure="sci_water_pressure",
+                                            longitude="lon",
+                                            latitude="lat",
+                                            depth="i_depth"),
+                               debug=getOption("gliderDebug", 0))
+
 {
-    rval <- methods::new("oce")
-    data <- utils::read.csv(name, header=TRUE)
+    data <- utils::read.csv(filename, header=TRUE)
     names <- names(data)
-    print(names)
-    names <- gsub("sci_water_cond", "conductivity", names)
-    names <- gsub("sci_water_temp", "temperature", names)
-    names <- gsub("sci_water_pressure", "pressure", names)
-    names <- gsub("lon", "longitude", names)
-    names <- gsub("lat", "latitude", names)
-    names <- gsub("i_depth", "depth", names)
+    nameMapNames <- names(nameMap)
+    gliderDebug(debug, 'original data names: "', paste(names, collapse='", "'), '"\n')
+    rval <- methods::new("oce")
+    rval@metadata$dataNamesOriginal <- list()
+    for (iname in seq_along(names)) {
+        if (names[iname] %in% nameMap) {
+            newName <- nameMapNames[which(names[iname] == nameMap)]
+            rval@metadata$dataNamesOriginal[[newName]] <- names[iname]
+            names[iname] <-  newName
+        } else {
+            rval@metadata$dataNamesOriginal[[names[iname]]] <- names[iname]
+        }
+    }
+    gliderDebug(debug, 'new data names: "', paste(names, collapse='", "'), '"\n')
     names(data) <- names
-    print(names)
     salinity <- with(data,
                      oce::swSCTp(conductivity, temperature, pressure,
                                  conductivityUnit="S/m", eos="unesco"))
     data$salinity <- salinity
     data$time <- oce::numberAsPOSIXct(data$unix_timestamp, "unix")
     rval@data <- data
-    rval@metadata$filename <- name
+    rval@metadata$filename <- filename
+    ## FIXME add to dataNamesOriginal as for CTD data type
     rval
 }
 
