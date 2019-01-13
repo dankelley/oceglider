@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dan Kelley (https://orcid.org/0000-0001-7808-5911)" />
 
-<meta name="date" content="2019-01-12" />
+<meta name="date" content="2019-01-13" />
 
 <title>Introduction to oceanglider</title>
 
@@ -300,16 +300,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Introduction to oceanglider</h1>
 <h4 class="author"><em>Dan Kelley (<a href="https://orcid.org/0000-0001-7808-5911" class="uri">https://orcid.org/0000-0001-7808-5911</a>)</em></h4>
-<h4 class="date"><em>2019-01-12</em></h4>
+<h4 class="date"><em>2019-01-13</em></h4>
 
 
-<div id="TOC">
-<ul>
-<li><a href="#introduction"><span class="toc-section-number">1</span> Introduction</a></li>
-<li><a href="#use-with-seaexplorer-glider-data"><span class="toc-section-number">2</span> Use with seaexplorer glider data</a></li>
-<li><a href="#use-with-slocum-glider-data"><span class="toc-section-number">3</span> Use with slocum glider data</a></li>
-</ul>
-</div>
 
 <!-- HOW TO BUILD THE VIGNETTE. -->
 <!-- 1. edit this file in vignettes/ -->
@@ -317,21 +310,34 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <!-- 3. build package -->
 <p><strong>Abstract.</strong> This vignette explains the basics of using the oceanglider package on Seaexplorer and Slocum data.</p>
 <div id="introduction" class="section level1">
-<h1><span class="header-section-number">1</span> Introduction</h1>
+<h1>Introduction</h1>
 <p>The first step in working with glider data is normally to download them from a server, and the lack of URL conventions for such servers makes this a challenging task. The <code>download.glider()</code> function is provided to download glider files from a server, caching the files locally to speed processing. Using this function demands an understanding of the dataset naming convention and the server file structure; see the individual examples below, but be aware that they are only known to work for a few individual datasets.</p>
 </div>
-<div id="use-with-seaexplorer-glider-data" class="section level1">
-<h1><span class="header-section-number">2</span> Use with seaexplorer glider data</h1>
-<p>The URL structure in the following example is subject to change without notice. The portion <code>SEA024</code> indicates that this is the glider named 24, and the <code>M25</code> portion refers to the 25-th mission. The pattern, the second argument The <code>pld1</code> in the file pattern requests data from the science stream, the <code>.2.</code> portion indicates that data from the the second descent/ascent sequence (or ‘yo’) is sought.</p>
+<div id="seaexplorer-gliders" class="section level1">
+<h1>SeaExplorer Gliders</h1>
+<p>NOTE: The data used in the following are private. The URL structure in the following example is subject to change without notice.</p>
+<p>The portion <code>SEA024</code> indicates that this is the glider named 24, and the <code>M25</code> portion refers to the 25-th mission. The pattern, the second argument The <code>pld1</code> in the file pattern requests data from the science stream, the <code>.2.</code> portion indicates that data from the the second descent/ascent sequence (or ‘yo’) is sought.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(oceanglider)</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">url &lt;-<span class="st"> &quot;ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25&quot;</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">yo2file &lt;-<span class="st"> </span><span class="kw">download.glider</span>(url, <span class="st">&quot;pld1.sub.2.gz$&quot;</span>, <span class="dt">debug=</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">yo2pldf &lt;-<span class="st"> </span><span class="kw">download.glider</span>(url, <span class="st">&quot;pld1.sub.2.gz$&quot;</span>, <span class="dt">debug=</span><span class="dv">1</span>)</a>
 <a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">#&gt;         Found files: &quot;sea024.25.pld1.sub.2.gz&quot;</span></a>
 <a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">#&gt;         already have &quot;sea024.25.pld1.sub.2.gz&quot; locally, so not downloading</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">yo2 &lt;-<span class="st"> </span><span class="kw">read.glider.seaexplorer</span>(yo2file)</a></code></pre></div>
+<a class="sourceLine" id="cb1-6" data-line-number="6">yo2pld &lt;-<span class="st"> </span><span class="kw">read.glider.seaexplorer</span>(yo2pldf)</a></code></pre></div>
+<p>In applying this example to other situations, it might be helpful to write a function for generating URLS, e.g. perhaps</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">urlBIO &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">glider=</span><span class="st">&quot;024&quot;</span>, <span class="dt">mission=</span><span class="dv">25</span>)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">    <span class="kw">paste</span>(<span class="st">&quot;ftp://ftp.dfo-mpo.gc.ca/glider/realData/&quot;</span>, glider, <span class="st">&quot;/M&quot;</span>, mission, <span class="dt">sep=</span><span class="st">&quot;&quot;</span>)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">patternBIO &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">type=</span><span class="st">&quot;pld1&quot;</span>, <span class="dt">yo=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    <span class="kw">paste</span>(type, <span class="st">&quot;.sub.&quot;</span>, yo, <span class="st">&quot;.gz$&quot;</span>, <span class="dt">sep=</span><span class="st">&quot;&quot;</span>)</a></code></pre></div>
+<p>where in  using  will yield the ‘science’ data, and  will yield the navigation data. (The distinction between these two types is best explained elsewhere.)</p>
+<p>Now, we could get the engineering data for this yo with</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">yo2glif &lt;-<span class="st"> </span><span class="kw">download.glider</span>(<span class="kw">urlBIO</span>(<span class="st">&quot;SEA024&quot;</span>, <span class="dv">25</span>), <span class="kw">patternBIO</span>(<span class="st">&quot;gli&quot;</span>, <span class="dv">2</span>), <span class="dt">debug=</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co">#&gt;         Found files: &quot;sea024.25.gli.sub.2.gz&quot;</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="co">#&gt;         already have &quot;sea024.25.gli.sub.2.gz&quot; locally, so not downloading</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">yo2gli &lt;-<span class="st"> </span><span class="kw">read.glider.seaexplorer</span>(yo2glif)</a></code></pre></div>
+<p>FIXME: show how to work with <code>yo2pld</code> and <code>yo2gli</code>.</p>
 </div>
-<div id="use-with-slocum-glider-data" class="section level1">
-<h1><span class="header-section-number">3</span> Use with slocum glider data</h1>
+<div id="slocum-gliders" class="section level1">
+<h1>Slocum gliders</h1>
 </div>
 
 

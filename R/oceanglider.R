@@ -20,6 +20,28 @@
 #' @name oceanglider
 NULL
 
+
+#' Convert lon and lat from a combined degree+minute formula
+#'
+#' Data from Seaexplorers save longitude and latitude in a combined
+#' format, in which e.g. 45deg 30.1min is saved as 4530.1
+#'
+#' @param x Numerical value in degree+minute notation, e.g.
+#'
+#' @return Numerical value in decimal degrees.
+#'
+#' @export
+degreeMinute <- function(x)
+{
+    s <- sign(x)
+    x <- abs(x)
+    degree <- floor(x / 100)
+    minute <- x - 100 * degree
+    s * (degree + minute / 60)
+}
+
+
+
 #' Print a debugging message
 #'
 #' Many glider functions decrease the \code{debug} level by 1 when they call other

@@ -64,10 +64,9 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' (e.g. \code{x[["sci_water_temp"]]}) or the more standard
 #' name (e.g. \code{x[["temperature"]]}).
 #'
-#' @param filename Character value giving the name of the file.
+#' @param file A connection or a character string giving the name of the file to load.
 #'
-#' @param nameMap List used to rename data columns. See 
-#' \dQuote{Details}.
+#' @param nameMap List used to rename data columns. See \dQuote{Details}.
 #'
 #' @template debug
 #'
@@ -115,7 +114,7 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' @importFrom methods new
 #' @importFrom oce numberAsPOSIXct swSCTp
 #' @export
-read.glider.slocum <- function(filename,
+read.glider.slocum <- function(file,
                                nameMap=list(conductivity="sci_water_cond",
                                             temperature="sci_water_temp",
                                             pressure="sci_water_pressure",
@@ -125,6 +124,21 @@ read.glider.slocum <- function(filename,
                                debug=getOption("gliderDebug", 0))
 
 {
+    if (missing(file))
+        stop("must provide `file'")
+    filename <- ""
+    if (is.character(file)) {
+        filename <- normalizePath(file)
+        file <- file(file, "r")
+        on.exit(close(file))
+    }
+    if (!inherits(file, "connection"))
+        stop("argument `file' must be a character string or connection")
+    if (!isOpen(file)) {
+        open(file, "r")
+        on.exit(close(file))
+    }
+ 
     data <- utils::read.csv(filename, header=TRUE)
     names <- names(data)
     nameMapNames <- names(nameMap)

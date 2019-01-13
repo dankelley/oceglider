@@ -2,19 +2,11 @@
 title: "Introduction to oceanglider"
 author: "Dan Kelley (https://orcid.org/0000-0001-7808-5911)"
 date: "`r Sys.Date()`"
-output:
-  rmarkdown::html_vignette:
-    toc: true
-    number_sections: true
-    fig_caption: yes
-    fig_width: 5
-    fig_height: 5
-    dpi: 72
-    dev.args: list(pointsize=11)
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction to oceanglider}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{Introduction to oceanglider}
+  %\VignetteEncoding{UTF-8}
 ---
 
 <!-- HOW TO BUILD THE VIGNETTE. -->
@@ -40,9 +32,11 @@ Using this function demands an understanding of the dataset naming convention
 and the server file structure; see the individual examples below, but be aware
 that they are only known to work for a few individual datasets.
 
-# Use with seaexplorer glider data
+# SeaExplorer Gliders
 
-The URL structure in the following example is subject to change without notice.
+NOTE: The data used in the following are private. The URL structure in the
+following example is subject to change without notice.
+
 The portion `SEA024` indicates that this is the glider named 24, and the `M25`
 portion refers to the 25-th mission. The pattern, the second argument The
 `pld1` in the file pattern requests data from the science stream, the `.2.`
@@ -52,9 +46,28 @@ portion indicates that data from the the second descent/ascent sequence (or
 ```{r}
 library(oceanglider)
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25"
-yo2file <- download.glider(url, "pld1.sub.2.gz$", debug=1)
-yo2 <- read.glider.seaexplorer(yo2file)
+yo2pldf <- download.glider(url, "pld1.sub.2.gz$", debug=1)
+yo2pld <- read.glider.seaexplorer(yo2pldf)
 ```
 
+In applying this example to other situations, it might be helpful to write a
+function for generating URLS, e.g. perhaps
+```{r}
+urlBIO <- function(glider="024", mission=25)
+    paste("ftp://ftp.dfo-mpo.gc.ca/glider/realData/", glider, "/M", mission, sep="")
+patternBIO <- function(type="pld1", yo=2)
+    paste(type, ".sub.", yo, ".gz$", sep="")
+```
+where in \code{patternBIO()} using \code{type="pld1"} will yield the 'science'
+data, and \code{type="gli"}  will yield the navigation data. (The distinction
+between these two types is best explained elsewhere.)
 
-# Use with slocum glider data
+Now, we could get the engineering data for this yo with
+```{r}
+yo2glif <- download.glider(urlBIO("SEA024", 25), patternBIO("gli", 2), debug=1)
+yo2gli <- read.glider.seaexplorer(yo2glif)
+```
+
+FIXME: show how to work with `yo2pld` and `yo2gli`.
+
+# Slocum gliders

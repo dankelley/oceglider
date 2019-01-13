@@ -4,16 +4,15 @@
 \alias{read.glider.slocum}
 \title{Read a Slocum Glider file}
 \usage{
-read.glider.slocum(filename, nameMap = list(conductivity =
-  "sci_water_cond", temperature = "sci_water_temp", pressure =
-  "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
-  "i_depth"), debug = getOption("gliderDebug", 0))
+read.glider.slocum(file, nameMap = list(conductivity = "sci_water_cond",
+  temperature = "sci_water_temp", pressure = "sci_water_pressure",
+  longitude = "lon", latitude = "lat", depth = "i_depth"),
+  debug = getOption("gliderDebug", 0))
 }
 \arguments{
-\item{filename}{Character value giving the name of the file.}
+\item{file}{A connection or a character string giving the name of the file to load.}
 
-\item{nameMap}{List used to rename data columns. See 
-\dQuote{Details}.}
+\item{nameMap}{List used to rename data columns. See \dQuote{Details}.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. The printing is done by
