@@ -229,12 +229,13 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #'     rpld <- S(geodDist(pld[['longitude']],pld[['latitude']],alongPath=TRUE))*1e3/S(pld[['depth']])
 #'     message("glide ratio: ", rpld, " from pld file")
 #'     ## Experiments for isolating downcast (FIXME: is that preferred?)
-#'     par(mfrow=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+#'     selectNavState <- 117 # 100 is going up
 #'     selected <- runmed(gli[["NavState"]], 3) == selectNavState
 #'     istart <- which(selected)[1]
 #'     tstart <- gli[["time"]][istart]
 #'     iend <- rev(which(selected))[1]
 #'     tend <- gli[["time"]][iend]
+#'     par(mfrow=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
 #'     plot(gli[['time']], gli[['depth']])
 #'     abline(v=gli[['time']][c(istart, iend)], col=2)
 #'     plot(gli[['time']], gli[['pitch']])
@@ -301,7 +302,8 @@ read.glider.seaexplorer <- function(file,
     names <- names(data)
     gliderDebug(debug, 'original data names: "', paste(names, collapse='", "'), '"\n', sep="")
     nameMapNames <- names(nameMap)
-    rval <- methods::new("oce")
+    rval <- methods::new("glider")
+    rval@metadata$type <- "seaexplorer" # FIXME separate gli and pld1?
     rval@metadata$dataNamesOriginal <- list() # FIXME: work on this
     for (iname in seq_along(names)) {
         if (names[iname] %in% nameMap) {

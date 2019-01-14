@@ -20,15 +20,89 @@
 #' @name oceanglider
 NULL
 
+#' Class for Glider Objects
+#'
+#' @author Dan Kelley
+#'
+#' @export
+setClass("glider", contains="oce")
+setMethod(f="initialize",
+          signature="glider",
+          definition=function(.Object, filename) {
+              if (!missing(filename))
+                  .Object@metadata$filename <- filename
+              .Object@processingLog$time <- as.POSIXct(Sys.time())
+              .Object@processingLog$value <- "create 'glider' object"
+              return(.Object)
+          })
+
+
+#' @title Retrieve Part of a glider Object
+#'
+#' @description
+#' First, a check is done to see if the object's metadata contains an item
+#' with name given by \code{i}. If this is true, then that value is returned.
+#' Otherwise, the item is sought in the \code{data} slot. This is straightforward
+#' for objects read by \code{\link{read.glider.slocum}}, which has no
+#' repeated data items, but trickier for objects read by 
+#' \code{\link{read.glider.seaexplorer}}, since it stores data from the glider
+#' and the payload separately, in items called \code{glider} and
+#' \code{payload}, respectively. If \code{j} is not specified, then
+#' \code{i} is sought first in the \code{payload} component, with
+#' \code{glider} being checked thereafter. (For example, this means that the
+#' payload thermometer is preferred to the glider thermometer.) This selection
+#' process can be controlled by setting \code{j} to either \code{"glider"}
+#' or \code{"payload"}.  For example, both \code{x[["temperature"]]} and
+#' \code{x[["temperature","payload"]]} retrieves values from
+#' the payload thermistor, while \code{x[["temperature","glider"]]} retrieve 
+#' values from the glider thermister.
+#'
+#' @param x A glider object, i.e. one inheriting from \code{\link{glider-class}}.
+#'
+#' @param i Character value that names the item to be retrieved.
+#'
+#' @param j Optional character value specifying the data-stream to be used.
+#'
+#' @param ... Optional additional information (ignored).
+#'
+#' @author Dan Kelley
+#'
+#' @export
+setMethod(f="[[",
+          signature(x="glider", i="ANY", j="ANY"),
+          definition=function(x, i, j, ...) {
+              debug <- getOption("gliderDebug", default=0)
+              gliderDebug(debug, "glider [[ {\n", unindent=1)
+              if (missing(i))
+                  stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
+              i <- i[1]                # drop extras if more than one given
+              if (!is.character(i))
+                  stop("glider item must be specified by name", call.=FALSE)
+              if (missing(j)) {
+                  if (i %in% names(x@metadata)) {
+                      return(x@metadata[[i]])
+                  } else {
+                      return(x@data[[i]]) # FIXME: extend this for 'j'
+                  }
+              } else {
+                  message("FIXME: code [[ to handle j")
+              }
+          })
+
+
 
 #' Convert lon and lat from a combined degree+minute formula
 #'
 #' Data from Seaexplorers save longitude and latitude in a combined
-#' format, in which e.g. 45deg 30.1min is saved as 4530.1
+#' format, in which e.g. 45deg 30.1min is saved as 4530.100, as
+#' illustrated in the example.
 #'
 #' @param x Numerical value in degree+minute notation, e.g.
 #'
 #' @return Numerical value in decimal degrees.
+#'
+#' @examples
+#' expect_equal(45+30.100/60, degreeMinute(4530.100))
 #'
 #' @export
 degreeMinute <- function(x)

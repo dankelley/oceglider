@@ -138,12 +138,13 @@ read.glider.slocum <- function(file,
         open(file, "r")
         on.exit(close(file))
     }
- 
+
     data <- utils::read.csv(filename, header=TRUE)
     names <- names(data)
     nameMapNames <- names(nameMap)
     gliderDebug(debug, 'original data names: "', paste(names, collapse='", "'), '"\n')
-    rval <- methods::new("oce")
+    rval <- methods::new("glider")
+    rval@metadata$type <- "slocum"
     rval@metadata$dataNamesOriginal <- list()
     for (iname in seq_along(names)) {
         if (names[iname] %in% nameMap) {
