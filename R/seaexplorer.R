@@ -170,6 +170,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 
 #' Read a Seaexplorer Glider file
 #'
+#' \strong{FIXME: will probably remove nameMap.}
 #' These files do not use standard names for variables, but
 #' the \code{nameMap} argument facilitates renaming for storage
 #' in the returned object. (Renaming simplifies later analysis, e.g.
@@ -187,7 +188,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' which are in a combined degree+minute format that is
 #' decoded by \code{\link{degreeMinute}}.
 #'
-#' @param file Character value of length 2, giving the names of
+#' @param files Character value of length 2, giving the names of
 #' a local glider-data file (typically with \code{gli} in the filname)
 #' and th name of a payload-data file (typically with \code{pld} in
 #' the filename).
@@ -198,10 +199,6 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' not apply to other missions. When in doubt as to the correct value,
 #' use \code{summary()} on the returned object, and check to see if the
 #' data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.
-#'
-#' @param nameMap List used to rename data columns. See \dQuote{Details}.
-#' FIXME: this argument will be deleted if a hard-wired pattern
-#' is discovered in SeaExplorer documentation.
 #'
 #' @param debug Integer indicating the debugging level; 0 for quiet
 #' action and higher values for more indications of the processing
@@ -215,56 +212,14 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' filenames <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
 #' if (2 == length(filenames)) {
-#'     gli <- read.glider.seaexplorer(filenames[1])
-#'     pld <- read.glider.seaexplorer(filenames[2])
-#'     ## Plot depth-time (as a way to learn about gli and pld differences)
-#'     par(mfrow=c(2, 1))
-#'     tlim <- range(c(gli[['time']], pld[['time']]))
-#'     oce.plot.ts(gli[['time']], gli[['depth']], type='p', xlim=tlim, ylab="Depth [m]")
-#'     points(pld[['time']], pld[['depth']], col=2, pch=3)
-#'     legend("topleft", col=c(1,2), pch=c(1,3), legend=c("gli", "pld"))
-#'     oce.plot.ts(gli[['time']], gli[['pitch']], type='p', xlim=tlim, ylab="Pitch [deg]")
-#'     abline(h=0, col='gray')
-#'     legend("topleft", col=1, pch=1, legend="gli")
-#'     ## Compute glide ratio (as a way to learn about lon and lat)
-#'     S <- function (x) diff(range(x))
-#'     rgli <- S(geodDist(gli[['longitude']],gli[['latitude']],alongPath=TRUE))*1e3/S(gli[['depth']])
-#'     message("glide ratio: ", rgli, " from gli file")
-#'     rpld <- S(geodDist(pld[['longitude']],pld[['latitude']],alongPath=TRUE))*1e3/S(pld[['depth']])
-#'     message("glide ratio: ", rpld, " from pld file")
-#'     ## Experiments for isolating downcast (FIXME: is that preferred?)
-#'     selectNavState <- 117 # 100 is going up
-#'     selected <- runmed(gli[["NavState"]], 3) == selectNavState
-#'     istart <- which(selected)[1]
-#'     tstart <- gli[["time"]][istart]
-#'     iend <- rev(which(selected))[1]
-#'     tend <- gli[["time"]][iend]
-#'     par(mfrow=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-#'     plot(gli[['time']], gli[['depth']])
-#'     abline(v=gli[['time']][c(istart, iend)], col=2)
-#'     plot(gli[['time']], gli[['pitch']])
-#'     abline(v=gli[['time']][c(istart, iend)], col=2)
-#'     plot(gli[['time']], gli[['NavStat']])
-#'     abline(v=gli[['time']][c(istart, iend)], col=2)
-#'     ## Examine some details.
-#'     ## Isolate science data using start/end inferred from gli[["NavState"]]
-#'     ctd <- as.ctd(pld)
-#'     focus <- tstart <= pld[["time"]] & pld[["time"]] <= tend
-#'     col <- ifelse(focus, "black", "red")
-#'     par(mfcol=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-#'     plot(ctd[["time"]], ctd[["pressure"]], type="p")
-#'     points(ctd[["time"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-#'     plot(ctd[["time"]], ctd[["SA"]], type="p")
-#'     points(ctd[["time"]][focus], ctd[["SA"]][focus], pch=20, col=2)
-#'     plot(ctd[["time"]], ctd[["CT"]], type="p")
-#'     points(ctd[["time"]][focus], ctd[["CT"]][focus], pch=20, col=2)
-#'     par(mfcol=c(1, 3), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-#'     plotProfile(ctd, xtype="salinity", type="p")
-#'     points(ctd[["SA"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-#'     plotProfile(ctd, xtype="temperature", type="p")
-#'     points(ctd[["CT"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-#'     plotTS(ctd, type="p")
-#'     points(ctd[["SA"]][focus], ctd[["CT"]][focus], pch=20, col=2)
+#'     d <- read.glider.seaexplorer(filenames)
+#'     ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
+#'                   lon=d[['longitude']], lat=d[['latitude']])
+#'     plot(ctd)
+#'     ## Isolate the upcast, which is the preferred subset for this particular dataset
+#'     ## Note that we cannot use d[["NAV_RESOURCE"]]==100, because it has a
+#'     ## false positive in the first point.
+#'     plot(ctdTrim(ctd, "upcast"))
 #' }
 #'
 #' @family functions for seaexplorer gliders
@@ -273,93 +228,146 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @importFrom methods new
 #' @importFrom oce swSCTp
 #' @export
-read.glider.seaexplorer <- function(file,
-                                    missingValue=9999,
-                                    nameMap=list(conductivity="GPCTD_CONDUCTIVITY",
-                                                 temperature="GPCTD_TEMPERATURE",
-                                                 temperature="Temperature",
-                                                 pressure="GPCTD_PRESSURE", ## values not right for pressure
-                                                 depth="NAV_DEPTH",
-                                                 depth="Depth",
-                                                 heading="Heading",
-                                                 pitch="Pitch",
-                                                 roll="Roll"),
-                                    debug=0)
+read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
 {
-    if (missing(file))
+    if (missing(files))
         stop("must provide `file'")
-    filename <- ""
-    if (is.character(file)) {
-        filename <- normalizePath(file)
-        file <- file(file, "r")
-        on.exit(close(file))
-    }
-    if (!inherits(file, "connection"))
-        stop("argument `file' must be a character string or connection")
-    if (!isOpen(file)) {
-        open(file, "r")
-        on.exit(close(file))
-    }
-    data <- utils::read.delim(file, sep=";")
-    ## Take care of missing-value codes.  This may vary from file to file.
-    data[data == missingValue] <- NA
-    names <- names(data)
-    gliderDebug(debug, 'original data names: "', paste(names, collapse='", "'), '"\n', sep="")
-    nameMapNames <- names(nameMap)
-    rval <- methods::new("glider")
-    rval@metadata$type <- "seaexplorer" # FIXME separate gli and pld1?
-    rval@metadata$dataNamesOriginal <- list() # FIXME: work on this
-    for (iname in seq_along(names)) {
-        if (names[iname] %in% nameMap) {
-            newName <- nameMapNames[which(names[iname] == nameMap)]
-            rval@metadata$dataNamesOriginal[[newName]] <- names[iname]
-            names[iname] <-  newName
-        } else {
-            rval@metadata$dataNamesOriginal[[names[iname]]] <- names[iname]
-        }
-    }
-    gliderDebug(debug, 'new data names: "', paste(names, collapse='", "'), '"\n', sep="")
-    names(data) <- names
-    ## Time is named differently in the two (pld1 and gli) files
-    if ("Timestamp" %in% names) {      # in gli files
-        data$time <- as.POSIXct(data$Timestamp, format="%d/%m/%Y %H:%M:%S", tz="UTC")
-        rval@metadata$dataNamesOriginal$time <- "-"
-    }
-    if ("PLD_REALTIMECLOCK" %in% names) { # in pld1 files
-        data$time <- as.POSIXct(data$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%S", tz="UTC")
-        rval@metadata$dataNamesOriginal$time <- "-"
-    }
+    if (2 != length(files))
+        stop("files must be of length 2")
+    if (!is.character(files))
+        stop("files must be a character vector of length 2")
+    filename <- files
+    wpld <- grep("pld", files)
+    if (!length(wpld))
+        stop("files does not contain a pld filename")
+    wgli <- grep("gli", files)
+    if (!length(wgli))
+        stop("files does not contain a gli filename")
+    pldFile <- files[wpld]
+    gliFile <- files[wgli]
+    gliData <- utils::read.delim(gliFile, sep=";")
+    pldData <- utils::read.delim(pldFile, sep=";")
+    pldData[pldData == missingValue] <- NA
+    gliData[gliData == missingValue] <- NA
 
-    ## Longitude and latitude are named differently in pld1 and gli files, and each is in centi-degrees
-    if ("Lon" %in% names) {            # in gli files
-        data$longitude <- degreeMinute(data$Lon)
-        rval@metadata$dataNamesOriginal$longitude <- "-"
+    ## names(gliData)
+    ##  [1] "Timestamp"     "NavState"      "SecurityLevel"
+    ##  [4] "Heading"       "Pitch"         "Roll"
+    ##  [7] "Depth"         "Temperature"   "Pa"
+    ## [10] "Lat"           "Lon"           "DesiredH"
+    ## [13] "BallastCmd"    "BallastPos"    "LinCmd"
+    ## [16] "LinPos"        "AngCmd"        "AngPos"
+    ## [19] "Voltage"       "Altitude"      "X"
+
+    ## names(pldData)
+    ##  [1] "PLD_REALTIMECLOCK"    "NAV_RESOURCE"
+    ##  [3] "NAV_LONGITUDE"        "NAV_LATITUDE"
+    ##  [5] "NAV_DEPTH"            "FLBBCD_CHL_COUNT"
+    ##  [7] "FLBBCD_CHL_SCALED"    "FLBBCD_BB_700_COUNT"
+    ##  [9] "FLBBCD_BB_700_SCALED" "FLBBCD_CDOM_COUNT"
+    ## [11] "FLBBCD_CDOM_SCALED"   "GPCTD_CONDUCTIVITY"
+    ## [13] "GPCTD_TEMPERATURE"    "GPCTD_PRESSURE"
+    ## [15] "GPCTD_DOF"            "X"
+
+    ## FIXME: if we want to isolate e.g. downcast within pldData, we need to
+    ## FIXME: use gliData$NavState, but that has a different length than items in
+    ## FIXME: pldData. I suppose we can use the clocks to decide how to trim.
+
+    res <- new("glider")
+    res@metadata$type <- "seaexplorer"
+    res@metadata$filename <- files
+    res@metadata$dataNamesOriginal <- list(glider=list(), payload=list())
+    if ("NAV_LONGITUDE" %in% names(pldData)) {
+        names(pldData) <- gsub("NAV_LONGITUDE", "longitude", names(pldData))
+        pldData$longitude <- degreeMinute(pldData$longitude)
+        res@metadata$dataNamesOriginal$payload$longitude <- "NAV_LONGITUDE"
     }
-    if ("Lat" %in% names) {            # in gli files
-        data$latitude <- degreeMinute(data$Lat)
-        rval@metadata$dataNamesOriginal$latitude <- "-"
+    if ("NAV_LATITUDE" %in% names(pldData)) {
+        names(pldData) <- gsub("NAV_LATITUDE", "latitude", names(pldData))
+        pldData$latitude <- degreeMinute(pldData$latitude)
+        res@metadata$dataNamesOriginal$payload$latitude <- "NAV_LATITUDE"
     }
-    if ("NAV_LONGITUDE" %in% names) {  # in pld1 files
-        data$longitude <- degreeMinute(data$NAV_LONGITUDE)
-        rval@metadata$dataNamesOriginal$longitude <- "-"
+    if ("GPCTD_TEMPERATURE" %in% names(pldData)) {
+        names(pldData) <- gsub("GPCTD_TEMPERATURE", "temperature", names(pldData))
+        res@metadata$dataNamesOriginal$payload$temperature <- "GPCTD_TEMPERATURE"
     }
-    if ("NAV_LATITUDE" %in% names) {   # in pld1 files
-        data$latitude <- degreeMinute(data$NAV_LATITUDE)
-        rval@metadata$dataNamesOriginal$latitude <- "-"
+    if ("GPCTD_PRESSURE" %in% names(pldData)) {
+        names(pldData) <- gsub("GPCTD_PRESSURE", "pressure", names(pldData))
+        res@metadata$dataNamesOriginal$payload$pressure <- "GPCTD_PRESSURE"
     }
-    if ("NAV_DEPTH" %in% names) {      # in pld1 files
-        data$pressure <- data$NAV_DEPTH
-        rval@metadata$dataNamesOriginal$pressure <- "-"
+    if ("GPCTD_CONDUCTIVITY" %in% names(pldData)) {
+        names(pldData) <- gsub("GPCTD_CONDUCTIVITY", "conductivity", names(pldData))
+        res@metadata$dataNamesOriginal$payload$conductivity <- "GPCTD_CONDUCTIVITY"
     }
-    names <- names(data)
-    if ("conductivity" %in% names && "temperature" %in% names && "pressure" %in% names) {
-        data$salinity <- with(data,
-                              oce::swSCTp(conductivity, temperature, pressure,
-                                          conductivityUnit="S/m", eos="unesco"))
-        rval@metadata$dataNamesOriginal$salinity <- "-"
+    if (3 == sum(c("conductivity", "temperature", "pressure") %in% names(pldData))) {
+        pldData$salinity <- swSCTp(pldData$conductivity/4.2914, pldData$temperature, pldData$pressure)
+        res@metadata$dataNamesOriginal$payload$salinity <- "-"
     }
-    rval@data <- data
-    rval@metadata$filename <- filename
-    rval
+    res@data <- list(glider=gliData, payload=pldData)
+
+    ## FIXME: translate names
+    ## FIXME: make [[ understand this paired data scheme
+    return(res)
+
+    ##> ## Take care of missing-value codes.  This may vary from file to file.
+    ##> data[data == missingValue] <- NA
+    ##> names <- names(data)
+    ##> gliderDebug(debug, 'original data names: "', paste(names, collapse='", "'), '"\n', sep="")
+    ##> nameMapNames <- names(nameMap)
+    ##> rval <- methods::new("glider")
+    ##> rval@metadata$type <- "seaexplorer" # FIXME separate gli and pld1?
+    ##> rval@metadata$dataNamesOriginal <- list() # FIXME: work on this
+    ##> for (iname in seq_along(names)) {
+    ##>     if (names[iname] %in% nameMap) {
+    ##>         newName <- nameMapNames[which(names[iname] == nameMap)]
+    ##>         rval@metadata$dataNamesOriginal[[newName]] <- names[iname]
+    ##>         names[iname] <-  newName
+    ##>     } else {
+    ##>         rval@metadata$dataNamesOriginal[[names[iname]]] <- names[iname]
+    ##>     }
+    ##> }
+    ##> gliderDebug(debug, 'new data names: "', paste(names, collapse='", "'), '"\n', sep="")
+    ##> names(data) <- names
+    ##> ## Time is named differently in the two (pld1 and gli) files
+    ##> if ("Timestamp" %in% names) {      # in gli files
+    ##>     data$time <- as.POSIXct(data$Timestamp, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+    ##>     rval@metadata$dataNamesOriginal$time <- "-"
+    ##> }
+    ##> if ("PLD_REALTIMECLOCK" %in% names) { # in pld1 files
+    ##>     data$time <- as.POSIXct(data$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+    ##>     rval@metadata$dataNamesOriginal$time <- "-"
+    ##> }
+
+    ##> ## Longitude and latitude are named differently in pld1 and gli files, and each is in centi-degrees
+    ##> if ("Lon" %in% names) {            # in gli files
+    ##>     data$longitude <- degreeMinute(data$Lon)
+    ##>     rval@metadata$dataNamesOriginal$longitude <- "-"
+    ##> }
+    ##> if ("Lat" %in% names) {            # in gli files
+    ##>     data$latitude <- degreeMinute(data$Lat)
+    ##>     rval@metadata$dataNamesOriginal$latitude <- "-"
+    ##> }
+    ##> if ("NAV_LONGITUDE" %in% names) {  # in pld1 files
+    ##>     data$longitude <- degreeMinute(data$NAV_LONGITUDE)
+    ##>     rval@metadata$dataNamesOriginal$longitude <- "-"
+    ##> }
+    ##> if ("NAV_LATITUDE" %in% names) {   # in pld1 files
+    ##>     data$latitude <- degreeMinute(data$NAV_LATITUDE)
+    ##>     rval@metadata$dataNamesOriginal$latitude <- "-"
+    ##> }
+    ##> if ("NAV_DEPTH" %in% names) {      # in pld1 files
+    ##>     data$pressure <- data$NAV_DEPTH
+    ##>     rval@metadata$dataNamesOriginal$pressure <- "-"
+    ##> }
+    ##> names <- names(data)
+    ##> if ("conductivity" %in% names && "temperature" %in% names && "pressure" %in% names) {
+    ##>     data$salinity <- with(data,
+    ##>                           oce::swSCTp(conductivity, temperature, pressure,
+    ##>                                       conductivityUnit="S/m", eos="unesco"))
+    ##>     rval@metadata$dataNamesOriginal$salinity <- "-"
+    ##> }
+    ##> rval@data <- data
+    ##> rval@metadata$filename <- filename
+    ##> rval
 }
 

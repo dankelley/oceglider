@@ -2,7 +2,15 @@
 title: "Introduction to oceanglider"
 author: "Dan Kelley (https://orcid.org/0000-0001-7808-5911)"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    fig_caption: yes
+    fig_width: 5
+    fig_height: 5
+    dpi: 72
+    dev.args: list(pointsize=11)
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Introduction to oceanglider}
@@ -45,18 +53,18 @@ portion indicates that data from the the second descent/ascent sequence (or
 
 ```{r}
 library(oceanglider)
-url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25"
-yo2pldf <- download.glider(url, "pld1.sub.2.gz$", debug=1)
-yo2pld <- read.glider.seaexplorer(yo2pldf)
+url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+filenames <- download.glider(url, "\\.200\\.gz$")
+g <- read.glider.seaexplorer(filenames)
 ```
 
 In applying this example to other situations, it might be helpful to write a
 function for generating URLS, e.g. perhaps
 ```{r}
-urlBIO <- function(glider="024", mission=25)
+urlBIO <- function(glider="024", mission=32)
     paste("ftp://ftp.dfo-mpo.gc.ca/glider/realData/", glider, "/M", mission, sep="")
-patternBIO <- function(type="pld1", yo=2)
-    paste(type, ".sub.", yo, ".gz$", sep="")
+patternBIO <- function(yo=2)
+    paste("\\.", yo, "\\.gz$", sep="")
 ```
 where in \code{patternBIO()} using \code{type="pld1"} will yield the 'science'
 data, and \code{type="gli"}  will yield the navigation data. (The distinction
@@ -64,10 +72,37 @@ between these two types is best explained elsewhere.)
 
 Now, we could get the engineering data for this yo with
 ```{r}
-yo2glif <- download.glider(urlBIO("SEA024", 25), patternBIO("gli", 2), debug=1)
-yo2gli <- read.glider.seaexplorer(yo2glif)
+filenames <- download.glider(urlBIO("SEA024", 32), patternBIO(200), debug=1)
+g <- read.glider.seaexplorer(filenames)
 ```
 
-FIXME: show how to work with `yo2pld` and `yo2gli`.
+Once we have the data, it can be useful to examine the `glider` and `payload`
+components, e.g. with
+```{r}
+head(g[["glider"]], 3)
+head(g[["payload"]], 3)
+```
+
+The payload is the preferred data source (consult `help("[[,glider-method")`
+for the details of how `[[` works for `glider` objects), so we can make a ctd
+object and examine it with
+```{r}
+ctd <- as.ctd(g[["salinity"]],g[["temperature"]],g[["pressure"]],lon=g[["longitude"]],lat=g[["latitude"]])
+summary(ctd)
+plot(ctd)
+```
+
+Note that there seems to be a retracing in the diagrams. To see why, use
+```{r}
+plotScan(ctd, type="o")
+```
+which tells us that there is a stray point from a surface interval. We *should* be
+able to isolate the upcast by keying on `g[["NAV_RESOURCE"]]==100` but that does not
+work, because of this stray point. But, as a stopgap measure, we can use `ctdTrim()` to
+get better results:
+```{r}
+plot(ctdTrim(ctd, "upcast"))
+```
+
 
 # Slocum gliders

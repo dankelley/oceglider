@@ -78,6 +78,30 @@ setMethod(f="[[",
               i <- i[1]                # drop extras if more than one given
               if (!is.character(i))
                   stop("glider item must be specified by name", call.=FALSE)
+              if (i == "filename")
+                  return(x@metadata$filename)
+              type <- x@metadata$type
+              if (is.null(type))
+                  stop("'type' is NULL")
+              if (i == "type")
+                  return(type)
+              if (type == "seaexplorer") {
+                  if (i == "glider")
+                      return(x@data$glider)
+                  if (i == "payload")
+                      return(x@data$payload)
+                  if (missing(j))
+                      return(x@data$payload[[i]])
+                  if (j == "glider")
+                      return(x@data$glider[[i]])
+                  if (j == "payload")
+                      return(x@data$payload[[i]])
+                  return(NULL)
+              } else if (type == "slocum") {
+                  return(x@data[[i]])
+              } else {
+                  stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+              }
               if (missing(j)) {
                   if (i %in% names(x@metadata)) {
                       return(x@metadata[[i]])
@@ -89,7 +113,19 @@ setMethod(f="[[",
               }
           })
 
-
+#' Summarize a glider Object
+#' @param object A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#'
+#' @param ... Further arguments passed to or from other methods.
+#' @export
+setMethod(f="summary",
+          signature="glider",
+          definition=function(object, ...) {
+              ##mnames <- names(object@metadata)
+              cat("Glider Summary\n-----------\n\n")
+              cat("FIXME: code something here; need to do seaexplorer differently\n")
+          })
+ 
 
 #' Convert lon and lat from a combined degree+minute formula
 #'

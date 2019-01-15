@@ -4,14 +4,10 @@
 \alias{read.glider.seaexplorer}
 \title{Read a Seaexplorer Glider file}
 \usage{
-read.glider.seaexplorer(file, missingValue = 9999,
-  nameMap = list(conductivity = "GPCTD_CONDUCTIVITY", temperature =
-  "GPCTD_TEMPERATURE", temperature = "Temperature", pressure =
-  "GPCTD_PRESSURE", depth = "NAV_DEPTH", depth = "Depth", heading =
-  "Heading", pitch = "Pitch", roll = "Roll"), debug = 0)
+read.glider.seaexplorer(files, missingValue = 9999, debug = 0)
 }
 \arguments{
-\item{file}{Character value of length 2, giving the names of
+\item{files}{Character value of length 2, giving the names of
 a local glider-data file (typically with \code{gli} in the filname)
 and th name of a payload-data file (typically with \code{pld} in
 the filename).}
@@ -23,15 +19,12 @@ not apply to other missions. When in doubt as to the correct value,
 use \code{summary()} on the returned object, and check to see if the
 data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.}
 
-\item{nameMap}{List used to rename data columns. See \dQuote{Details}.
-FIXME: this argument will be deleted if a hard-wired pattern
-is discovered in SeaExplorer documentation.}
-
 \item{debug}{Integer indicating the debugging level; 0 for quiet
 action and higher values for more indications of the processing
 steps.}
 }
 \description{
+\strong{FIXME: will probably remove nameMap.}
 These files do not use standard names for variables, but
 the \code{nameMap} argument facilitates renaming for storage
 in the returned object. (Renaming simplifies later analysis, e.g.
@@ -55,57 +48,14 @@ yo <- 200
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 filenames <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
 if (2 == length(filenames)) {
-    message("FIXME: debugging here")
-    gli <- read.glider.seaexplorer(filenames[1])
-    pld <- read.glider.seaexplorer(filenames[2])
-    ## Plot depth-time (as a way to learn about gli and pld differences)
-    par(mfrow=c(2, 1))
-    tlim <- range(c(gli[['time']], pld[['time']]))
-    oce.plot.ts(gli[['time']], gli[['depth']], type='p', xlim=tlim, ylab="Depth [m]")
-    points(pld[['time']], pld[['depth']], col=2, pch=3)
-    legend("topleft", col=c(1,2), pch=c(1,3), legend=c("gli", "pld"))
-    oce.plot.ts(gli[['time']], gli[['pitch']], type='p', xlim=tlim, ylab="Pitch [deg]")
-    abline(h=0, col='gray')
-    legend("topleft", col=1, pch=1, legend="gli")
-    ## Compute glide ratio (as a way to learn about lon and lat)
-    S <- function (x) diff(range(x))
-    rgli <- S(geodDist(gli[['longitude']],gli[['latitude']],alongPath=TRUE))*1e3/S(gli[['depth']])
-    message("glide ratio: ", rgli, " from gli file")
-    rpld <- S(geodDist(pld[['longitude']],pld[['latitude']],alongPath=TRUE))*1e3/S(pld[['depth']])
-    message("glide ratio: ", rpld, " from pld file")
-    ## Experiments for isolating downcast (FIXME: is that preferred?)
-    selectNavState <- 117 # 100 is going up
-    selected <- runmed(gli[["NavState"]], 3) == selectNavState
-    istart <- which(selected)[1]
-    tstart <- gli[["time"]][istart]
-    iend <- rev(which(selected))[1]
-    tend <- gli[["time"]][iend]
-    par(mfrow=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-    plot(gli[['time']], gli[['depth']])
-    abline(v=gli[['time']][c(istart, iend)], col=2)
-    plot(gli[['time']], gli[['pitch']])
-    abline(v=gli[['time']][c(istart, iend)], col=2)
-    plot(gli[['time']], gli[['NavStat']])
-    abline(v=gli[['time']][c(istart, iend)], col=2)
-    ## Examine some details.
-    ## Isolate science data using start/end inferred from gli[["NavState"]]
-    ctd <- as.ctd(pld)
-    focus <- tstart <= pld[["time"]] & pld[["time"]] <= tend
-    col <- ifelse(focus, "black", "red")
-    par(mfcol=c(3, 1), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-    plot(ctd[["time"]], ctd[["pressure"]], type="p")
-    points(ctd[["time"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-    plot(ctd[["time"]], ctd[["SA"]], type="p")
-    points(ctd[["time"]][focus], ctd[["SA"]][focus], pch=20, col=2)
-    plot(ctd[["time"]], ctd[["CT"]], type="p")
-    points(ctd[["time"]][focus], ctd[["CT"]][focus], pch=20, col=2)
-    par(mfcol=c(1, 3), mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-    plotProfile(ctd, xtype="salinity", type="p")
-    points(ctd[["SA"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-    plotProfile(ctd, xtype="temperature", type="p")
-    points(ctd[["CT"]][focus], ctd[["pressure"]][focus], pch=20, col=2)
-    plotTS(ctd, type="p")
-    points(ctd[["SA"]][focus], ctd[["CT"]][focus], pch=20, col=2)
+    d <- read.glider.seaexplorer(filenames)
+    ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
+                  lon=d[['longitude']], lat=d[['latitude']])
+    plot(ctd)
+    ## Isolate the upcast, which is the preferred subset for this particular dataset
+    ## Note that we cannot use d[["NAV_RESOURCE"]]==100, because it has a
+    ## false positive in the first point.
+    plot(ctdTrim(ctd, "upcast"))
 }
 
 }
