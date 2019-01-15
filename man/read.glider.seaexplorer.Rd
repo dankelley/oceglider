@@ -24,39 +24,26 @@ action and higher values for more indications of the processing
 steps.}
 }
 \description{
-\strong{FIXME: will probably remove nameMap.}
-These files do not use standard names for variables, but
-the \code{nameMap} argument facilitates renaming for storage
-in the returned object. (Renaming simplifies later analysis, e.g.
-permitting direct use of algorithms in the \code{oce} package,
-which assume that salinity is named \code{"salinity"}, etc.)
-The original names of data items are retained in the metadata
-of the returned object, so that the \code{[[} operator in the \code{oce}
-package can retrieve the data using either the original name
-(e.g. \code{x[["sci_water_temp"]]}) or the more standard
-name (e.g. \code{x[["temperature"]]}). In addition to names
-given in \code{nameMap}, several other name/value inferences
-are made, e.g. a character timestamp (named differently in gli
-and pld1 files) is used to compute \code{time}, and similar actions
-are done to infer \code{longitude} and \code{latitude},
-which are in a combined degree+minute format that is
-decoded by \code{\link{degreeMinute}}.
+Read a Seaexplorer Glider file
 }
 \examples{
 library(oceanglider)
-yo <- 200
-url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-filenames <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
-if (2 == length(filenames)) {
-    d <- read.glider.seaexplorer(filenames)
-    ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
-                  lon=d[['longitude']], lat=d[['latitude']])
-    plot(ctd)
-    ## Isolate the upcast, which is the preferred subset for this particular dataset
-    ## Note that we cannot use d[["NAV_RESOURCE"]]==100, because it has a
-    ## false positive in the first point.
-    plot(ctdTrim(ctd, "upcast"))
-}
+## # Download and read a file (default server, mission, etc)
+## yo <- 200
+## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+## filenames <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
+files <- system.file("extdata",
+                     c("sea024.32.gli.sub.200.gz",
+                       "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+d <- read.glider.seaexplorer(files)
+ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
+              lon=d[['longitude']], lat=d[['latitude']])
+plot(ctd)
+## Isolate the upcast, inferred with oce::ctdTrim().
+plot(ctdTrim(ctd, "upcast"))
+## Isolate the upcast, using d[["NAV_RESOURCE"]]==117;
+## note that the downcast has code 100.
+plot(subset(ctd, d[["NAV_RESOURCE"]]==117))
 
 }
 \seealso{

@@ -53,9 +53,12 @@ portion indicates that data from the the second descent/ascent sequence (or
 
 ```{r}
 library(oceanglider)
-url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-filenames <- download.glider(url, "\\.200\\.gz$")
-g <- read.glider.seaexplorer(filenames)
+## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+## filenames <- download.glider(url, "\\.200\\.gz$")
+files <- system.file("extdata",
+                     c("sea024.32.gli.sub.200.gz",
+                       "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+g <- read.glider.seaexplorer(files)
 ```
 
 In applying this example to other situations, it might be helpful to write a
@@ -71,10 +74,11 @@ data, and \code{type="gli"}  will yield the navigation data. (The distinction
 between these two types is best explained elsewhere.)
 
 Now, we could get the engineering data for this yo with
-```{r}
+```{r eval=FALSE}
 filenames <- download.glider(urlBIO("SEA024", 32), patternBIO(200), debug=1)
 g <- read.glider.seaexplorer(filenames)
 ```
+(which is not executed here, owing to server accessibility).
 
 Once we have the data, it can be useful to examine the `glider` and `payload`
 components, e.g. with
@@ -87,7 +91,8 @@ The payload is the preferred data source (consult `help("[[,glider-method")`
 for the details of how `[[` works for `glider` objects), so we can make a ctd
 object and examine it with
 ```{r}
-ctd <- as.ctd(g[["salinity"]],g[["temperature"]],g[["pressure"]],lon=g[["longitude"]],lat=g[["latitude"]])
+ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
+              lon=g[["longitude"]], lat=g[["latitude"]])
 summary(ctd)
 plot(ctd)
 ```

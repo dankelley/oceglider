@@ -48,8 +48,10 @@ will be interrogated to try to determine possible choices.
 \examples{
 \dontrun{
 # Download and read a file (default server, mission, etc)
-filename <- download.glider.seaexplorer(yo=2)
-yo2 <- read.glider.seaexplorer(filename)
+yo <- 200
+url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+files <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
+yo2 <- read.glider.seaexplorer(files)
 # Download (or use cache for) a set files
 download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 }

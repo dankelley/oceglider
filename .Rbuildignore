@@ -4,4 +4,4 @@
 ^\.Rproj\.user$
 man-roxygen
 .travis.yml
-^.*.gz$
+

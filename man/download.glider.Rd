@@ -4,7 +4,7 @@
 \alias{download.glider}
 \title{Download and Cache a Glider File}
 \usage{
-download.glider(url, pattern, debug = 0)
+download.glider(url, pattern, destdir = ".", debug = 0)
 }
 \arguments{
 \item{url}{Character value providing the web location of the
@@ -12,6 +12,9 @@ server.}
 
 \item{pattern}{Character value indicating a pattern for
 the name(s) of the desired file(s).}
+
+\item{destdir}{Character value indicating the directory in which
+to save the downloaded data.}
 
 \item{debug}{Integer indicating the debugging level; 0 for quiet
 action and higher values for more indications of the processing
@@ -35,14 +38,15 @@ is \code{NULL}; otherwise, it is a vector of character values
 giving the names of the files that have been downloaded.
 }
 \examples{
-# Download and read the second yo of mission 32 of instrument SEA024.
+# Download and read yo 200 of glider SEA024 on mission 32.
+\dontrun{
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-yo2files <- download.glider(url, "\\\\.2\\\\.gz$")
-if (2 == length(yo2files)) {
-    yo2 <- read.glider.seaexplorer(yo2ffiles)
+yofiles <- download.glider(url, "\\\\.200\\\\.gz$", destdir="~/data/glider")
+if (2 == length(yofiles)) {
+    yo <- read.glider.seaexplorer(yofiles)
 }
-##? # Download (or use cache for) a set files
-##? download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
+summary(yo)
+}
 
 }
 \seealso{

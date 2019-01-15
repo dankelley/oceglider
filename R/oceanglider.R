@@ -117,15 +117,64 @@ setMethod(f="[[",
 #' @param object A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
 #'
 #' @param ... Further arguments passed to or from other methods.
+#' @importFrom oce threenum processingLogShow
 #' @export
 setMethod(f="summary",
           signature="glider",
           definition=function(object, ...) {
               ##mnames <- names(object@metadata)
               cat("Glider Summary\n-----------\n\n")
-              cat("FIXME: code something here; need to do seaexplorer differently\n")
+              cat(sprintf("* Input files:         \"%s\" and \"%s\"\n",
+                          object@metadata$filename[1], object@metadata$filename[2]))
+              type <- object@metadata$type
+              cat(sprintf("* Type:                 %s\n", type))
+              if (type == "seaexplorer") {
+                  ## Glider data
+                  ndata <- length(object@data$glider)
+                  threes <- matrix(nrow=ndata, ncol=4)
+                  for (i in 1:ndata) {
+                      threes[i, ] <- oce::threenum(object@data$glider[[i]])
+                  }
+                  if (!is.null(threes)) {
+                      rownames(threes) <- paste("    ", names(object@data$glider))
+                      OriginalName <- unlist(lapply(names(object@data$glider), function(n)
+                                                    if (n %in% names(object@metadata$dataNamesOriginal$glider))
+                                                        object@metadata$dataNamesOriginal$glider[[n]] else "-"))
+                      threes <- cbind(threes, OriginalName)
+                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                      cat("* Data from glider's sensors:\n")
+                      owidth <- options('width')
+                      options(width=150) # make wide to avoid line breaks
+                      print(threes, quote=FALSE)
+                      options(width=owidth$width)
+                      cat("\n")
+                  }
+                  ## Payload data
+                  ndata <- length(object@data$payload)
+                  threes <- matrix(nrow=ndata, ncol=4)
+                  for (i in 1:ndata) {
+                      threes[i, ] <- threenum(object@data$payload[[i]])
+                  }
+                  if (!is.null(threes)) {
+                      rownames(threes) <- paste("    ", names(object@data$payload))
+                      OriginalName <- unlist(lapply(names(object@data$payload), function(n)
+                                                    if (n %in% names(object@metadata$dataNamesOriginal$payload))
+                                                        object@metadata$dataNamesOriginal$payload[[n]] else "-"))
+                      threes <- cbind(threes, OriginalName)
+                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                      cat("* Data from payload's sensors:\n")
+                      owidth <- options('width')
+                      options(width=150) # make wide to avoid line breaks
+                      print(threes, quote=FALSE)
+                      options(width=owidth$width)
+                      cat("\n")
+                  }
+              } else {
+                  cat("FIXME: summarize (slocum)\n")
+              }
+              processingLogShow(object)
           })
- 
+
 
 #' Convert lon and lat from a combined degree+minute formula
 #'
@@ -242,6 +291,9 @@ urlExists <- function(url, quiet=FALSE)
 #' @param pattern Character value indicating a pattern for
 #' the name(s) of the desired file(s).
 #'
+#' @param destdir Character value indicating the directory in which
+#' to save the downloaded data.
+#'
 #' @param debug Integer indicating the debugging level; 0 for quiet
 #' action and higher values for more indications of the processing
 #' steps.
@@ -254,20 +306,21 @@ urlExists <- function(url, quiet=FALSE)
 #' @author Dan Kelley
 #'
 #' @examples
-#' # Download and read the second yo of mission 32 of instrument SEA024.
+#' # Download and read yo 200 of glider SEA024 on mission 32.
+#'\dontrun{
 #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-#' yo2files <- download.glider(url, "\\.2\\.gz$")
-#' if (2 == length(yo2files)) {
-#'     yo2 <- read.glider.seaexplorer(yo2ffiles)
+#' yofiles <- download.glider(url, "\\.200\\.gz$", destdir="~/data/glider")
+#' if (2 == length(yofiles)) {
+#'     yo <- read.glider.seaexplorer(yofiles)
 #' }
-#' ##? # Download (or use cache for) a set files
-#' ##? download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
+#' summary(yo)
+#'}
 #'
 #' @family functions to download data
 #' @importFrom RCurl getURL
 #' @importFrom utils download.file
 #' @export
-download.glider <- function(url, pattern, debug=0)
+download.glider <- function(url, pattern, destdir=".", debug=0)
 {
     if (missing(url))
         stop("must supply url")
@@ -288,15 +341,16 @@ download.glider <- function(url, pattern, debug=0)
     }
     files <- files[w]
     gliderDebug(debug, 'Found files: "', paste(files, collapse='", "'), '"\n', sep="")
-    for (file in files) {
-        if (!file.exists(file)) { # look in destination
-            path <- paste(url, file, sep="")
-            utils::download.file(path, file)
-            gliderDebug(debug, 'downloaded "', file, '"\n', sep="")
+    destfiles <- paste(destdir, files, sep="/")
+    for (i in seq_along(files)) {
+        if (!file.exists(destfiles[i])) {
+            path <- paste(url, files[i], sep="")
+            utils::download.file(path, destfiles[i])
+            gliderDebug(debug, 'downloaded "', destfiles[i], '"\n', sep="")
         } else {
-            gliderDebug(debug, 'already have "', file, '" locally, so not downloading\n', sep="")
+            gliderDebug(debug, 'already have "', destfiles[i], '", so not downloading\n', sep="")
         }
     }
-    files
+    destfiles
 }
 
