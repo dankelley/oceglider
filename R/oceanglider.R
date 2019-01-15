@@ -218,11 +218,11 @@ urlExists <- function(url, quiet=FALSE)
 #' @author Dan Kelley
 #'
 #' @examples
-#' # Download and read the second yo of mission 25 of instrument SEA024.
-#' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25"
-#' yo2file <- download.glider(url, "pld1.sub.2.gz$")
-#' if (!is.null(yo2file)) {
-#'     yo2 <- read.glider.seaexplorer(yo2file)
+#' # Download and read the second yo of mission 32 of instrument SEA024.
+#' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+#' yo2files <- download.glider(url, "\\.2\\.gz$")
+#' if (2 == length(yo2files)) {
+#'     yo2 <- read.glider.seaexplorer(yo2ffiles)
 #' }
 #' ##? # Download (or use cache for) a set files
 #' ##? download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))

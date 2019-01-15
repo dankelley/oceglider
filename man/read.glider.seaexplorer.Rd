@@ -11,7 +11,10 @@ read.glider.seaexplorer(file, missingValue = 9999,
   "Heading", pitch = "Pitch", roll = "Roll"), debug = 0)
 }
 \arguments{
-\item{file}{A connection or a character string naming the file to load.}
+\item{file}{Character value of length 2, giving the names of
+a local glider-data file (typically with \code{gli} in the filname)
+and th name of a payload-data file (typically with \code{pld} in
+the filename).}
 
 \item{missingValue}{Numerical value for missing data; all such values
 are set to \code{NA} in the data as interpreted. The default value
@@ -20,7 +23,9 @@ not apply to other missions. When in doubt as to the correct value,
 use \code{summary()} on the returned object, and check to see if the
 data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.}
 
-\item{nameMap}{List used to rename data columns. See \dQuote{Details}.}
+\item{nameMap}{List used to rename data columns. See \dQuote{Details}.
+FIXME: this argument will be deleted if a hard-wired pattern
+is discovered in SeaExplorer documentation.}
 
 \item{debug}{Integer indicating the debugging level; 0 for quiet
 action and higher values for more indications of the processing
@@ -48,11 +53,11 @@ decoded by \code{\link{degreeMinute}}.
 library(oceanglider)
 yo <- 200
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-glif <- download.glider(url, paste("gli.sub.", yo, ".gz$", sep=""), debug=1)
-pldf <- download.glider(url, paste("pld1.sub.", yo, ".gz$", sep=""), debug=1)
-if (!is.null(pldf) && !is.null(glif)) {
-    gli <- read.glider.seaexplorer(glif)
-    pld <- read.glider.seaexplorer(pldf)
+filenames <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
+if (2 == length(filenames)) {
+    message("FIXME: debugging here")
+    gli <- read.glider.seaexplorer(filenames[1])
+    pld <- read.glider.seaexplorer(filenames[2])
     ## Plot depth-time (as a way to learn about gli and pld differences)
     par(mfrow=c(2, 1))
     tlim <- range(c(gli[['time']], pld[['time']]))
