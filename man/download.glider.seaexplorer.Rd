@@ -2,11 +2,11 @@
 % Please edit documentation in R/seaexplorer.R
 \name{download.glider.seaexplorer}
 \alias{download.glider.seaexplorer}
-\title{Download and Cache a Seaexplorer Glider File}
+\title{Download and Cache a Seaexplorer Glider File [deprecated]}
 \usage{
 download.glider.seaexplorer(url = "ftp://ftp.dfo-mpo.gc.ca/glider",
-  stream = "realData", glider = "SEA024", mission = "M25",
-  yo = "2", type = "pld1", debug = 0)
+  stream = "realData", glider = "SEA024", mission = "M32",
+  type = "pld1", yo = "?", debug = 0)
 }
 \arguments{
 \item{url}{Character value indicating the base URL for the
@@ -20,25 +20,31 @@ If \code{stream} is \code{"?"}, the data repository will
 be examined, and a message will be printed about possible values.}
 
 \item{glider}{Name Character value indicating the name of the
-glider. This is probably in a form like \code{"SEA019"}.
+glider. This is probably in a form like \code{"SEA024"}.
 If \code{glider} is \code{"?"}, the data repository will
 be examined, and a message will be printed about possible values.}
 
 \item{mission}{Character value indicating the name of the
-mission. This is probably in a form like \code{"M25"}.
+mission. This is probably in a form like \code{"M32"}.
 If \code{missionName} is \code{"?"}, the data repository will
 be examined, and a message will be printed about possible values.}
 
-\item{yo}{Numerical value indicating the name of the yo.
-If \code{yo} is \code{"?"}, the data repository will
-be examined, and a message will be printed about possible values.}
+\item{type}{Character value, either \code{"pld1"} or \code{"gli"}.}
 
-\item{type}{Character value indicating the type of file, either
-\code{"pld1"} (the default) or \code{sub}.}
+\item{yo}{Numerical value indicating the yo number,
+or the character value \code{"?"}.  In the second case,
+the data repository will be examined, and the return
+value will be a vector of \code{yo} numbers that can
+be retrieved by the server.}
 
 \item{debug}{Integer indicating the debugging level; 0 for quiet
 action and higher values for more indications of the processing
 steps.}
+}
+\value{
+Either a character vector of file names or (if \code{yo=="?"})
+a numerical vector of possible \code{yo} values for the indicated
+server.
 }
 \description{
 This function assumes some knowledge of the data being sought,

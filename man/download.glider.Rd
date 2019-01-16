@@ -10,8 +10,17 @@ download.glider(url, pattern, destdir = ".", debug = 0)
 \item{url}{Character value providing the web location of the
 server.}
 
-\item{pattern}{Character value indicating a pattern for
-the name(s) of the desired file(s).}
+\item{pattern}{A specification of the yos to be downloaded. This
+only makes sense for seaexplorer files, since slocum files (at
+least those the author works with) combine all yos together.
+There are three choices for \code{pattern}. First, it may be
+a vector of integers indicating the \code{yo}
+numbers that are desired. Second, it may be a single character
+value specifying a \code{\link{regexp}} pattern that will be
+used to identify the name(s) of the desired file(s). Third,
+it may be \code{NA} which means to download/cache all \code{pld1}
+(payload) and \code{gli} (glider) files in the indicated server
+directory.}
 
 \item{destdir}{Character value indicating the directory in which
 to save the downloaded data.}
@@ -21,7 +30,7 @@ action and higher values for more indications of the processing
 steps.}
 }
 \value{
-Either a vector of character values for the names of the
+Either a vector of character values for the full-path names of the
 desired files (whether they were downloaded or already present
 locally), or \code{NULL} if the server had no files
 matching the indicated pattern.
@@ -38,14 +47,23 @@ is \code{NULL}; otherwise, it is a vector of character values
 giving the names of the files that have been downloaded.
 }
 \examples{
-# Download and read yo 200 of glider SEA024 on mission 32.
+# 1. Download and read yo 200 of glider SEA024 on mission 32.
 \dontrun{
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-yofiles <- download.glider(url, "\\\\.200\\\\.gz$", destdir="~/data/glider")
-if (2 == length(yofiles)) {
-    yo <- read.glider.seaexplorer(yofiles)
+files <- download.glider(url, "\\\\.200\\\\.gz$",
+                         destdir="~/data/glider/SEA024/M32")
+if (2 == length(files)) {
+    g <- read.glider.seaexplorer(files)
+    summary(g)
 }
-summary(yo)
+
+# 2. Download yo 100, 101, and 102.
+files <- download.glider(url, pattern=100:102,
+                         destdir="~/data/glider/SEA024/M32")
+
+# 3. Download all yos from this mission.
+files <- download.glider(url, pattern=NA,
+                         destdir="~/data/glider/SEA024/M32")
 }
 
 }

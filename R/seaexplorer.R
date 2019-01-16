@@ -1,4 +1,4 @@
-#' Download and Cache a Seaexplorer Glider File
+#' Download and Cache a Seaexplorer Glider File [deprecated]
 #'
 #' This function assumes some knowledge of the data being sought,
 #' but if some parameters are set to \code{"?"}, the server
@@ -15,25 +15,30 @@
 #' be examined, and a message will be printed about possible values.
 #'
 #' @param glider Name Character value indicating the name of the
-#' glider. This is probably in a form like \code{"SEA019"}.
+#' glider. This is probably in a form like \code{"SEA024"}.
 #' If \code{glider} is \code{"?"}, the data repository will
 #' be examined, and a message will be printed about possible values.
 #'
 #' @param mission Character value indicating the name of the
-#' mission. This is probably in a form like \code{"M25"}.
+#' mission. This is probably in a form like \code{"M32"}.
 #' If \code{missionName} is \code{"?"}, the data repository will
 #' be examined, and a message will be printed about possible values.
 #'
-#' @param yo Numerical value indicating the name of the yo.
-#' If \code{yo} is \code{"?"}, the data repository will
-#' be examined, and a message will be printed about possible values.
+#' @param type Character value, either \code{"pld1"} or \code{"gli"}.
 #'
-#' @param type Character value indicating the type of file, either
-#' \code{"pld1"} (the default) or \code{sub}.
+#' @param yo Numerical value indicating the yo number,
+#' or the character value \code{"?"}.  In the second case,
+#' the data repository will be examined, and the return
+#' value will be a vector of \code{yo} numbers that can
+#' be retrieved by the server.
 #'
 #' @param debug Integer indicating the debugging level; 0 for quiet
 #' action and higher values for more indications of the processing
 #' steps.
+#'
+#' @return Either a character vector of file names or (if \code{yo=="?"})
+#' a numerical vector of possible \code{yo} values for the indicated
+#' server.
 #'
 #' @author Dan Kelley
 #'
@@ -56,9 +61,9 @@
 download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
                                         stream="realData",
                                         glider="SEA024",
-                                        mission="M25",
-                                        yo="2",
-                                        type="pld1", # or  "gli"
+                                        mission="M32",
+                                        type="pld1",
+                                        yo="?",
                                         debug=0)
 {
     ## ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M25/
@@ -67,7 +72,6 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
                 ', glider="', glider, '"',
                 ', mission="', mission, '"',
                 ', yo=c(', paste(yo, collapse=","), ')',
-                ', type="', type, '"',
                 ', debug=', debug, ')\n', sep="")
 
     if ("?" == url) {
@@ -137,24 +141,18 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
         gliderDebug(debug, "got data\n")
         yos <- strsplit(yos, "\n")[[1]]
         gliderDebug(debug, "split data\n")
-        ## EG sea024.25.pld1.sub.465.gz
-        ## EG sea024.25.gli.sub.465.gz
-        ##. yos0<<-yos
-        yos <- yos[grep(type, yos)]
-        gliderDebug(debug, "subsetted for type '", type, "'\n", sep="")
-        ##. yos1<<-yos
-        yos <- sort(as.numeric(gsub(".*\\.([0-9]*)\\.gz", "\\1", yos)))
-        gliderDebug(debug, "ordered\n")
+        ## Keep sea024.25.pld1.sub.465.gz and sea024.25.gli.sub.465.gz but remove a
+        ## few other files, e.g. ending in csv and kml.
+        yos <- yos[grep("^sea.*(pld)|(gli).*\\.sub.*\\.gz$", yos)]
+        gliderDebug(debug, "isolate so pld and gli .gz files\n")
+        yoNumbers <- sort(as.numeric(gsub(".*\\.([0-9]*)\\.gz", "\\1", yos)))
         ##. yos2<<-yos
-        cat("possible yo values: ", paste(yos, collapse=" "), "\n", sep="")
-        return(invisible(yos))
+        return(yoNumbers)
     }
-    if (!(type %in% c("pld1", "gli")))
-        stop("type must be \"pld1\" or \"gli\"")
     filenames <- NULL
     for (thisyo in yo) {
         gliderDebug(debug, "yo=", thisyo, "\n", sep="")
-        filename <- paste(tolower(glider), ".", gsub("M", "", mission), ".", type, ".sub.", thisyo, ".gz", sep="")
+        filename <- paste(tolower(glider), ".", gsub("M", "", mission), "", type, ".sub.", thisyo, ".gz", sep="")
         gliderDebug(debug, "filename='", filename, "'\n", sep="")
         path <- paste(url, stream, glider, mission, sep="/")
         gliderDebug(debug, "path='", path, "'\n", sep="")
