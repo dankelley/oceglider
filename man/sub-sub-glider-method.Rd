@@ -21,7 +21,7 @@ First, a check is done to see if the object's metadata contains an item
 with name given by \code{i}. If this is true, then that value is returned.
 Otherwise, the item is sought in the \code{data} slot. This is straightforward
 for objects read by \code{\link{read.glider.slocum}}, which has no
-repeated data items, but trickier for objects read by 
+repeated data items, but trickier for objects read by
 \code{\link{read.glider.seaexplorer}}, since it stores data from the glider
 and the payload separately, in items called \code{glider} and
 \code{payload}, respectively. If \code{j} is not specified, then
@@ -31,7 +31,7 @@ payload thermometer is preferred to the glider thermometer.) This selection
 process can be controlled by setting \code{j} to either \code{"glider"}
 or \code{"payload"}.  For example, both \code{x[["temperature"]]} and
 \code{x[["temperature","payload"]]} retrieves values from
-the payload thermistor, while \code{x[["temperature","glider"]]} retrieve 
+the payload thermistor, while \code{x[["temperature","glider"]]} retrieve
 values from the glider thermister.
 }
 \author{

@@ -217,10 +217,9 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
 {
     if (missing(files))
         stop("must provide `file'")
-    cat("FILES:\n");print(files)
-    if (2 != length(files)) {
-        stop("files must be of length 2")
-    }
+    nfiles <- length(files)
+    if (2 != nfiles)
+        stop("files must be of length 1 or 2")
     if (!is.character(files))
         stop("files must be a character vector of length 2")
     filename <- files
