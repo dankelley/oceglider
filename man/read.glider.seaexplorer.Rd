@@ -7,10 +7,16 @@
 read.glider.seaexplorer(files, missingValue = 9999, debug = 0)
 }
 \arguments{
-\item{files}{Character value of length 2, giving the names of
-a local glider-data file (typically with \code{gli} in the filname)
-and th name of a payload-data file (typically with \code{pld} in
-the filename).}
+\item{files}{Either a single integer, in which case it specifies
+a yo number for a local file, or a character value of length 2
+that provides the names of two local files, one (typically
+with \code{gli} in its filename) representing
+measurements made by sensors on the glider,
+and the other (with \code{pld1} in its filename) representing
+measurements made by sensors in the glider's payload. For the
+the case of \code{files} being an integer, all local filenames are
+found, and name-matching is done to try to find the \code{gli}
+and \code{pld1} files.}
 
 \item{missingValue}{Numerical value for missing data; all such values
 are set to \code{NA} in the data as interpreted. The default value

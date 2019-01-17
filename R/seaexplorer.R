@@ -170,10 +170,16 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 
 #' Read a Seaexplorer Glider file
 #'
-#' @param files Character value of length 2, giving the names of
-#' a local glider-data file (typically with \code{gli} in the filname)
-#' and th name of a payload-data file (typically with \code{pld} in
-#' the filename).
+#' @param files Either a single integer, in which case it specifies
+#' a yo number for a local file, or a character value of length 2
+#' that provides the names of two local files, one (typically
+#' with \code{gli} in its filename) representing
+#' measurements made by sensors on the glider,
+#' and the other (with \code{pld1} in its filename) representing
+#' measurements made by sensors in the glider's payload. For the
+#' the case of \code{files} being an integer, all local filenames are
+#' found, and name-matching is done to try to find the \code{gli}
+#' and \code{pld1} files.
 #'
 #' @param missingValue Numerical value for missing data; all such values
 #' are set to \code{NA} in the data as interpreted. The default value
@@ -218,10 +224,21 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
     if (missing(files))
         stop("must provide `file'")
     nfiles <- length(files)
-    if (2 != nfiles)
-        stop("files must be of length 1 or 2")
-    if (!is.character(files))
-        stop("files must be a character vector of length 2")
+    if (1 == nfiles) {
+        localFiles <- list.files()
+        ## e.g. "sea024.32.gli.sub.118.gz"
+        pattern <- paste("\\.sub\\.", files, "\\.gz$", sep="")
+        w <- grep(pattern, localFiles)
+        if (length(w) != 2) {
+            stop("files=", files, " (interpreted as a yo number) matches ", length(w), " files, but it must match only 2", sep="")
+        }
+        files <- localFiles[w]
+    } else if (2 == nfiles) {
+        if (!is.character(files))
+            stop("if files is of character type, it must be of length 2")
+    } else {
+        stop("files must be an integer (yo number) or a character value of length 2 (names of pld and gli files)")
+    }
     filename <- files
     wpld <- grep("\\.pld.*\\.sub\\..*gz$", files)
     if (!length(wpld))
