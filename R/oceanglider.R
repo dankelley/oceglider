@@ -37,6 +37,69 @@ setMethod(f="initialize",
           })
 
 
+#' Subset a glider Object
+#'
+#' Return a subset of a glider object.
+#'
+#' At the moment, this only works for SeaExplorer data (i.e. cases in which
+#' \code{x[["type"]]=="seaexplorer"}).
+#'
+#' The permitted values of \code{method} are:
+#'\itemize{
+#'
+#' \item \code{"ascending"}, which retains only \code{glider}
+#' data entries for which the \code{NavState} equals 117, and
+#' only \code{payload} data entries for which
+#' \code{NAV_RESOURCE} is 117.
+#'
+#' \item \code{"descending"}, which retains only \code{glider}
+#' data entries for which the \code{NavState} equals 100, and
+#' only \code{payload} data entries for which
+#' \code{NAV_RESOURCE} is 100.
+#'
+#'}
+#'
+#' @param x A \code{glider} object, i.e. one inheriting from
+#' \code{\link{glider-class}}.
+#'
+#' @param method An expression indicating how to subset \code{x}. See
+#' \dQuote{Details}.
+#'
+#' @return A \code{\link{glider-class}} object that
+#' has been trimmed to contain only the data specified by
+#' \code{subset}.
+#'
+#' @author Dan Kelley
+#'
+#' @examples
+#' files <- system.file("extdata",
+#'                      c("sea024.32.gli.sub.200.gz",
+#'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+#' d <- read.glider.seaexplorer(files)
+#' summary(gliderTrim(d, "ascending"))
+#' summary(gliderTrim(d, "descending"))
+#'
+#' @export
+gliderTrim <- function(x, method)
+{
+    if (!inherits(x, "glider"))
+        stop("function is only for objects of class 'glider'")
+    if (missing(method))
+        stop("give method")
+    res <- x
+    if (method == "ascending") {
+        res@data$glider <- subset(res@data$glider, res@data$glider$NavState == 117)
+        res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 117)
+    } else if (method == "descending") {
+        res@data$glider <- subset(res@data$glider, res@data$glider$NavState == 100)
+        res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
+    } else {
+        stop("method must be either \"ascending\" or \"descending\"")
+    }
+    res
+}
+
+
 #' @title Retrieve Part of a glider Object
 #'
 #' @description
