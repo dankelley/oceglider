@@ -304,8 +304,12 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
         res@metadata$dataNamesOriginal$payload$conductivity <- "GPCTD_CONDUCTIVITY"
     }
     if ("PLD_REALTIMECLOCK" %in% names(pldData)) {
-        pldData$time <- as.POSIXct(d[["PLD_REALTIMECLOCK"]], format="%d/%m/%Y %H:%M:%S", tz="UTC")
+        pldData$time <- as.POSIXct(pldData$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%S", tz="UTC")
         res@metadata$dataNamesOriginal$payload$time <- "-"
+    }
+    if (3 == sum(c("conductivity", "temperature", "pressure") %in% names(pldData))) {
+        pldData$salinity <- swSCTp(pldData$conductivity/4.2914, pldData$temperature, pldData$pressure)
+        res@metadata$dataNamesOriginal$payload$salinity <- "-"
     }
     res@data <- list(glider=gliData, payload=pldData)
     res@processingLog <- processingLogAppend(res@processingLog,

@@ -153,6 +153,8 @@ setMethod(f="[[",
                       return(x@data$glider)
                   if (i == "payload")
                       return(x@data$payload)
+                  if (i == "yo")
+                      return(x@metadata$yo)
                   if (missing(j))
                       return(x@data$payload[[i]])
                   if (j == "glider")
