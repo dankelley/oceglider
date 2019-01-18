@@ -2,7 +2,7 @@
 % Please edit documentation in R/seaexplorer.R
 \name{read.glider.seaexplorer}
 \alias{read.glider.seaexplorer}
-\title{Read a Seaexplorer Glider file}
+\title{Read a Seaexplorer File}
 \usage{
 read.glider.seaexplorer(files, missingValue = 9999, debug = 0)
 }
@@ -30,7 +30,7 @@ action and higher values for more indications of the processing
 steps.}
 }
 \description{
-Read a Seaexplorer Glider file
+Read a Seaexplorer File
 }
 \examples{
 library(oceanglider)

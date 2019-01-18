@@ -168,7 +168,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 }
 
 
-#' Read a Seaexplorer Glider file
+#' Read a Seaexplorer File
 #'
 #' @param files Either a single integer, in which case it specifies
 #' a yo number for a local file, or a character value of length 2
@@ -275,7 +275,12 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
     res@metadata$filename <- files
+    res@metadata$yo <- as.numeric(gsub(".*\\.([0-9]*)\\.gz", "\\1", files[1]))
     res@metadata$dataNamesOriginal <- list(glider=list(), payload=list())
+    for (name in names(gliData))
+        res@metadata$dataNamesOriginal$glider[[name]] <- name
+    for (name in names(pldData))
+        res@metadata$dataNamesOriginal$payload[[name]] <- name
     if ("NAV_LONGITUDE" %in% names(pldData)) {
         names(pldData) <- gsub("NAV_LONGITUDE", "longitude", names(pldData))
         pldData$longitude <- degreeMinute(pldData$longitude)
@@ -298,9 +303,9 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
         names(pldData) <- gsub("GPCTD_CONDUCTIVITY", "conductivity", names(pldData))
         res@metadata$dataNamesOriginal$payload$conductivity <- "GPCTD_CONDUCTIVITY"
     }
-    if (3 == sum(c("conductivity", "temperature", "pressure") %in% names(pldData))) {
-        pldData$salinity <- swSCTp(pldData$conductivity/4.2914, pldData$temperature, pldData$pressure)
-        res@metadata$dataNamesOriginal$payload$salinity <- "-"
+    if ("PLD_REALTIMECLOCK" %in% names(pldData)) {
+        pldData$time <- as.POSIXct(d[["PLD_REALTIMECLOCK"]], format="%d/%m/%Y %H:%M:%S", tz="UTC")
+        res@metadata$dataNamesOriginal$payload$time <- "-"
     }
     res@data <- list(glider=gliData, payload=pldData)
     res@processingLog <- processingLogAppend(res@processingLog,

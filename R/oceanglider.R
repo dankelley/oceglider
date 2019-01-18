@@ -187,10 +187,11 @@ setMethod(f="summary",
           definition=function(object, ...) {
               ##mnames <- names(object@metadata)
               cat("Glider Summary\n-----------\n\n")
-              cat(sprintf("* Input files:         \"%s\" and \"%s\"\n",
-                          object@metadata$filename[1], object@metadata$filename[2]))
+              cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
+              cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
               type <- object@metadata$type
               cat(sprintf("* Type:                 %s\n", type))
+              cat(sprintf("* Yo:                   %d\n", object@metadata$yo))
               if (type == "seaexplorer") {
                   ## Glider data
                   ndata <- length(object@data$glider)
