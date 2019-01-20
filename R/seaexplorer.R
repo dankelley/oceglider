@@ -222,7 +222,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
 {
     if (missing(files))
-        stop("must provide `file'")
+        stop("must provide `files'")
     nfiles <- length(files)
     if (1 == nfiles) {
         localFiles <- list.files()

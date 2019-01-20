@@ -55,7 +55,8 @@ plot(subset(ctd, d[["NAV_RESOURCE"]]==117))
 \seealso{
 Other functions for seaexplorer gliders: \code{\link{download.glider.seaexplorer}}
 
-Other functions to read glider data: \code{\link{read.glider.slocum}}
+Other functions to read glider data: \code{\link{read.glider.netcdf}},
+  \code{\link{read.glider.slocum}}
 }
 \author{
 Dan Kelley

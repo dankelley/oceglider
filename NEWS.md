@@ -1,4 +1,5 @@
 0.1.2
+* add read.glider.netcdf()
 * add download.seaexplorer() and read.saexplorer()
 * rename download.glider() to download.slocum()
 * rename read.glider() to read.slocum()

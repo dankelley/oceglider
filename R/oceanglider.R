@@ -143,6 +143,10 @@ setMethod(f="[[",
                   stop("glider item must be specified by name", call.=FALSE)
               if (i == "filename")
                   return(x@metadata$filename)
+              else if (i == "data")
+                  return(x@data)
+              else if (i == "metadata")
+                  return(x@metadata)
               type <- x@metadata$type
               if (is.null(type))
                   stop("'type' is NULL")
@@ -183,60 +187,67 @@ setMethod(f="[[",
 #'
 #' @param ... Further arguments passed to or from other methods.
 #' @importFrom oce threenum processingLogShow
+#' @importFrom methods callNextMethod
 #' @export
 setMethod(f="summary",
           signature="glider",
           definition=function(object, ...) {
               ##mnames <- names(object@metadata)
               cat("Glider Summary\n-----------\n\n")
-              cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
-              cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
+              if (2 == length(object@metadata$filename)) {
+                  cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
+                  cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
+              } else if (1 == length(object@metadata$filename)) {
+                  cat(sprintf("* Input file:           \"%s\"\n", object@metadata$filename))
+              } else {
+                  cat("* Input file:  UNKNOWN\n")
+              }
               type <- object@metadata$type
               cat(sprintf("* Type:                 %s\n", type))
               cat(sprintf("* Yo:                   %d\n", object@metadata$yo))
-              if (type == "seaexplorer") {
-                  ## Glider data
-                  ndata <- length(object@data$glider)
-                  threes <- matrix(nrow=ndata, ncol=4)
-                  for (i in 1:ndata) {
-                      threes[i, ] <- oce::threenum(object@data$glider[[i]])
+              if (!is.null(type) && type == "seaexplorer") {
+                  if (2 == sum(c("glider", "payload") %in% names(object@data))) {
+                      ## Glider data, two-stream format
+                      ndata <- length(object@data$glider)
+                      threes <- matrix(nrow=ndata, ncol=4)
+                      for (i in 1:ndata)
+                          threes[i, ] <- oce::threenum(object@data$glider[[i]])
+                      if (!is.null(threes)) {
+                          rownames(threes) <- paste("    ", names(object@data$glider))
+                          OriginalName <- unlist(lapply(names(object@data$glider), function(n)
+                                                        if (n %in% names(object@metadata$dataNamesOriginal$glider))
+                                                            object@metadata$dataNamesOriginal$glider[[n]] else "-"))
+                          threes <- cbind(threes, OriginalName)
+                          colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                          cat("* Data from glider's sensors:\n")
+                          owidth <- options('width')
+                          options(width=150) # make wide to avoid line breaks
+                          print(threes, quote=FALSE)
+                          options(width=owidth$width)
+                          cat("\n")
+                      }
+                      ## Payload data
+                      ndata <- length(object@data$payload)
+                      threes <- matrix(nrow=ndata, ncol=4)
+                      for (i in 1:ndata)
+                          threes[i, ] <- threenum(object@data$payload[[i]])
+                      if (!is.null(threes)) {
+                          rownames(threes) <- paste("    ", names(object@data$payload))
+                          OriginalName <- unlist(lapply(names(object@data$payload), function(n)
+                                                        if (n %in% names(object@metadata$dataNamesOriginal$payload))
+                                                            object@metadata$dataNamesOriginal$payload[[n]] else "-"))
+                          threes <- cbind(threes, OriginalName)
+                          colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                          cat("* Data from payload's sensors:\n")
+                          owidth <- options('width')
+                          options(width=150) # make wide to avoid line breaks
+                          print(threes, quote=FALSE)
+                          options(width=owidth$width)
+                          cat("\n")
+                      }
+                  } else {
+                      return(invisible(callNextMethod())) # summary
                   }
-                  if (!is.null(threes)) {
-                      rownames(threes) <- paste("    ", names(object@data$glider))
-                      OriginalName <- unlist(lapply(names(object@data$glider), function(n)
-                                                    if (n %in% names(object@metadata$dataNamesOriginal$glider))
-                                                        object@metadata$dataNamesOriginal$glider[[n]] else "-"))
-                      threes <- cbind(threes, OriginalName)
-                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                      cat("* Data from glider's sensors:\n")
-                      owidth <- options('width')
-                      options(width=150) # make wide to avoid line breaks
-                      print(threes, quote=FALSE)
-                      options(width=owidth$width)
-                      cat("\n")
-                  }
-                  ## Payload data
-                  ndata <- length(object@data$payload)
-                  threes <- matrix(nrow=ndata, ncol=4)
-                  for (i in 1:ndata) {
-                      threes[i, ] <- threenum(object@data$payload[[i]])
-                  }
-                  if (!is.null(threes)) {
-                      rownames(threes) <- paste("    ", names(object@data$payload))
-                      OriginalName <- unlist(lapply(names(object@data$payload), function(n)
-                                                    if (n %in% names(object@metadata$dataNamesOriginal$payload))
-                                                        object@metadata$dataNamesOriginal$payload[[n]] else "-"))
-                      threes <- cbind(threes, OriginalName)
-                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                      cat("* Data from payload's sensors:\n")
-                      owidth <- options('width')
-                      options(width=150) # make wide to avoid line breaks
-                      print(threes, quote=FALSE)
-                      options(width=owidth$width)
-                      cat("\n")
-                  }
-              } else {
-                  cat("FIXME: summarize (slocum)\n")
               }
               processingLogShow(object)
           })
@@ -463,5 +474,74 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
         }
     }
     destfiles
+}
+
+#' Read a glider file in netcdf format
+#'
+#' @param file Name of a netcdf file.
+#'
+#' @return A glider object, i.e. one inheriting from \code{\link{glider-class}}.
+#'
+#' @author Dan Kelley
+#'
+#' @family functions to read glider data
+#' @importFrom ncdf4 nc_open ncatt_get ncvar_get
+#' @export
+read.glider.netcdf <- function(file)
+{
+    if (missing(file))
+        stop("must provide `file'")
+    if (length(file) != 1)
+        stop("file must have length 1")
+    f <- nc_open(file)
+    res <- new("glider")
+    ## Next demonstrates how to detect this filetype.
+    instrument <- ncatt_get(f, varid=0, attname="instrument")
+    if (is.null(instrument) || "Glider" != instrument$value)
+        stop("glider files must have a global attribute 'instrument' equal to 'Glider'")
+    instrumentManufacturer <- ncatt_get(f, varid=0, attname="instrument_manufacturer")
+    if (is.null(instrumentManufacturer) || "Alseamar" != instrumentManufacturer$value)
+        stop("global attribute 'instrument_manufacturer' must be 'Alseamar' but it is '",
+             instrumentManufacturer$value, "'")
+    instrumentModel <- ncatt_get(f, varid=0, attname="instrument_model")
+    if (is.null(instrumentModel) || "SeaExplorer" != instrumentModel$value)
+        stop("global attribute 'instrument_model' must be 'SeaExplorer' but it is '", instrumentModel$value, "'")
+    res@metadata$type <- "seaexplorer"
+    data <- list()
+    ## FIXME get units
+    ## FIXME change some variable names from snake-case to camel-case
+    dataNames <- names(f$var)
+    data$time <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
+    dataNamesOriginal <- list()
+    dataNamesOriginal$time <- "-"
+    ## Get all variables, except time, which is not listed in f$var
+    for (i in seq_along(dataNames))  {
+        message("i=", i, ", dataNames=", dataNames[i])
+        if (dataNames[i] == "distance_over_ground") {
+            dataNamesOriginal$distanceOverGround <- dataNames[i]
+            data$distanceOverGround <- as.vector(ncvar_get(f, dataNames[i]))
+            dataNames[i] <- "distanceOverGround"
+        } else if (dataNames[i] == "oxygen_frequency") {
+            dataNamesOriginal$oxygenFrequency <- dataNames[i]
+            data$oxygenFrequency <- as.vector(ncvar_get(f, dataNames[i]))
+            dataNames[i] <- "oxygenFrequency"
+        } else if (dataNames[i] == "profile_direction") {
+            dataNamesOriginal$profileDirection <- dataNames[i]
+            data$profileDirection <- as.vector(ncvar_get(f, dataNames[i]))
+            dataNames[i] <- "profileDirection"
+        } else if (dataNames[i] == "profile_index") {
+            dataNamesOriginal$profileIndex <- dataNames[i]
+            data$profileIndex <- as.vector(ncvar_get(f, dataNames[i]))
+            dataNames[i] <- "profileIndex"
+        } else {
+            data[[dataNames[i]]] <- as.vector(ncvar_get(f, dataNames[i]))
+            dataNamesOriginal[[dataNames[i]]] <- dataNames[i]
+        }
+    }
+    names(data) <- c("time", dataNames) # names now in CamelCase, not snake_case.
+    res@data <- data
+    res@metadata$filename <- file
+    res@metadata$dataNamesOriginal <- dataNamesOriginal
+    res
 }
 
