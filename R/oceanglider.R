@@ -523,10 +523,12 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
 #' g <- subset(g, is.finite(g[["salinity"]]))
 #' ## Focus on ascent phase (profileDirection==-1)
 #' g <- subset(g, profileDirection==-1)
-#' # Draw a CTD-style plot
+#' # CTD-style plot of whole dataset
 #' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
 #'               longitude=g[["longitude"]], latitude=g[["latitude"]])
 #' plot(ctd, type=rep("p", 4)) # 'type' gives dots
+#' # CTD-style plot of a particular profile
+#' plot(as.ctd(subset(g, profileIndex==200)))
 #'}
 #'
 #' @family functions to read glider data
