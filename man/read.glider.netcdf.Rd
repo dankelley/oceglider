@@ -13,7 +13,38 @@ read.glider.netcdf(file)
 A glider object, i.e. one inheriting from \code{\link{glider-class}}.
 }
 \description{
-Read a glider file in netcdf format
+\strong{This is a provisional function, written to handle a particular level-1 file
+provided to the author by DFO colleagues in mid January, 2019.} This only works
+for files with global attribute \code{instrument} set to \code{Glider},
+\code{instrument_manufacturer} set to \code{Alseamar}, and
+\code{instrument_model} set to \code{SeaExplorer}, although this restriction
+will likely be lifted as data from other instruments becomes available.
+}
+\details{
+The data are copied directly from the file, except that \code{time}
+is converted from an integer to a POSIX time. Variable names containing
+underscores are renamed as e.g. \code{profile_direction}
+to \code{profileDirection}, although the \code{\link{[[,glider-method}}
+mechanism works with either name, e.g. if \code{g} is a glider object, then
+\code{g[["profileDirection"]]} and
+\code{g[["profile_direction"]]} give the same result.
+}
+\examples{
+\dontrun{
+library(oceanglider)
+g <- read.glider.netcdf("GLI2018_SEA019_054DM_L1.nc")
+## Remove spurious times (cannot be year 2009)
+g <- subset(g, time > as.POSIXct("2018-01-01"))
+## Remove bad data
+g <- subset(g, is.finite(g[["salinity"]]))
+## Focus on ascent phase (profileDirection==-1)
+g <- subset(g, profileDirection==-1)
+# Draw a CTD-style plot
+ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
+              longitude=g[["longitude"]], latitude=g[["latitude"]])
+plot(ctd, type=rep("p", 4)) # 'type' gives dots
+}
+
 }
 \seealso{
 Other functions to read glider data: \code{\link{read.glider.seaexplorer}},

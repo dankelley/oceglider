@@ -134,6 +134,7 @@ gliderTrim <- function(x, method)
 setMethod(f="[[",
           signature(x="glider", i="ANY", j="ANY"),
           definition=function(x, i, j, ...) {
+              ##. message("in [[, i='", i, "'")
               debug <- getOption("gliderDebug", default=0)
               gliderDebug(debug, "glider [[ {\n", unindent=1)
               if (missing(i))
@@ -153,14 +154,27 @@ setMethod(f="[[",
               if (i == "type")
                   return(type)
               if (type == "seaexplorer") {
+                  ##. message("it is a seaexplorer")
                   if (i == "glider")
                       return(x@data$glider)
                   if (i == "payload")
                       return(x@data$payload)
                   if (i == "yo")
                       return(x@metadata$yo)
-                  if (missing(j))
-                      return(x@data$payload[[i]])
+                  if (missing(j)) {
+                      ##. message("j is missing")
+                      if (i %in% names(x@metadata)) {
+                          ##. message("i in metadata")
+                          return(x@metadata[[i]])
+                      } else if (i %in% names(x@data)) {
+                          ##. message("i in data")
+                          return(x@data[[i]])
+                      } else {
+                          ##. message("returning i from within payload")
+                          return(x@data$payload[[i]])
+                      }
+                  }
+                  ##. message("j is not missing. j='", j, "'")
                   if (j == "glider")
                       return(x@data$glider[[i]])
                   if (j == "payload")
@@ -478,11 +492,42 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
 
 #' Read a glider file in netcdf format
 #'
+#' \strong{This is a provisional function, written to handle a particular level-1 file
+#' provided to the author by DFO colleagues in mid January, 2019.} This only works
+#' for files with global attribute \code{instrument} set to \code{Glider},
+#' \code{instrument_manufacturer} set to \code{Alseamar}, and
+#' \code{instrument_model} set to \code{SeaExplorer}, although this restriction
+#' will likely be lifted as data from other instruments becomes available.
+#'
+#' The data are copied directly from the file, except that \code{time}
+#' is converted from an integer to a POSIX time. Variable names containing
+#' underscores are renamed as e.g. \code{profile_direction}
+#' to \code{profileDirection}, although the \code{\link{[[,glider-method}}
+#' mechanism works with either name, e.g. if \code{g} is a glider object, then
+#' \code{g[["profileDirection"]]} and
+#' \code{g[["profile_direction"]]} give the same result.
+#'
 #' @param file Name of a netcdf file.
 #'
 #' @return A glider object, i.e. one inheriting from \code{\link{glider-class}}.
 #'
 #' @author Dan Kelley
+#'
+#' @examples
+#'\dontrun{
+#' library(oceanglider)
+#' g <- read.glider.netcdf("GLI2018_SEA019_054DM_L1.nc")
+#' ## Remove spurious times (cannot be year 2009)
+#' g <- subset(g, time > as.POSIXct("2018-01-01"))
+#' ## Remove bad data
+#' g <- subset(g, is.finite(g[["salinity"]]))
+#' ## Focus on ascent phase (profileDirection==-1)
+#' g <- subset(g, profileDirection==-1)
+#' # Draw a CTD-style plot
+#' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
+#'               longitude=g[["longitude"]], latitude=g[["latitude"]])
+#' plot(ctd, type=rep("p", 4)) # 'type' gives dots
+#'}
 #'
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get
@@ -516,7 +561,7 @@ read.glider.netcdf <- function(file)
     dataNamesOriginal$time <- "-"
     ## Get all variables, except time, which is not listed in f$var
     for (i in seq_along(dataNames))  {
-        message("i=", i, ", dataNames=", dataNames[i])
+        ## message("i=", i, ", dataNames=", dataNames[i])
         if (dataNames[i] == "distance_over_ground") {
             dataNamesOriginal$distanceOverGround <- dataNames[i]
             data$distanceOverGround <- as.vector(ncvar_get(f, dataNames[i]))
