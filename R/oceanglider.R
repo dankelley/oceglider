@@ -279,7 +279,6 @@ setMethod(f="summary",
 #' @export
 toCamelCase <- function(s)
 {
-    message(s)
     s <- strsplit(s, "")[[1]]
     r <- NULL
     n <- length(s)
@@ -600,8 +599,10 @@ read.glider.netcdf <- function(file)
     ## Get all variables, except time, which is not listed in f$var
     for (i in seq_along(dataNames))  {
         ## message("i=", i, ", dataNames=", dataNames[i])
-        data[[toCamelCase(dataNames[i])]] <- as.vector(ncvar_get(f, dataNames[i]))
-        dataNamesOriginal[[dataNames[i]]] <- dataNames[i]
+        newName <- toCamelCase(dataNames[i])
+        dataNamesOriginal[[newName]] <- dataNames[i]
+        data[[newName]] <- as.vector(ncvar_get(f, dataNames[i]))
+        dataNames[i] <- newName
     }
     names(data) <- c("time", dataNames) # names now in CamelCase, not snake_case.
     res@data <- data
