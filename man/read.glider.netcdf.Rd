@@ -11,6 +11,8 @@ read.glider.netcdf(file)
 }
 \value{
 A glider object, i.e. one inheriting from \code{\link{glider-class}}.
+(This class inherits from \code{\link[oce]{oce-class}} in the
+\code{oce} package.)
 }
 \description{
 \strong{This is a provisional function, written to handle a particular level-1 file

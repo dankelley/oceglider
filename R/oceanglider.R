@@ -267,6 +267,40 @@ setMethod(f="summary",
           })
 
 
+#' Convert a string from snake_case to camelCase
+#'
+#' @param s Character value
+#'
+#' @return CamelCase version of \code{s}
+#'
+#' @examples
+#' expect_equal("profileDirection", toCamelCase("profile_direction"))
+#'
+#' @export
+toCamelCase <- function(s)
+{
+    message(s)
+    s <- strsplit(s, "")[[1]]
+    r <- NULL
+    n <- length(s)
+    i <- 1
+    while (i <= n) {
+        if (s[i] == "_") {
+            if (i < n)
+                r <- c(r, toupper(s[i+1]))
+            else
+                warning("trailing underscores are ignored")
+            i <- i + 2
+        } else {
+            r <- c(r, s[i])
+            i <- i + 1
+        }
+    }
+    paste(r, collapse="")
+}
+
+
+
 #' Convert lon and lat from a combined degree+minute formula
 #'
 #' Data from Seaexplorers save longitude and latitude in a combined
@@ -510,6 +544,8 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
 #' @param file Name of a netcdf file.
 #'
 #' @return A glider object, i.e. one inheriting from \code{\link{glider-class}}.
+#' (This class inherits from \code{\link[oce]{oce-class}} in the
+#' \code{oce} package.)
 #'
 #' @author Dan Kelley
 #'
@@ -564,26 +600,8 @@ read.glider.netcdf <- function(file)
     ## Get all variables, except time, which is not listed in f$var
     for (i in seq_along(dataNames))  {
         ## message("i=", i, ", dataNames=", dataNames[i])
-        if (dataNames[i] == "distance_over_ground") {
-            dataNamesOriginal$distanceOverGround <- dataNames[i]
-            data$distanceOverGround <- as.vector(ncvar_get(f, dataNames[i]))
-            dataNames[i] <- "distanceOverGround"
-        } else if (dataNames[i] == "oxygen_frequency") {
-            dataNamesOriginal$oxygenFrequency <- dataNames[i]
-            data$oxygenFrequency <- as.vector(ncvar_get(f, dataNames[i]))
-            dataNames[i] <- "oxygenFrequency"
-        } else if (dataNames[i] == "profile_direction") {
-            dataNamesOriginal$profileDirection <- dataNames[i]
-            data$profileDirection <- as.vector(ncvar_get(f, dataNames[i]))
-            dataNames[i] <- "profileDirection"
-        } else if (dataNames[i] == "profile_index") {
-            dataNamesOriginal$profileIndex <- dataNames[i]
-            data$profileIndex <- as.vector(ncvar_get(f, dataNames[i]))
-            dataNames[i] <- "profileIndex"
-        } else {
-            data[[dataNames[i]]] <- as.vector(ncvar_get(f, dataNames[i]))
-            dataNamesOriginal[[dataNames[i]]] <- dataNames[i]
-        }
+        data[[toCamelCase(dataNames[i])]] <- as.vector(ncvar_get(f, dataNames[i]))
+        dataNamesOriginal[[dataNames[i]]] <- dataNames[i]
     }
     names(data) <- c("time", dataNames) # names now in CamelCase, not snake_case.
     res@data <- data

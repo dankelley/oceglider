@@ -239,7 +239,6 @@ read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
     } else {
         stop("files must be an integer (yo number) or a character value of length 2 (names of pld and gli files)")
     }
-    filename <- files
     wpld <- grep("\\.pld.*\\.sub\\..*gz$", files)
     if (!length(wpld))
         stop("files does not contain a pld filename")
