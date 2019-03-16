@@ -196,12 +196,45 @@ setMethod(f="[[",
               }
           })
 
+#' Plot a glider Object
+#'
+#' The type of plot depends on the value of the \code{which} argument:
+#'\itemize{
+#'\item \code{which=1}: plot pressure versus time
+#'\item \code{which=2}: plot temperature versus time
+#'\item \code{which=3}: plot salinity versus time
+#'}
+#'
+#' @param x A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#'
+#' @param which Integer or character value indicating which type of plot to produce
+#' (see \dQuote{Details}).
+#'
+#' @param ... Ignored in the present version.
+#'
+#' @importFrom oce oce.plot.ts resizableLabel
+#'
+## @export
+setMethod(f="plot",
+          signature="glider",
+          definition=function(x, which, ...) {
+              if (which == 1)
+                  oce.plot.ts(x[["time"]], x[["pressure"]], ylab=resizableLabel("p"))
+              else if (which == 2)
+                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"))
+              else if (which == 3)
+                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"))
+              else stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
+          })
+
 #' Summarize a glider Object
 #' @param object A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
 #'
 #' @param ... Further arguments passed to or from other methods.
+#'
 #' @importFrom oce threenum processingLogShow
 #' @importFrom methods callNextMethod
+#'
 #' @export
 setMethod(f="summary",
           signature="glider",
