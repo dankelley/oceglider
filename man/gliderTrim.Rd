@@ -2,7 +2,7 @@
 % Please edit documentation in R/oceanglider.R
 \name{gliderTrim}
 \alias{gliderTrim}
-\title{Subset a glider Object}
+\title{Trim a glider Object}
 \usage{
 gliderTrim(x, method)
 }
@@ -19,7 +19,7 @@ has been trimmed to contain only the data specified by
 \code{subset}.
 }
 \description{
-Return a subset of a glider object.
+Return a trimmed version of a glider object.
 }
 \details{
 At the moment, this only works for SeaExplorer data (i.e. cases in which

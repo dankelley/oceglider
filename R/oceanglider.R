@@ -37,9 +37,9 @@ setMethod(f="initialize",
           })
 
 
-#' Subset a glider Object
+#' Trim a glider Object
 #'
-#' Return a subset of a glider object.
+#' Return a trimmed version of a glider object.
 #'
 #' At the moment, this only works for SeaExplorer data (i.e. cases in which
 #' \code{x[["type"]]=="seaexplorer"}).
@@ -98,6 +98,49 @@ gliderTrim <- function(x, method)
     }
     res
 }
+
+#' Subset an oceanglider Object
+#'
+#' Note that \code{NA} values in the \code{subset} value will be dropped from
+#' the return value, mimicking the behaviour of the base \code{link{subset}}
+#' function.
+#'
+#' @param x an oceanglider object, i.e. one inheriting from the \code{\link{oceanglider-class}}.
+#' @param subset a logical expression indicating how to take the subset.
+#' @param ... ignored
+#' @return An oceanglider object.
+#' @examples
+#'\dontrun{
+#' # Example 1. remove wild salinities
+#' library(oceanglider)
+#' g <- read.glider(filename)
+#' gg <- subset(g, 0 < salinity & salinity < 40)
+#' par(mfrow=c(2, 1))
+#' hist(g[["salinity"]], main="S original")
+#' hist(gg[["salinity"]], main="S cleaned")
+#'}
+#'
+#' @author Dan Kelley
+#'
+#' @export
+setMethod(f="subset",
+          signature="glider",
+          definition=function(x, subset, ...) {
+              if (missing(subset))
+                  stop("must give 'subset'")
+              keep <- eval(substitute(subset), x@data, parent.frame())
+              keep[is.na(keep)] <- FALSE
+              ##message("percent keep ", round(sum(keep)/length(keep)*100, 2), "%")
+              res <- x
+              for (i in seq_along(x@data))
+                  res@data[[i]] <- res@data[[i]][keep]
+              for (i in seq_along(x@metadata$flags))
+                  res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+              res@processingLog <- processingLogAppend(res@processingLog,
+                                                        paste(deparse(match.call(call=sys.call(sys.parent(1)))),
+                                                              sep="", collapse=""))
+              res
+          })
 
 
 #' @title Retrieve Part of a glider Object
