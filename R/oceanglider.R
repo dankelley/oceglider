@@ -105,7 +105,7 @@ gliderTrim <- function(x, method)
 #' the return value, mimicking the behaviour of the base \code{link{subset}}
 #' function.
 #'
-#' @param x an oceanglider object, i.e. one inheriting from the \code{\link{oceanglider-class}}.
+#' @param x an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.
 #' @param subset a logical expression indicating how to take the subset.
 #' @param ... ignored
 #' @return An oceanglider object.

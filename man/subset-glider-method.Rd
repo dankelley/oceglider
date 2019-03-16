@@ -8,7 +8,7 @@
 \S4method{subset}{glider}(x, subset, ...)
 }
 \arguments{
-\item{x}{an oceanglider object, i.e. one inheriting from the \code{\link{oceanglider-class}}.}
+\item{x}{an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.}
 
 \item{subset}{a logical expression indicating how to take the subset.}
 
