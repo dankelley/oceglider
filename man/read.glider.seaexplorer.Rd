@@ -4,7 +4,7 @@
 \alias{read.glider.seaexplorer}
 \title{Read a Seaexplorer File}
 \usage{
-read.glider.seaexplorer(files, missingValue = 9999, debug = 0)
+read.glider.seaexplorer(files, debug, missingValue = 9999)
 }
 \arguments{
 \item{files}{Either a single integer, in which case it specifies
@@ -18,16 +18,23 @@ the case of \code{files} being an integer, all local filenames are
 found, and name-matching is done to try to find the \code{gli}
 and \code{pld1} files.}
 
+\item{debug}{an integer specifying whether debugging information is
+to be printed during processing. If this is not provided, then
+the value of \code{\link{getOption}("gliderDebug",0)} is used.
+The printing is done by a call to \code{\link{gliderDebug}}.
+Setting \code{debug=0} turns off this form of debugging, while
+higher values may yield more information, depending on the
+function. If one \code{glider} function calls another, it
+passes the value of \code{debug} but decreased by 1, which means
+that the value of \code{debug} controls not just the breadth
+of debugging, but also the depth.}
+
 \item{missingValue}{Numerical value for missing data; all such values
 are set to \code{NA} in the data as interpreted. The default value
 works for one particular mission that was examined, but it might
 not apply to other missions. When in doubt as to the correct value,
 use \code{summary()} on the returned object, and check to see if the
 data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.}
-
-\item{debug}{Integer indicating the debugging level; 0 for quiet
-action and higher values for more indications of the processing
-steps.}
 }
 \description{
 Read a Seaexplorer File

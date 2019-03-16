@@ -542,6 +542,8 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
 #'
 #' @param file Name of a netcdf file.
 #'
+#' @template debug
+#'
 #' @return A glider object, i.e. one inheriting from \code{\link{glider-class}}.
 #' (This class inherits from \code{\link[oce]{oce-class}} in the
 #' \code{oce} package.)
@@ -569,8 +571,11 @@ download.glider <- function(url, pattern, destdir=".", debug=0)
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get
 #' @export
-read.glider.netcdf <- function(file)
+read.glider.netcdf <- function(file, debug)
 {
+    if (missing(debug))
+        debug <- getOption("gliderDebug", default=0)
+    gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
     if (missing(file))
         stop("must provide `file'")
     if (length(file) != 1)
@@ -598,16 +603,49 @@ read.glider.netcdf <- function(file)
     dataNamesOriginal$time <- "-"
     ## Get all variables, except time, which is not listed in f$var
     for (i in seq_along(dataNames))  {
-        ## message("i=", i, ", dataNames=", dataNames[i])
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         data[[newName]] <- as.vector(ncvar_get(f, dataNames[i]))
+        gliderDebug(debug, "data name \"", dataNames[i], "\" converted to \"", newName, "\"", sep="")
         dataNames[i] <- newName
     }
     names(data) <- c("time", dataNames) # names now in CamelCase, not snake_case.
     res@data <- data
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- dataNamesOriginal
+    gliderDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
     res
 }
 
+#' Read a glider data file
+#'
+#' This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
+#' if the first argument is a string ending with \code{".nc"}, or to
+#' \code{\link{read.glider.seaexplorer}} if it is a string (or vector of strings)
+#' ending in \code{".gz"}.
+#'
+#' @param file Character value giving the name of the file.
+#'
+#' @param ... Extra parameters passed to more specific \code{read.*} functions.
+#'
+#' @template debug
+#'
+#' @return A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#' @export
+read.glider <- function(file, debug, ...)
+{
+    if (missing(debug))
+        debug <- getOption("gliderDebug", default=0)
+    gliderDebug(debug, 'read.glider() {', unindent=1, sep="")
+    if (!is.character(file))
+        stop("'file' must be a character value (or values) giving filename(s)")
+    if (length(file) == 1 && length(grep(".nc$", file))) {
+        res <- read.glider.netcdf(file=file, debug=debug-1, ...)
+    } else if (length(grep(".gz$", file[1]))) {
+        res <- read.glider.seaexplorer(file, debug=debug-1, ...)
+    } else {
+        stop("only .nc and .gz files handled")
+    }
+    gliderDebug(debug, '} # read.glider()', unindent=1, sep="")
+    res
+}

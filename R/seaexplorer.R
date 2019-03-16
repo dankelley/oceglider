@@ -181,16 +181,14 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' found, and name-matching is done to try to find the \code{gli}
 #' and \code{pld1} files.
 #'
+#' @template debug
+#'
 #' @param missingValue Numerical value for missing data; all such values
 #' are set to \code{NA} in the data as interpreted. The default value
 #' works for one particular mission that was examined, but it might
 #' not apply to other missions. When in doubt as to the correct value,
 #' use \code{summary()} on the returned object, and check to see if the
 #' data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.
-#'
-#' @param debug Integer indicating the debugging level; 0 for quiet
-#' action and higher values for more indications of the processing
-#' steps.
 #'
 #' @author Dan Kelley
 #'
@@ -219,8 +217,10 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer <- function(files, missingValue=9999, debug=0)
+read.glider.seaexplorer <- function(files, debug, missingValue=9999)
 {
+    if (missing(debug))
+        debug <- getOption("gliderDebug", default=0)
     if (missing(files))
         stop("must provide `files'")
     nfiles <- length(files)

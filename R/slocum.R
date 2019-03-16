@@ -66,9 +66,9 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #'
 #' @param file A connection or a character string giving the name of the file to load.
 #'
-#' @param nameMap List used to rename data columns. See \dQuote{Details}.
-#'
 #' @template debug
+#'
+#' @param nameMap List used to rename data columns. See \dQuote{Details}.
 #'
 #' @return An oce object holding the data, with variables renamed as
 #' described in \dQuote{Details}, and with \code{salinity} added,
@@ -114,16 +114,16 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' @importFrom methods new
 #' @importFrom oce numberAsPOSIXct swSCTp
 #' @export
-read.glider.slocum <- function(file,
+read.glider.slocum <- function(file, debug,
                                nameMap=list(conductivity="sci_water_cond",
                                             temperature="sci_water_temp",
                                             pressure="sci_water_pressure",
                                             longitude="lon",
                                             latitude="lat",
-                                            depth="i_depth"),
-                               debug=getOption("gliderDebug", 0))
-
+                                            depth="i_depth"))
 {
+    if (missing(debug))
+        debug <- getOption("gliderDebug", default=0)
     if (missing(file))
         stop("must provide `file'")
     filename <- ""
