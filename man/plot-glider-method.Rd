@@ -10,16 +10,68 @@
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
 
-\item{which}{Integer or character value indicating which type of plot to produce
-(see \dQuote{Details}).}
+\item{which}{Integer or character value specifying which style is
+to be used; see \dQuote{Details}.}
 
 \item{...}{Ignored in the present version.}
 }
 \description{
-The type of plot depends on the value of the \code{which} argument:
+This is a limited function that is intended for quick views of a dataset.
+More serious analysis is best done by extracting data and using whatever
+graphical methods work well for the task at hand.
+}
+\details{
+The form of the plot is set by the \code{which} argument, as follows.
+
 \itemize{
-\item \code{which=1}: plot pressure versus time
-\item \code{which=2}: plot temperature versus time
-\item \code{which=3}: plot salinity versus time
+
+\item \code{which=0} or \code{which="map"}: plot a map of sampling locations. This
+can be quite slow with the default plot type, so try e.g.
+\code{plot(g, type="l")} to speed things up for a quick look at the data.
+In many cases, that quick look might be followed by the drawing of
+a larger view, including a coastline, with functions provided for
+\code{coastline} objects in the \CRANpkg{oce} package.
+
+\item \code{which=1} or \code{which="p"}: time-series plot
+of pressure versus time. This
+is done using \code{\link[oce]{oce.plot.ts}} in the \CRANpkg{oce} package,
+which also makes the other time-series plots listed below.
+
+\item \code{which=2} or \code{which="T"}: time-series temperature plot
+
+\item \code{which=3} or \code{which="S"}: time-series salinity plot
+
+\item \code{which=4} or \code{which="TS"}: temperature-salinity diagram,
+with dots for data and labels indicating density anomaly; see
+\code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
+details.
+
+}
+}
+\examples{
+\dontrun{
+library(glider)
+# These files are much too large to provide, so no sample
+# file is provided.
+g <- read.glider(filename)
+
+# Example 1. Pressure-time plot
+plot(g, which="p")
+
+# Example 2. Pressure-time plot, with dots (which slows things down!)
+plot(g, which="p", type="p", cex=0.5)
+
+# Example 3. Pressure-time plot, colour-coded for temperature
+# (using an oce function to define the color map) and arranged
+# with high pressure at the bottom, to make a time-pressure
+# section plot of temperature. Several arguments
+# are passed to oce.plot.ts(), and users may find it
+# agreeable to simply call that function directly.
+cm <- colormap(g[["temperature"]])
+ylim <- rev(range(g[["pressure"]], na.rm=TRUE))
+par(mar=c(2, 3.5, 2, 4))
+drawPalette(colormap=cm)
+plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
+     mar=c(2, 3.5, 2, 4))
 }
 }
