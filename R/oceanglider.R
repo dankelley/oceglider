@@ -179,7 +179,7 @@ setMethod(f="[[",
           definition=function(x, i, j, ...) {
               ##. message("in [[, i='", i, "'")
               debug <- getOption("gliderDebug", default=0)
-              gliderDebug(debug, "glider [[ {\n", unindent=1)
+              ## gliderDebug(debug, "glider [[ {\n", unindent=1)
               if (missing(i))
                   stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
               i <- i[1]                # drop extras if more than one given
@@ -196,6 +196,24 @@ setMethod(f="[[",
                   stop("'type' is NULL")
               if (i == "type")
                   return(type)
+              if (i == "sigmaTheta")
+                  return(swSigmaTheta(salinity=x[["salinity"]],
+                                  temperature=x[["temperature"]],
+                                  pressure=x[["pressure"]],
+                                  longitude=x[["longitude"]],
+                                  latitude=x[["latitude"]]))
+              else if (i == "sigma0")
+                  return(swSigma0(salinity=x[["salinity"]],
+                                  temperature=x[["temperature"]],
+                                  pressure=x[["pressure"]],
+                                  longitude=x[["longitude"]],
+                                  latitude=x[["latitude"]]))
+              else if (i == "spice")
+                  return(swSpice(salinity=x[["salinity"]],
+                                 temperature=x[["temperature"]],
+                                 pressure=x[["pressure"]],
+                                 longitude=x[["longitude"]],
+                                 latitude=x[["latitude"]]))
               if (type == "seaexplorer") {
                   ##. message("it is a seaexplorer")
                   if (i == "glider")
