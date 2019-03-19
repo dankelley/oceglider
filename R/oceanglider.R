@@ -173,6 +173,7 @@ setMethod(f="subset",
 #'
 #' @author Dan Kelley
 #'
+#' @importFrom oce swSigmaTheta swSigma0 swSpice
 #' @export
 setMethod(f="[[",
           signature(x="glider", i="ANY", j="ANY"),
@@ -198,10 +199,10 @@ setMethod(f="[[",
                   return(type)
               if (i == "sigmaTheta")
                   return(swSigmaTheta(salinity=x[["salinity"]],
-                                  temperature=x[["temperature"]],
-                                  pressure=x[["pressure"]],
-                                  longitude=x[["longitude"]],
-                                  latitude=x[["latitude"]]))
+                                      temperature=x[["temperature"]],
+                                      pressure=x[["pressure"]],
+                                      longitude=x[["longitude"]],
+                                      latitude=x[["latitude"]]))
               else if (i == "sigma0")
                   return(swSigma0(salinity=x[["salinity"]],
                                   temperature=x[["temperature"]],
