@@ -23,6 +23,7 @@
 ## cycle. Likely this is because the GPS has not yet obtained a fix,
 ## and it is still repeating the last values
 
+rm(list=ls())
 library(oce)
 library(oceanglider)
 
@@ -40,6 +41,9 @@ res@metadata$type <- "seaexplorer"
 res@metadata$filename <- pldfiles
 res@metadata$yo <- yonumber
 
+## We'll read each file into a list of data frames, since it's faster
+## than reading into one large data frame
+pld <- list()
 pb <- txtProgressBar(1, length(pldfiles), 1, style=3)
 for (i in 1:length(pldfiles)) {
     ## for (i in 1:50) {
@@ -109,27 +113,51 @@ for (i in 1:length(pldfiles)) {
         d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%S", tz="UTC")
         res@metadata$dataNamesOriginal$payload$time <- "-"
     }
-    ii <- ifelse(i == 1, 1, dim(pld)[1])
-    iii  <- ii + dim(d)[1] - 1
-    if (i == 1) {
-        pld <- d
-    } else {
-        pld[ii:iii, ] <- d
-    }
+    pld[[i]] <- d
 }
 
+## convert the list to a data frame
+df <- do.call(rbind.data.frame, pld)
+df[['X']] <- NULL # get rid of the weird last column
+
 ## First remove all duplicated lon/lat
-pld$longitude[which(duplicated(pld$longitude))] <- NA
-pld$latitude[which(duplicated(pld$latitude))] <- NA
+df$longitude[which(duplicated(df$longitude))] <- NA
+df$latitude[which(duplicated(df$latitude))] <- NA
 
 ## Then remove all lon/lat that aren't from when navState is 116
-trans <- pld$navState == 116
-pld$longitude[!trans] <- NA
-pld$latitude[!trans] <- NA
+trans <- df$navState == 116
+df$longitude[!trans] <- NA
+df$latitude[!trans] <- NA
 
 ## Now interpolate
-pld$longitude <- approx(pld$time, pld$longitude, pld$time)$y
-pld$latitude <- approx(pld$time, pld$latitude, pld$time)$y
+df$longitude <- approx(df$time, df$longitude, df$time)$y
+df$latitude <- approx(df$time, df$latitude, df$time)$y
 
-res@data <- list(payload=pld)
+## The only pressure measurements come from the GP-CTD, but the FLBBCD
+## samples on it's own schedule that isn't synced with the CTD. So, to
+## "fill out" the data we should interpolate the pressures to the
+## FLBBCD times.
+##   * Should we also interpolate the FLBBCD values to the GP-CTD times?
+##   * What about interpolating the GP-CTD (i.e. C and T) to the measured FLBBCD times?
 
+## However, we only want to interpolate to times when something was actually being sampled
+##   * maybe need to trim out all times where there is a complete row of NAs first?
+
+cat('* trimming empty rows:')
+sub <- df[, which(!(names(df) %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber')))]
+naRows <- apply(sub, 1, function(x) sum(is.na(x)))
+ok <- naRows < dim(sub)[2]
+dft <- df[ok,]
+
+cat('* Interpolating NAs from:')
+for (var in names(dft)) {
+    if (!(var %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))) {
+        cat(var, ' ')
+        dft[[var]] <- approx(dft[['time']], dft[[var]], dft[['time']])$y
+    }
+}
+cat('done\n')
+
+res@data <- list(payload=dft)
+
+plot(res, which=1)
