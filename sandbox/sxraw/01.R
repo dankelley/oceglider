@@ -46,7 +46,7 @@ res@metadata$yo <- yonumber
 pld <- list()
 pb <- txtProgressBar(1, length(pldfiles), 1, style=3)
 for (i in 1:length(pldfiles)) {
-## for (i in 1:20) {
+## for (i in 1:200) {
     setTxtProgressBar(pb, i)
     d <- read.delim(pldfiles[i], sep=';', stringsAsFactors=FALSE, row.names=NULL)
     d$yoNumber <- rep(yonumber[i], dim(d)[1])
@@ -156,24 +156,21 @@ cat('done\n')
 ## We need to remove the first point (or two) from the beginning of
 ## each "inflecting" state (110 and 118), because the CTD may repeat
 ## the last measured value when it is first turned on
+## Have to remove at least a few of the first points in the
+## "inflecting" stage because they don't always have GP-CTD samples:
+system.time({
 cat('* Removing bad points from inflection ...')
 inflectUp <- as.integer(dft$navState == 118)
 iuStart <- which(diff(inflectUp) == 1) + 1
-## Have to remove at least a few of the first points in the
-## "inflecting" stage because they don't always have GP-CTD samples:
-for (i in rev(iuStart)) {
-    for (ii in 1:3) {
-        dft <- dft[-i,]
-    }
-}
 inflectDown <- as.integer(dft$navState == 110)
 idStart <- which(diff(inflectDown) == 1) + 1
-for (i in rev(idStart)) {
-    for (ii in 1:3) {
-        dft <- dft[-i,]
-    }
+ok <- rep(TRUE, dim(dft)[1])
+for (i in 0:5) {
+    ok[iuStart+i] <- FALSE
+    ok[idStart+i] <- FALSE
 }
-cat('done\n')
+dft <- dft[ok,]
+})
 
 cat('* Interpolating NAs:\n')
 n <- length(names(dft)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
@@ -189,7 +186,10 @@ for (var in names(dft)) {
 }
 cat('done\n')
 
+dft$salinity <- with(dft, swSCTp(conductivity, temperature, pressure, conductivityUnit = 'S/m'))
+dft$salinity[dft$salinity > 40] <- NA
+
 res@data <- list(payload=dft)
 
 ## plot(res, which=1, xlim=focus, type='p')
-plot(res, which=1, type='p', pch='.')
+plot(res, which=1, type='p', pch='.', col=colormap(res[['chlorophyl']])$zcol)
