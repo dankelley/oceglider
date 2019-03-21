@@ -46,9 +46,9 @@ res@metadata$yo <- yonumber
 pld <- list()
 pb <- txtProgressBar(1, length(pldfiles), 1, style=3)
 for (i in 1:length(pldfiles)) {
-    ## for (i in 1:50) {
+## for (i in 1:20) {
     setTxtProgressBar(pb, i)
-    d <- read.delim(pldfiles[i], sep=';', stringsAsFactors=FALSE)
+    d <- read.delim(pldfiles[i], sep=';', stringsAsFactors=FALSE, row.names=NULL)
     d$yoNumber <- rep(yonumber[i], dim(d)[1])
     if ("NAV_RESOURCE" %in% names(d)) {
         names(d) <- gsub("NAV_RESOURCE", "navState", names(d))
@@ -115,10 +115,13 @@ for (i in 1:length(pldfiles)) {
     }
     pld[[i]] <- d
 }
+cat('\n')
 
+cat('* Convert list to data frame ...')
 ## convert the list to a data frame
 df <- do.call(rbind.data.frame, pld)
 df[['X']] <- NULL # get rid of the weird last column
+cat('done\n')
 
 ## First remove all duplicated lon/lat
 df$longitude[which(duplicated(df$longitude))] <- NA
@@ -143,21 +146,50 @@ df$latitude <- approx(df$time, df$latitude, df$time)$y
 ## However, we only want to interpolate to times when something was actually being sampled
 ##   * maybe need to trim out all times where there is a complete row of NAs first?
 
-cat('* trimming empty rows:')
+cat('* trimming empty rows ...')
 sub <- df[, which(!(names(df) %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber')))]
 naRows <- apply(sub, 1, function(x) sum(is.na(x)))
 ok <- naRows < dim(sub)[2]
 dft <- df[ok,]
+cat('done\n')
 
-cat('* Interpolating NAs from:')
+## We need to remove the first point (or two) from the beginning of
+## each "inflecting" state (110 and 118), because the CTD may repeat
+## the last measured value when it is first turned on
+cat('* Removing bad points from inflection ...')
+inflectUp <- as.integer(dft$navState == 118)
+iuStart <- which(diff(inflectUp) == 1) + 1
+## Have to remove at least a few of the first points in the
+## "inflecting" stage because they don't always have GP-CTD samples:
+for (i in rev(iuStart)) {
+    for (ii in 1:3) {
+        dft <- dft[-i,]
+    }
+}
+inflectDown <- as.integer(dft$navState == 110)
+idStart <- which(diff(inflectDown) == 1) + 1
+for (i in rev(idStart)) {
+    for (ii in 1:3) {
+        dft <- dft[-i,]
+    }
+}
+cat('done\n')
+
+cat('* Interpolating NAs:\n')
+n <- length(names(dft)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
+pb <- txtProgressBar(1, n, 1, style=3)
+i <- 1
 for (var in names(dft)) {
     if (!(var %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))) {
-        cat(var, ' ')
+        ## cat(var, ' ')
+        setTxtProgressBar(pb, i)
         dft[[var]] <- approx(dft[['time']], dft[[var]], dft[['time']])$y
+        i <- i + 1
     }
 }
 cat('done\n')
 
 res@data <- list(payload=dft)
 
-plot(res, which=1)
+## plot(res, which=1, xlim=focus, type='p')
+plot(res, which=1, type='p', pch='.')
