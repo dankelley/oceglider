@@ -178,12 +178,15 @@ pb <- txtProgressBar(1, n, 1, style=3)
 i <- 1
 for (var in names(dft)) {
     if (!(var %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))) {
-        ## cat(var, ' ')
         setTxtProgressBar(pb, i)
         dft[[var]] <- approx(dft[['time']], dft[[var]], dft[['time']])$y
         i <- i + 1
     }
 }
+cat('done\n')
+
+cat('* Remove duplicate times ...')
+dft <- dft[!duplicated(dft), ]
 cat('done\n')
 
 dft$salinity <- with(dft, swSCTp(conductivity, temperature, pressure, conductivityUnit = 'S/m'))
@@ -192,4 +195,5 @@ dft$salinity[dft$salinity > 40] <- NA
 res@data <- list(payload=dft)
 
 ## plot(res, which=1, xlim=focus, type='p')
-plot(res, which=1, type='p', pch='.', col=colormap(res[['chlorophyl']])$zcol)
+plot(res, which=1, type='p', pch='.', cex=3, col=colormap(res[['chlorophyl']], breaks=31)$zcol,
+     ylim=c(250, 0))
