@@ -158,7 +158,6 @@ cat('done\n')
 ## the last measured value when it is first turned on
 ## Have to remove at least a few of the first points in the
 ## "inflecting" stage because they don't always have GP-CTD samples:
-system.time({
 cat('* Removing bad points from inflection ...')
 inflectUp <- as.integer(dft$navState == 118)
 iuStart <- which(diff(inflectUp) == 1) + 1
@@ -170,7 +169,6 @@ for (i in 0:5) {
     ok[idStart+i] <- FALSE
 }
 dft <- dft[ok,]
-})
 
 cat('* Interpolating NAs:\n')
 n <- length(names(dft)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
