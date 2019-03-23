@@ -28,7 +28,9 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
 **Abstract.** This vignette explains the basics of using the oceanglider
-package on Seaexplorer and Slocum data.
+package on Seaexplorer and Slocum data. It is \emph{very much} a work in
+progress, because the functions provided by this package are still much under
+development.
 
 # Introduction
 
