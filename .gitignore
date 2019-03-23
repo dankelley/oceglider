@@ -9,4 +9,4 @@ sea*gz
 .Rapp.history
 .DS_Store
 vignettes/*_files
-vignettes/*.R
+

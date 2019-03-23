@@ -2,8 +2,8 @@ Package: oceanglider
 Type: Package
 Title: Analysis of Oceanographic Glider Data
 Version: 0.1.2
-Authors@R: c(
-    person(given="Dan", family="Kelley", email="dan.kelley@dal.ca", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0001-7808-5911")))
+Authors@R: c(person(given="Dan", family="Kelley", email="dan.kelley@dal.ca", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0001-7808-5911")),
+        person(given="Clark", family="Richards", email="clark.richards@gmail.com", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0002-7833-206X")))
 Maintainer: Dan Kelley <dan.kelley@dal.ca>
 Depends: R (>= 2.15), utils, knitr, oce
 Imports: methods, RCurl, testthat, ncdf4
