@@ -54,7 +54,7 @@ Level 1 processing performs a number of steps to give an
 \enumerate{
 
 \item Interpolation of the surface longitude and latitude to give
-an esimate of the subsurface positions. This is a crude estimate of
+an estimate of the subsurface positions. This is a crude estimate of
 subsurface location and should be taken only as a first guess.
 
 \item Removal of the first few sensor values from when the glider
@@ -74,7 +74,7 @@ values measured by sensors not integrated into the CTD
 (e.g. Wetlabs FLBBCD, Rinko O2). Following the interpolation, any
 rows with duplicated times are removed.
 
-\item Calculate Practical salinity from conductiivity, temperature
+\item Calculate Practical salinity from conductivity, temperature
 and pressure using \code{swSCTp()}.
 
 }
