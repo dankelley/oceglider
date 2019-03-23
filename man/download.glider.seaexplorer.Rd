@@ -64,7 +64,7 @@ download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer}}
+Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.realtime}}
 
 Other functions to download data: \code{\link{download.glider.slocum}},
   \code{\link{download.glider}}
