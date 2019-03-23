@@ -342,7 +342,8 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' latitude for samples where the glider wasn't actually communicating
 #' with satellites and then interpolate between surface values.
 #'
-#' Level 1 processing preforms a number of steps to give an "analysis ready" dataset, including
+#' Level 1 processing performs a number of steps to give an
+#' "analysis ready" dataset, including
 #'
 #' \enumerate{
 #'
@@ -358,7 +359,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' sample recorded before power down.
 #'
 #' \item NAs for all the sensors are interpolated to a common
-#' time. For example, if a Wetlabs FLBBCD senor sampled, but there is
+#' time. For example, if a Wetlabs FLBBCD sensor sampled, but there is
 #' no corresponding GP-CTD sample from the same time, the CTD
 #' parameters will be interpolated from the ones before and
 #' after. This has the disadvantage of interpolating values that were
@@ -394,7 +395,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' library(oceanglider)
 #' dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
 #' d <- read.glider.seaexplorer.raw(dir, yo=1:100)
-#' plot(d, which=1, type='p')
+#' plot(d, which=1)
 #' }
 #' @importFrom utils read.delim
 #' @importFrom methods new
@@ -406,6 +407,8 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         debug <- getOption("gliderDebug", default=0)
     if (missing(dir))
         stop("must provide a directory with files")
+    if (level != 0 & level != 1)
+        stop("Level must be either 0 or 1")
     navfiles <- dir(dir, pattern='*gli*', full.names=TRUE)
     pldfiles <- dir(dir, pattern='*pld*', full.names=TRUE)
     
@@ -533,12 +536,14 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         iuStart <- which(diff(inflectUp) == 1) + 1
         inflectDown <- as.integer(df$navState == 110)
         idStart <- which(diff(inflectDown) == 1) + 1
-        ok <- rep(TRUE, dim(df)[1])
-        for (i in 0:5) {
-            ok[iuStart+i] <- FALSE
-            ok[idStart+i] <- FALSE
+        if (length(iuStart) > 0 & length(idStart) > 0) {
+            ok <- rep(TRUE, dim(df)[1])
+            for (i in 0:5) {
+                ok[iuStart+i] <- FALSE
+                ok[idStart+i] <- FALSE
+            }
+            df <- df[ok,]
         }
-        df <- df[ok,]
 
         ## Interpolate NAs for all sensors
         n <- length(names(df)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))

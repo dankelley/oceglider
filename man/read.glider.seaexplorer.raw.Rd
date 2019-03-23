@@ -48,7 +48,8 @@ with no processing done, other than to remove longitude and
 latitude for samples where the glider wasn't actually communicating
 with satellites and then interpolate between surface values.
 
-Level 1 processing preforms a number of steps to give an "analysis ready" dataset, including
+Level 1 processing performs a number of steps to give an
+"analysis ready" dataset, including
 
 \enumerate{
 
@@ -64,7 +65,7 @@ the first sample output to the payload computer is the \emph{last}
 sample recorded before power down.
 
 \item NAs for all the sensors are interpolated to a common
-time. For example, if a Wetlabs FLBBCD senor sampled, but there is
+time. For example, if a Wetlabs FLBBCD sensor sampled, but there is
 no corresponding GP-CTD sample from the same time, the CTD
 parameters will be interpolated from the ones before and
 after. This has the disadvantage of interpolating values that were
@@ -83,7 +84,7 @@ and pressure using \code{swSCTp()}.
 library(oceanglider)
 dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
 d <- read.glider.seaexplorer.raw(dir, yo=1:100)
-plot(d, which=1, type='p')
+plot(d, which=1)
 }
 }
 \author{
