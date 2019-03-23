@@ -87,6 +87,11 @@ d <- read.glider.seaexplorer.raw(dir, yo=1:100)
 plot(d, which=1)
 }
 }
+\seealso{
+Other functions for seaexplorer gliders: \code{\link{download.glider.seaexplorer}},
+  \code{\link{read.glider.seaexplorer.realtime}}
+}
 \author{
 Clark Richards and Dan Kelley
 }
+\concept{functions for seaexplorer gliders}
