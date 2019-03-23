@@ -48,7 +48,7 @@
 #' yo <- 200
 #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' files <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' yo2 <- read.glider.seaexplorer(files)
+#' yo2 <- read.glider.seaexplorer.realtime(files)
 #' # Download (or use cache for) a set files
 #' download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 #' }
@@ -320,7 +320,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
     }
     res@data <- list(glider=gliData, payload=pldData)
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("read.glider.seaexplorer(c(\"", files[1], "\", \"",
+                                             paste("read.glider.seaexplorer.realtime(c(\"", files[1], "\", \"",
                                                    files[2], "\"), missingValue=", missingValue, ")", sep=""))
     res
 }
@@ -400,6 +400,8 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' @importFrom utils read.delim
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
+#' @importFrom stats approx
+#' @importFrom utils head setTxtProgressBar tail txtProgressBar
 #' @export
 read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRUE)
 {
