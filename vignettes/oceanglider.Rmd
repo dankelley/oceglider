@@ -12,15 +12,15 @@ output:
     dpi: 72
     dev.args: list(pointsize=11)
 vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Introduction to oceanglider}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 <!-- HOW TO BUILD THE VIGNETTE. -->
-<!-- 1. edit this file in vignettes/ -->
-<!-- 2. run devtools::build_vignettes() -->
-<!-- 3. build package -->
+<!-- 1. edit this file in vignettes/oceanglider.Rmd -->
+<!-- 2. devtools::build_vignettes() -->
+<!-- 3. devtools::install(build_vignettes=TRUE) -->
 
 
 ```{r, echo = FALSE}
