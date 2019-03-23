@@ -27,7 +27,9 @@ A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
 }
 \description{
 This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
-if the first argument is a string ending with \code{".nc"}, or to
-\code{\link{read.glider.seaexplorer}} if it is a string (or vector of strings)
-ending in \code{".gz"}.
+if the first argument is a string ending with \code{".nc"}, to
+\code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
+of which contains the text \code{".sub."} followed by one or more digits, or to
+\code{\link{read.glider.seaexplorer.raw}} if it is a vector of strings, any
+contains the text \code{".raw."} followed by one or more digits.
 }

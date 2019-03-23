@@ -62,7 +62,7 @@ plot(as.ctd(subset(g, profileIndex==200)))
 
 }
 \seealso{
-Other functions to read glider data: \code{\link{read.glider.seaexplorer}},
+Other functions to read glider data: \code{\link{read.glider.seaexplorer.realtime}},
   \code{\link{read.glider.slocum}}
 }
 \author{

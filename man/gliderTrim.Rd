@@ -41,10 +41,10 @@ only \code{payload} data entries for which
 }
 }
 \examples{
-files <- system.file("extdata",
+files <- system.file("extdata/seaexplorer/realtime",
                      c("sea024.32.gli.sub.200.gz",
                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-d <- read.glider.seaexplorer(files)
+d <- read.glider.seaexplorer.realtime(files)
 summary(gliderTrim(d, "ascending"))
 summary(gliderTrim(d, "descending"))
 

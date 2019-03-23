@@ -57,14 +57,14 @@ will be interrogated to try to determine possible choices.
 yo <- 200
 url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 files <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
-yo2 <- read.glider.seaexplorer(files)
+yo2 <- read.glider.seaexplorer.realtime(files)
 # Download (or use cache for) a set files
 download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 }
 
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer}}
+Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.realtime}}
 
 Other functions to download data: \code{\link{download.glider.slocum}},
   \code{\link{download.glider}}

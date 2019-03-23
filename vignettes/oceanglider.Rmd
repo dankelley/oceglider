@@ -12,15 +12,15 @@ output:
     dpi: 72
     dev.args: list(pointsize=11)
 vignette: >
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Introduction to oceanglider}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 <!-- HOW TO BUILD THE VIGNETTE. -->
-<!-- 1. edit this file in vignettes/ -->
-<!-- 2. run devtools::build_vignettes() -->
-<!-- 3. build package -->
+<!-- 1. edit this file in vignettes/oceanglider.Rmd -->
+<!-- 2. devtools::build_vignettes() -->
+<!-- 3. devtools::install(build_vignettes=TRUE) -->
 
 
 ```{r, echo = FALSE}
@@ -55,10 +55,10 @@ portion indicates that data from the the second descent/ascent sequence (or
 library(oceanglider)
 ## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 ## filenames <- download.glider(url, "\\.200\\.gz$")
-files <- system.file("extdata",
+files <- system.file("extdata/seaexplorer/realtime",
                      c("sea024.32.gli.sub.200.gz",
                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-g <- read.glider.seaexplorer(files)
+g <- read.glider.seaexplorer.realtime(files)
 ```
 
 In applying this example to other situations, it might be helpful to write a
@@ -76,7 +76,7 @@ between these two types is best explained elsewhere.)
 Now, we could get the engineering data for this yo with
 ```{r eval=FALSE}
 filenames <- download.glider(urlBIO("SEA024", 32), patternBIO(200), debug=1)
-g <- read.glider.seaexplorer(filenames)
+g <- read.glider.seaexplorer.realtime(filenames)
 ```
 (which is not executed here, owing to server accessibility).
 

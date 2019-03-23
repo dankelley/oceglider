@@ -22,8 +22,12 @@ with name given by \code{i}. If this is true, then that value is returned.
 Otherwise, the item is sought in the \code{data} slot. This is straightforward
 for objects read by \code{\link{read.glider.slocum}}, which has no
 repeated data items, but trickier for objects read by
-\code{\link{read.glider.seaexplorer}}, since it stores data from the glider
-and the payload separately, in items called \code{glider} and
+\code{\link{read.glider.seaexplorer.realtime}} and
+\code{\link{read.glider.seaexplorer.raw}}, since SeaExplorer systems
+store data from the instrumentation that is integral to the glider
+in separate files than those used for the data from instrumentation
+carried in the glider's payload; these two streams are stored within
+the \code{data} slot in list items called \code{glider} and
 \code{payload}, respectively. If \code{j} is not specified, then
 \code{i} is sought first in the \code{payload} component, with
 \code{glider} being checked thereafter. (For example, this means that the

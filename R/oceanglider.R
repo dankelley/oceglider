@@ -72,10 +72,10 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @examples
-#' files <- system.file("extdata",
+#' files <- system.file("extdata/seaexplorer/realtime",
 #'                      c("sea024.32.gli.sub.200.gz",
 #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-#' d <- read.glider.seaexplorer(files)
+#' d <- read.glider.seaexplorer.realtime(files)
 #' summary(gliderTrim(d, "ascending"))
 #' summary(gliderTrim(d, "descending"))
 #'
@@ -151,8 +151,12 @@ setMethod(f="subset",
 #' Otherwise, the item is sought in the \code{data} slot. This is straightforward
 #' for objects read by \code{\link{read.glider.slocum}}, which has no
 #' repeated data items, but trickier for objects read by
-#' \code{\link{read.glider.seaexplorer}}, since it stores data from the glider
-#' and the payload separately, in items called \code{glider} and
+#' \code{\link{read.glider.seaexplorer.realtime}} and
+#' \code{\link{read.glider.seaexplorer.raw}}, since SeaExplorer systems
+#' store data from the instrumentation that is integral to the glider
+#' in separate files than those used for the data from instrumentation
+#' carried in the glider's payload; these two streams are stored within
+#' the \code{data} slot in list items called \code{glider} and
 #' \code{payload}, respectively. If \code{j} is not specified, then
 #' \code{i} is sought first in the \code{payload} component, with
 #' \code{glider} being checked thereafter. (For example, this means that the
@@ -601,7 +605,7 @@ urlExists <- function(url, quiet=FALSE)
 #' files <- download.glider(url, "\\.200\\.gz$",
 #'                          destdir="~/data/glider/SEA024/M32")
 #' if (2 == length(files)) {
-#'     g <- read.glider.seaexplorer(files)
+#'     g <- read.glider.seaexplorer.realtime(files)
 #'     summary(g)
 #' }
 #'
@@ -776,9 +780,11 @@ read.glider.netcdf <- function(file, debug)
 #' Read a glider data file
 #'
 #' This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
-#' if the first argument is a string ending with \code{".nc"}, or to
-#' \code{\link{read.glider.seaexplorer}} if it is a string (or vector of strings)
-#' ending in \code{".gz"}.
+#' if the first argument is a string ending with \code{".nc"}, to
+#' \code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
+#' of which contains the text \code{".sub."} followed by one or more digits, or to
+#' \code{\link{read.glider.seaexplorer.raw}} if it is a vector of strings, any
+#' contains the text \code{".raw."} followed by one or more digits.
 #'
 #' @param file Character value giving the name of the file.
 #'
@@ -797,8 +803,10 @@ read.glider <- function(file, debug, ...)
         stop("'file' must be a character value (or values) giving filename(s)")
     if (length(file) == 1 && length(grep(".nc$", file))) {
         res <- read.glider.netcdf(file=file, debug=debug-1, ...)
-    } else if (length(grep(".gz$", file[1]))) {
-        res <- read.glider.seaexplorer(file, debug=debug-1, ...)
+    } else if (0 != length(grep(".sub.[0-9]+", file))) {
+        res <- read.glider.seaexplorer.realtime(file, debug=debug-1, ...)
+    } else if (0 != length(grep(".raw.[0-9]+", file))) {
+        res <- read.glider.seaexplorer.raw(file, debug=debug-1, ...)
     } else {
         stop("only .nc and .gz files handled")
     }

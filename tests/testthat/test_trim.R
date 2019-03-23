@@ -4,10 +4,10 @@ library(oceanglider)
 context("oceanglider")
 
 test_that("gliderTrim(g, ascending)", {
-          files <- system.file("extdata",
+          files <- system.file("extdata/seaexplorer/realtime",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-          g <- read.glider.seaexplorer(files)
+          g <- read.glider.seaexplorer.realtime(files)
           expect_error(gliderTrim(g, "junk"),
                        'method must be either "ascending" or "descending"')
           ascending <- gliderTrim(g, "ascending")
@@ -20,10 +20,10 @@ test_that("gliderTrim(g, ascending)", {
 })
 
 test_that("gliderTrim(g, descending)", {
-          files <- system.file("extdata",
+          files <- system.file("extdata/seaexplorer/realtime",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-          g <- read.glider.seaexplorer(files)
+          g <- read.glider.seaexplorer.realtime(files)
           expect_error(gliderTrim(g, "junk"),
                        'method must be either "ascending" or "descending"')
           descending <- gliderTrim(g, "descending")

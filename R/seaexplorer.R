@@ -48,7 +48,7 @@
 #' yo <- 200
 #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' files <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' yo2 <- read.glider.seaexplorer(files)
+#' yo2 <- read.glider.seaexplorer.realtime(files)
 #' # Download (or use cache for) a set files
 #' download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 #' }
@@ -168,7 +168,15 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 }
 
 
-#' Read a Seaexplorer File
+#' Read real-time SeaExplorer glider data
+#'
+#' Reads real-time CSV files produced by a SeaExplorer glider. The
+#' real-time data are decimated before transmission, and thus do not
+#' represent the full data collected by the glider sensors.
+#'
+#' While the data format is similar to the "raw" SeaExplorer file
+#' format, there are some differences and
+#' \code{read.glider.explorer.raw()} should be used for the latter.
 #'
 #' @param files Either a single integer, in which case it specifies
 #' a yo number for a local file, or a character value of length 2
@@ -190,7 +198,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' use \code{summary()} on the returned object, and check to see if the
 #' data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.
 #'
-#' @author Dan Kelley
+#' @author Dan Kelley and Clark Richards
 #'
 #' @examples
 #' library(oceanglider)
@@ -198,10 +206,10 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' ## yo <- 200
 #' ## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' ## filenames <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' files <- system.file("extdata",
+#' files <- system.file("extdata/seaexplorer/realtime",
 #'                      c("sea024.32.gli.sub.200.gz",
 #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-#' d <- read.glider.seaexplorer(files)
+#' d <- read.glider.seaexplorer.realtime(files)
 #' ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
 #'               lon=d[['longitude']], lat=d[['latitude']])
 #' plot(ctd)
@@ -217,7 +225,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer <- function(files, debug, missingValue=9999)
+read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -312,8 +320,259 @@ read.glider.seaexplorer <- function(files, debug, missingValue=9999)
     }
     res@data <- list(glider=gliData, payload=pldData)
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("read.glider.seaexplorer(c(\"", files[1], "\", \"",
+                                             paste("read.glider.seaexplorer.realtime(c(\"", files[1], "\", \"",
                                                    files[2], "\"), missingValue=", missingValue, ")", sep=""))
     res
 }
 
+
+#' Read raw SeaExplorer glider data
+#'
+#' Reads raw CSV files produced by a SeaExplorer glider. The raw data
+#' are the full resolution data stored on the glider and downloaded
+#' after recovery.
+#'
+#' While the data format is similar to the "real-time" SeaExplorer file
+#' format, there are some differences and
+#' \code{read.glider.explorer.realtime()} should be used for the latter.
+#'
+#' This function can output either "Level 0" or "Level 1" type
+#' data. Level 0 is simply the raw data as written in the CSV files
+#' with no processing done, other than to remove longitude and
+#' latitude for samples where the glider wasn't actually communicating
+#' with satellites and then interpolate between surface values.
+#'
+#' Level 1 processing performs a number of steps to give an
+#' "analysis ready" dataset, including
+#'
+#' \enumerate{
+#'
+#' \item Interpolation of the surface longitude and latitude to give
+#' an esimate of the subsurface positions. This is a crude estimate of
+#' subsurface location and should be taken only as a first guess.
+#'
+#' \item Removal of the first few sensor values from when the glider
+#' is in \code{navState=118} (inflecting up) or \code{navState=110}
+#' (inflecting down). The reason for this is that when the glider is
+#' set to sample on alternating profiles, when the CTD is powered up
+#' the first sample output to the payload computer is the \emph{last}
+#' sample recorded before power down.
+#'
+#' \item NAs for all the sensors are interpolated to a common
+#' time. For example, if a Wetlabs FLBBCD sensor sampled, but there is
+#' no corresponding GP-CTD sample from the same time, the CTD
+#' parameters will be interpolated from the ones before and
+#' after. This has the disadvantage of interpolating values that were
+#' not measured, but has the advantage of assigning pressures to
+#' values measured by sensors not integrated into the CTD
+#' (e.g. Wetlabs FLBBCD, Rinko O2). Following the interpolation, any
+#' rows with duplicated times are removed.
+#'
+#' \item Calculate Practical salinity from conductiivity, temperature
+#' and pressure using \code{swSCTp()}.
+#' 
+#' }
+#' 
+#' @param dir The directory in which the raw SeaExplorer files are located.
+#'
+#' @param yo A numeric value (or vector) specifying the yo numbers to
+#'     read. If not provided will read all yo numbers for which files
+#'     are present in \code{dir}.
+#'
+#' @param level A numeric value specifying the processing level, 0 or
+#'     1. See Details.
+#'
+#' @param progressBar A logical indicating whether to show progress
+#'     bars while reading the data. Can be useful when reading full
+#'     datasets.
+#'
+#' @template debug
+#'
+#' @author Clark Richards and Dan Kelley
+#'
+#' @examples
+#' \dontrun{
+#' library(oceanglider)
+#' dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
+#' d <- read.glider.seaexplorer.raw(dir, yo=1:100)
+#' plot(d, which=1)
+#' }
+#' @importFrom utils read.delim
+#' @importFrom methods new
+#' @importFrom oce swSCTp processingLogAppend
+#' @importFrom stats approx
+#' @importFrom utils head setTxtProgressBar tail txtProgressBar
+#' @export
+read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRUE)
+{
+    if (missing(debug))
+        debug <- getOption("gliderDebug", default=0)
+    if (missing(dir))
+        stop("must provide a directory with files")
+    if (level != 0 & level != 1)
+        stop("Level must be either 0 or 1")
+    navfiles <- dir(dir, pattern='*gli*', full.names=TRUE)
+    pldfiles <- dir(dir, pattern='*pld*', full.names=TRUE)
+    
+    yoNumber <- as.numeric(unlist(lapply(strsplit(pldfiles, '.', fixed=TRUE), tail, 1)))
+    o <- order(yoNumber)
+    yoNumber <- yoNumber[o]
+    pldfiles <- pldfiles[o]
+    
+    if (missing(yo))
+        yo <- yoNumber
+    
+    y <- yoNumber %in% yo
+    files <- pldfiles[y]
+    
+    res <- new("glider")
+    res@metadata$type <- "seaexplorer"
+    res@metadata$filename <- files
+    res@metadata$yo <- yo
+    res@metadata$dataNamesOriginal <- list(glider=list(), payload=list())
+
+    pld <- list()
+    if (progressBar) {
+        cat('* Reading files...\n')
+        pb <- txtProgressBar(1, length(files), 1, style=3)
+    }
+    for (i in 1:length(files)) {
+        if (progressBar) setTxtProgressBar(pb, i)
+        d <- utils::read.delim(files[i], sep=';', stringsAsFactors=FALSE, row.names=NULL)
+        d$yoNumber <- rep(yo[i], dim(d)[1])
+        if ("NAV_RESOURCE" %in% names(d)) {
+            names(d) <- gsub("NAV_RESOURCE", "navState", names(d))
+            res@metadata$dataNamesOriginal$payload$navState <- "NAV_RESOURCE"
+        }
+        if ("NAV_DEPTH" %in% names(d)) {
+            names(d) <- gsub("NAV_DEPTH", "pressureNav", names(d))
+            res@metadata$dataNamesOriginal$payload$pressureNav <- "NAV_DEPTH"
+        }
+        if ("NAV_LONGITUDE" %in% names(d)) {
+            names(d) <- gsub("NAV_LONGITUDE", "longitude", names(d))
+            d$longitude <- degreeMinute(d$longitude)
+            res@metadata$dataNamesOriginal$payload$longitude <- "NAV_LONGITUDE"
+        }
+        if ("NAV_LATITUDE" %in% names(d)) {
+            names(d) <- gsub("NAV_LATITUDE", "latitude", names(d))
+            d$latitude <- degreeMinute(d$latitude)
+            res@metadata$dataNamesOriginal$payload$latitude <- "NAV_LATITUDE"
+        }
+        if ("GPCTD_TEMPERATURE" %in% names(d)) {
+            names(d) <- gsub("GPCTD_TEMPERATURE", "temperature", names(d))
+            res@metadata$dataNamesOriginal$payload$temperature <- "GPCTD_TEMPERATURE"
+        }
+        if ("GPCTD_PRESSURE" %in% names(d)) {
+            names(d) <- gsub("GPCTD_PRESSURE", "pressure", names(d))
+            res@metadata$dataNamesOriginal$payload$pressure <- "GPCTD_PRESSURE"
+        }
+        if ("GPCTD_CONDUCTIVITY" %in% names(d)) {
+            names(d) <- gsub("GPCTD_CONDUCTIVITY", "conductivity", names(d))
+            res@metadata$dataNamesOriginal$payload$conductivity <- "GPCTD_CONDUCTIVITY"
+        }
+        if ("GPCTD_DOF" %in% names(d)) {
+            names(d) <- gsub("GPCTD_DOF", "oxygenFrequency", names(d))
+            res@metadata$dataNamesOriginal$payload$oxygenFrequency <- "GPCTD_DOF"
+        }
+        if ("FLBBCD_CHL_COUNT" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_CHL_COUNT", "chlorophylCount", names(d))
+            res@metadata$dataNamesOriginal$payload$chlorophylCount <- "FLBBCD_CHL_COUNT"
+        }
+        if ("FLBBCD_CHL_SCALED" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_CHL_SCALED", "chlorophyl", names(d))
+            res@metadata$dataNamesOriginal$payload$chlorophyl <- "FLBBCD_CHL_SCALED"
+        }
+        if ("FLBBCD_BB_700_COUNT" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_BB_700_COUNT", "backscatterCount", names(d))
+            res@metadata$dataNamesOriginal$payload$backscatterCount <- "FLBBCD_BB_700_COUNT"
+        }
+        if ("FLBBCD_BB_700_SCALED" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_BB_700_SCALED", "backscatter", names(d))
+            res@metadata$dataNamesOriginal$payload$backscatter <- "FLBBCD_BB_700_SCALED"
+        }
+        if ("FLBBCD_CDOM_COUNT" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_CDOM_COUNT", "cdomCount", names(d))
+            res@metadata$dataNamesOriginal$payload$cdomCount <- "FLBBCD_CDOM_COUNT"
+        }
+        if ("FLBBCD_CDOM_SCALED" %in% names(d)) {
+            names(d) <- gsub("FLBBCD_CDOM_SCALED", "cdom", names(d))
+            res@metadata$dataNamesOriginal$payload$cdom <- "FLBBCD_CDOM_SCALED"
+        }
+        if ("PLD_REALTIMECLOCK" %in% names(d)) {
+            names(d) <- gsub("PLD_REALTIMECLOCK", "time", names(d))
+            d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+            res@metadata$dataNamesOriginal$payload$time <- "-"
+        }
+        pld[[i]] <- d
+    }
+    df <- do.call(rbind.data.frame, pld)
+    df[['X']] <- NULL # get rid of the weird last column
+    if (progressBar) cat('\n')
+    
+    ## First remove all duplicated lon/lat
+    df$longitude[which(duplicated(df$longitude))] <- NA
+    df$latitude[which(duplicated(df$latitude))] <- NA
+
+    ## Then remove all lon/lat that aren't from when navState is 116
+    trans <- df$navState == 116
+    df$longitude[!trans] <- NA
+    df$latitude[!trans] <- NA
+
+    ## Now interpolate lon/lat
+    df$longitude <- approx(df$time, df$longitude, df$time)$y
+    df$latitude <- approx(df$time, df$latitude, df$time)$y
+
+    ## Trim out any empty rows (no data at all)
+    sub <- df[, which(!(names(df) %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber')))]
+    naRows <- apply(sub, 1, function(x) sum(is.na(x)))
+    ok <- naRows < dim(sub)[2]
+    df <- df[ok,]
+
+    if (level == 0) {
+        res@data <- list(payload=df)
+        res@processingLog <- processingLogAppend(res@processingLog,
+                                                 paste("read.glider.seaexplorer.raw(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+        return(res)
+    } else if (level == 1) {
+        inflectUp <- as.integer(df$navState == 118)
+        iuStart <- which(diff(inflectUp) == 1) + 1
+        inflectDown <- as.integer(df$navState == 110)
+        idStart <- which(diff(inflectDown) == 1) + 1
+        if (length(iuStart) > 0 & length(idStart) > 0) {
+            ok <- rep(TRUE, dim(df)[1])
+            for (i in 0:5) {
+                ok[iuStart+i] <- FALSE
+                ok[idStart+i] <- FALSE
+            }
+            df <- df[ok,]
+        }
+
+        ## Interpolate NAs for all sensors
+        n <- length(names(df)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
+        if (progressBar) {
+            cat('* Interpolating NAs...\n')
+            pb <- txtProgressBar(1, n, 1, style=3)
+        }
+        i <- 1
+        for (var in names(df)) {
+            if (!(var %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))) {
+                if (progressBar) setTxtProgressBar(pb, i)
+                df[[var]] <- approx(df[['time']], df[[var]], df[['time']])$y
+                i <- i + 1
+            }
+        }
+        if (progressBar) cat('\n')
+
+        ## Remove duplicated times
+        df <- df[!duplicated(df), ]
+
+        ## Calculate salinity
+        df$salinity <- with(df, swSCTp(conductivity, temperature, pressure, conductivityUnit = 'S/m'))
+        df$salinity[df$salinity > 40] <- NA
+
+        res@data <- list(payload=df)
+        res@processingLog <- processingLogAppend(res@processingLog,
+                                                 paste("read.glider.seaexplorer.raw(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+        return(res)
+    }
+}
