@@ -397,6 +397,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' d <- read.glider.seaexplorer.raw(dir, yo=1:100)
 #' plot(d, which=1)
 #' }
+#' @family functions for seaexplorer gliders
 #' @importFrom utils read.delim
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
