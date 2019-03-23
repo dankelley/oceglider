@@ -206,7 +206,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' ## yo <- 200
 #' ## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' ## filenames <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' files <- system.file("extdata",
+#' files <- system.file("extdata/seaexplorer/realtime",
 #'                      c("sea024.32.gli.sub.200.gz",
 #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
 #' d <- read.glider.seaexplorer.realtime(files)

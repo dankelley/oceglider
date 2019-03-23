@@ -7,3 +7,4 @@ doc
 sea*gz
 .RData
 .Rapp.history
+.DS_Store
