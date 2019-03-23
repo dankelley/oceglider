@@ -90,13 +90,14 @@ head(g[["payload"]], 3)
 ```
 
 The payload is the preferred data source (consult `help("[[,glider-method")`
-for the details of how `[[` works for `glider` objects), so we can make a ctd
-object and examine it with
+for the details of how `[[` works for `glider` objects), so we can make a CTD
+object and plot it, before and after trimming to the upcast.
 ```{r}
 ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
               lon=g[["longitude"]], lat=g[["latitude"]])
+print(class(ctd))
 summary(ctd)
-plot(ctd)
+oce::plot(ctd)
 ```
 
 Note that there seems to be a retracing in the diagrams. To see why, use
@@ -108,7 +109,7 @@ able to isolate the upcast by keying on `g[["NAV_RESOURCE"]]==100` but that does
 work, because of this stray point. But, as a stopgap measure, we can use `ctdTrim()` to
 get better results:
 ```{r}
-plot(ctdTrim(ctd, "upcast"))
+oce::plot(ctdTrim(ctd, "upcast"))
 ```
 
 

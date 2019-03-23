@@ -331,6 +331,7 @@ setMethod(f="[[",
 #' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
 #'      mar=c(2, 3.5, 2, 4))
 #'}
+#' @export
 setMethod(f="plot",
           signature="glider",
           definition=function(x, which, ...) {
