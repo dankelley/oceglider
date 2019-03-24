@@ -93,9 +93,9 @@ The payload is the preferred data source (consult `help("[[,glider-method")`
 for the details of how `[[` works for `glider` objects), so we can make a CTD
 object and plot it, before and after trimming to the upcast.
 ```{r}
+library(oce)
 ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
-              lon=g[["longitude"]], lat=g[["latitude"]])
-print(class(ctd))
+              longitude=g[["longitude"]], latitude=g[["latitude"]])
 summary(ctd)
 oce::plot(ctd)
 ```
