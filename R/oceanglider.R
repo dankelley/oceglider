@@ -128,6 +128,8 @@ setMethod(f="subset",
           definition=function(x, subset, ...) {
               if (missing(subset))
                   stop("must give 'subset'")
+              ##message("in subset")
+              ##browser()
               keep <- eval(substitute(subset), x@data, parent.frame())
               keep[is.na(keep)] <- FALSE
               ##message("percent keep ", round(sum(keep)/length(keep)*100, 2), "%")
@@ -373,13 +375,19 @@ setMethod(f="summary",
                   cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
                   cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
               } else if (1 == length(object@metadata$filename)) {
-                  cat(sprintf("* Input file:           \"%s\"\n", object@metadata$filename))
+                  cat(sprintf("* Input file: \"%s\"\n", object@metadata$filename))
               } else {
-                  cat("* Input file:  UNKNOWN\n")
+                  cat("* Input file: -\n")
               }
               type <- object@metadata$type
-              cat(sprintf("* Type:                 %s\n", type))
-              cat(sprintf("* Yo:                   %d\n", object@metadata$yo))
+              cat(sprintf("* Type:       %s\n", type))
+              nyo <- length(object@metadata$yo)
+              if (nyo == 0)
+                  cat("* Yo:         (none)\n")
+              if (nyo == 1)
+                  cat(sprintf("* Yo:         %d\n", object@metadata$yo))
+              else if (nyo > 1)
+                  cat(sprintf("* Yo:         %d to %d\n", head(object@metadata$yo, 1), tail(object@metadata$yo, 1)))
               if (!is.null(type) && type == "seaexplorer") {
                   if ("glider" %in% names(object@data)) {
                       ## Glider data
