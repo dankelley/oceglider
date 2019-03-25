@@ -57,7 +57,7 @@ files <- system.file("extdata/seaexplorer/realtime",
                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
 d <- read.glider.seaexplorer.realtime(files)
 ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
-              lon=d[['longitude']], lat=d[['latitude']])
+              longitude=d[['longitude']], latitude=d[['latitude']])
 plot(ctd)
 ## Isolate the upcast, inferred with oce::ctdTrim().
 plot(ctdTrim(ctd, "upcast"))
