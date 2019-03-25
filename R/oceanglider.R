@@ -128,21 +128,30 @@ setMethod(f="subset",
           definition=function(x, subset, ...) {
               if (missing(subset))
                   stop("must give 'subset'")
-              ##message("in subset")
+              ##.message("in subset")
               if (x[["type"]] == "seaexplorer") {
+                  ##.message("type is seaexplorer")
                   if (!"payload" %in% names(x@data))
                       stop("cannot subset seaexplorer objects that lack a 'payload' item in the data slot")
                   keep <- eval(substitute(subset), x@data$payload, parent.frame())
+                  ##.message("keep evaluated")
                   keep[is.na(keep)] <- FALSE
+                  ##.message("remove NA from keep")
                   res <- x
-                  res@data$payload <- x@data$payload[, keep]
-                  for (i in seq_along(x@metadata$flags))
+                  ##.str(keep)
+                  ##.str(x@data$payload)
+                  res@data$payload <- x@data$payload[keep,]
+                  ##.str(res@data$payload)
+                  ##.message("payload done")
+                  for (i in seq_along(x@metadata$flags)) {
+                      ##.message("i=", i)
                       res@metadata$flags[[i]] <- x$metadata$flags[[i]][keep]
+                  }
               } else {
                   keep <- eval(substitute(subset), x@data, parent.frame())
                   keep[is.na(keep)] <- FALSE
                   res <- x
-                  res@data <- x@data[, keep]
+                  res@data <- subset(x@data, keep)
                   for (i in seq_along(x@metadata$flags))
                       res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
               }
