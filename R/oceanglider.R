@@ -381,8 +381,8 @@ setMethod(f="summary",
               cat(sprintf("* Type:                 %s\n", type))
               cat(sprintf("* Yo:                   %d\n", object@metadata$yo))
               if (!is.null(type) && type == "seaexplorer") {
-                  if (2 == sum(c("glider", "payload") %in% names(object@data))) {
-                      ## Glider data, two-stream format
+                  if ("glider" %in% names(object@data)) {
+                      ## Glider data
                       ndata <- length(object@data$glider)
                       threes <- matrix(nrow=ndata, ncol=4)
                       for (i in 1:ndata)
@@ -401,6 +401,8 @@ setMethod(f="summary",
                           options(width=owidth$width)
                           cat("\n")
                       }
+                  }
+                  if ("payload" %in% names(object@data)) {
                       ## Payload data
                       ndata <- length(object@data$payload)
                       threes <- matrix(nrow=ndata, ncol=4)
@@ -420,8 +422,6 @@ setMethod(f="summary",
                           options(width=owidth$width)
                           cat("\n")
                       }
-                  } else {
-                      return(invisible(callNextMethod())) # summary
                   }
               }
               processingLogShow(object)
