@@ -129,15 +129,32 @@ setMethod(f="subset",
               if (missing(subset))
                   stop("must give 'subset'")
               ##message("in subset")
-              ##browser()
-              keep <- eval(substitute(subset), x@data, parent.frame())
-              keep[is.na(keep)] <- FALSE
-              ##message("percent keep ", round(sum(keep)/length(keep)*100, 2), "%")
-              res <- x
-              for (i in seq_along(x@data))
-                  res@data[[i]] <- res@data[[i]][keep]
-              for (i in seq_along(x@metadata$flags))
-                  res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+              if (x[["type"]] == "seaexplorer") {
+                  if (!"payload" %in% names(x@data))
+                      stop("cannot subset seaexplorer objects that lack a 'payload' item in the data slot")
+                  keep <- eval(substitute(subset), x@data$payload, parent.frame())
+                  keep[is.na(keep)] <- FALSE
+                  ##message("sum(!keep)=", sum(!keep))
+                  res <- x
+                  ## NOTE: we make payload into a list.
+                  payload <- as.list(x@data$payload)
+                  for (i in seq_along(x@data$payload))
+                      payload[[i]] <- payload[[i]][keep]
+                  res@data$payload <- payload
+                  flags <- as.list(x@metadata$flags)
+                  for (i in seq_along(x@metadata$flags))
+                      flags[[i]] <- flags[[i]][keep]
+                  res@metadata$flags <- flags
+              } else {
+                  keep <- eval(substitute(subset), x@data, parent.frame())
+                  keep[is.na(keep)] <- FALSE
+                  ##message("percent keep ", round(sum(keep)/length(keep)*100, 2), "%")
+                  res <- x
+                  for (i in seq_along(x@data))
+                      res@data[[i]] <- res@data[[i]][keep]
+                  for (i in seq_along(x@metadata$flags))
+                      res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+              }
               res@processingLog <- processingLogAppend(res@processingLog,
                                                         paste(deparse(match.call(call=sys.call(sys.parent(1)))),
                                                               sep="", collapse=""))
