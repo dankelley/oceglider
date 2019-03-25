@@ -134,24 +134,15 @@ setMethod(f="subset",
                       stop("cannot subset seaexplorer objects that lack a 'payload' item in the data slot")
                   keep <- eval(substitute(subset), x@data$payload, parent.frame())
                   keep[is.na(keep)] <- FALSE
-                  ##message("sum(!keep)=", sum(!keep))
                   res <- x
-                  ## NOTE: we make payload into a list.
-                  payload <- as.list(x@data$payload)
-                  for (i in seq_along(x@data$payload))
-                      payload[[i]] <- payload[[i]][keep]
-                  res@data$payload <- payload
-                  flags <- as.list(x@metadata$flags)
+                  res@data$payload <- x@data$payload[, keep]
                   for (i in seq_along(x@metadata$flags))
-                      flags[[i]] <- flags[[i]][keep]
-                  res@metadata$flags <- flags
+                      res@metadata$flags[[i]] <- x$metadata$flags[[i]][keep]
               } else {
                   keep <- eval(substitute(subset), x@data, parent.frame())
                   keep[is.na(keep)] <- FALSE
-                  ##message("percent keep ", round(sum(keep)/length(keep)*100, 2), "%")
                   res <- x
-                  for (i in seq_along(x@data))
-                      res@data[[i]] <- res@data[[i]][keep]
+                  res@data <- x@data[, keep]
                   for (i in seq_along(x@metadata$flags))
                       res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
               }
