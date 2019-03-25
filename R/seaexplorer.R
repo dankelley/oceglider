@@ -398,11 +398,10 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #' plot(d, which=1)
 #' }
 #' @family functions for seaexplorer gliders
-#' @importFrom utils read.delim
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @importFrom stats approx
-#' @importFrom utils head setTxtProgressBar tail txtProgressBar
+#' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 #' @export
 read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRUE)
 {
@@ -508,7 +507,10 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
     }
     df <- do.call(rbind.data.frame, pld)
     df[['X']] <- NULL # get rid of the weird last column
-    if (progressBar) cat('\n')
+    if (progressBar) {
+        cat('\n')
+        flush.console()
+    }
     
     ## First remove all duplicated lon/lat
     df$longitude[which(duplicated(df$longitude))] <- NA
@@ -562,7 +564,10 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
                 i <- i + 1
             }
         }
-        if (progressBar) cat('\n')
+        if (progressBar) {
+            cat('\n')
+            flush.console()
+        }
 
         ## Remove duplicated times
         df <- df[!duplicated(df), ]
