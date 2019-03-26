@@ -147,7 +147,7 @@ gliderTrim <- function(x, method)#, parameters)
 #' if \code{subset} is a logical expression containing the word \code{"levels"},
 #' but \code{emph} not the names of any columns in the 'yo' data, then the
 #' expression is used as a filter to select yos (see Example 2). The two
-#' schemes cannot be combined in on call to the function; use nested
+#' schemes cannot be combined in one call to the function; use nested
 #' calls to subset progressively.
 #'
 #' Note that \code{NA} values in the \code{subset} value will be dropped from
