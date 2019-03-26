@@ -57,6 +57,10 @@ setMethod(f="initialize",
 #' only \code{payload} data entries for which
 #' \code{NAV_RESOURCE} is 100.
 #'
+## \item \code{"length"}, which requires also that
+## \code{parameters} be specified. This retains only \code{glider}
+## yos with more than \code{parameters$minlength} depth levels.
+#'
 #'}
 #'
 #' @param x A \code{glider} object, i.e. one inheriting from
@@ -64,6 +68,11 @@ setMethod(f="initialize",
 #'
 #' @param method An expression indicating how to subset \code{x}. See
 #' \dQuote{Details}.
+#'
+## @param parameters A list containing extra parameters. At present,
+## this is only used if \code{method="length"}, and must contain
+## an element named \code{minimum}, an integer specifying how many
+## levels a yo must havee to avoid being discarding.
 #'
 #' @return A \code{\link{glider-class}} object that
 #' has been trimmed to contain only the data specified by
@@ -79,8 +88,12 @@ setMethod(f="initialize",
 #' summary(gliderTrim(d, "ascending"))
 #' summary(gliderTrim(d, "descending"))
 #'
+#' @section Caution:
+#' This function may be subsumed into \code{\link{subset,glider-method}}, because it
+#' does similar things, and users are more likely to guess the name of the latter.
+#'
 #' @export
-gliderTrim <- function(x, method)
+gliderTrim <- function(x, method)#, parameters)
 {
     if (!inherits(x, "glider"))
         stop("function is only for objects of class 'glider'")
@@ -93,16 +106,52 @@ gliderTrim <- function(x, method)
     } else if (method == "descending") {
         res@data$glider <- subset(res@data$glider, res@data$glider$NavState == 100)
         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
+    ## } else if (method == "length") {
+    ##     if (missing(parameters))
+    ##         stop("must give parameters, if method=\"length\"")
+    ##     if (!is.list(parameters))
+    ##         stop("parameters must be a list")
+    ##     minimum <- parameters$minimum
+    ##     if (is.null(minimum))
+    ##         stop("parameters must contain an item named \"minimum\"")
+    ##     if (x@metadata$type != "seaexplorer")
+    ##         stop("method only works for seaexplorer data; contact the package authors, if you need this for other types")
+    ##     if (!"payload" %in% names(x@data))
+    ##         stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
+    ##     gs <- split(x@data$payload, x[["yoNumber"]])
+    ##     keepYo <- unlist(lapply(gs, function(yo) {
+    ##                             n <- length(yo[["pressure"]])
+    ##                             n >= parameters$minimum } ) )
+    ##     ##. message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+    ##     keepLevel <- unlist(lapply(gs, function(yo) {
+    ##                                n <- length(yo[["pressure"]])
+    ##                                rep(n >= parameters$minimum, n) } ) )
+    ##     ## gsk <- gs[keep]
+    ##     ## ## FIXME: do.call() seems slow; try expanding 'keep' and then index x@data$payload.
+    ##     ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keep, ])
+    ##     res@metadata$yo <- x@metadata$yo[keepYo]
+    ##     res@data$payload <- x@data$payload[keepLevel, ]
     } else {
-        stop("method must be either \"ascending\" or \"descending\"")
+        stop("method \"", method, "\" is not permitted; see ?gliderTrim for choices")
     }
     res
 }
 
-#' Subset an oceanglider Object
+#' Subset a glider Object
+#'
+#' Select a portion of an glider object, specified according to one
+#' of two possible schemes, based on the form of the argument named
+#' \code{subset}. Scheme 1: if \code{subset} is a logical expression written
+#' in terms of data that are stored in the yos, then this expression is applied
+#' overall, to each 'yo' in the glider object (see Example 1). Scheme 2:
+#' if \code{subset} is a logical expression containing the word \code{"levels"},
+#' but \code{emph} not the names of any columns in the 'yo' data, then the
+#' expression is used as a filter to select yos (see Example 2). The two
+#' schemes cannot be combined in on call to the function; use nested
+#' calls to subset progressively.
 #'
 #' Note that \code{NA} values in the \code{subset} value will be dropped from
-#' the return value, mimicking the behaviour of the base \code{link{subset}}
+#' the return value, mimicking the behaviour of the base \code{\link{subset}}
 #' function.
 #'
 #' @param x an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.
@@ -111,6 +160,7 @@ gliderTrim <- function(x, method)
 #' @return An oceanglider object.
 #' @examples
 #'\dontrun{
+#'
 #' # Example 1. remove wild salinities
 #' library(oceanglider)
 #' g <- read.glider(filename)
@@ -118,6 +168,9 @@ gliderTrim <- function(x, method)
 #' par(mfrow=c(2, 1))
 #' hist(g[["salinity"]], main="S original")
 #' hist(gg[["salinity"]], main="S cleaned")
+#'
+#' # Example 2. remove short yos
+#' gg <- subset(g, levels > 4)
 #'}
 #'
 #' @author Dan Kelley
@@ -128,24 +181,41 @@ setMethod(f="subset",
           definition=function(x, subset, ...) {
               if (missing(subset))
                   stop("must give 'subset'")
+              subsetString <- paste(deparse(substitute(subset)), collapse=" ")
               ##.message("in subset")
               if (x[["type"]] == "seaexplorer") {
                   ##.message("type is seaexplorer")
                   if (!"payload" %in% names(x@data))
                       stop("cannot subset seaexplorer objects that lack a 'payload' item in the data slot")
-                  keep <- eval(substitute(subset), x@data$payload, parent.frame())
-                  ##.message("keep evaluated")
-                  keep[is.na(keep)] <- FALSE
-                  ##.message("remove NA from keep")
-                  res <- x
-                  ##.str(keep)
-                  ##.str(x@data$payload)
-                  res@data$payload <- x@data$payload[keep,]
-                  ##.str(res@data$payload)
-                  ##.message("payload done")
-                  for (i in seq_along(x@metadata$flags)) {
-                      ##.message("i=", i)
-                      res@metadata$flags[[i]] <- x$metadata$flags[[i]][keep]
+                  if (1 == length(grep("levels", subsetString))) {
+                      if (!"payload" %in% names(x@data))
+                          stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
+                      s <- split(x@data$payload, x[["yoNumber"]])
+                      warning("only subsetting 'payload'; contact package authors, if your data have other streams")
+                      levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
+                      keepYo <- eval(substitute(subset), list(levels=levels))
+                      ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+                      res <- x
+                      res@metadata$yo <- x@metadata$yo[keepYo]
+                      keepLevel <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], levels[si])))
+                      ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
+                      ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
+                      res@data$payload <- x@data$payload[keepLevel, ]
+                  } else {
+                      keep <- eval(substitute(subset), x@data$payload, parent.frame())
+                      ##.message("keep evaluated")
+                      keep[is.na(keep)] <- FALSE
+                      ##.message("remove NA from keep")
+                      res <- x
+                      ##.str(keep)
+                      ##.str(x@data$payload)
+                      res@data$payload <- x@data$payload[keep,]
+                      ##.str(res@data$payload)
+                      ##.message("payload done")
+                      for (i in seq_along(x@metadata$flags)) {
+                          ##.message("i=", i)
+                          res@metadata$flags[[i]] <- x$metadata$flags[[i]][keep]
+                      }
                   }
               } else {
                   keep <- eval(substitute(subset), x@data, parent.frame())
@@ -404,7 +474,8 @@ setMethod(f="summary",
               if (nyo == 1)
                   cat(sprintf("* Yo:         %d\n", object@metadata$yo))
               else if (nyo > 1)
-                  cat(sprintf("* Yo:         %d to %d\n", head(object@metadata$yo, 1), tail(object@metadata$yo, 1)))
+                  cat(sprintf("* Yo:         %d values, between %d and %d\n",
+                              nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               if (!is.null(type) && type == "seaexplorer") {
                   if ("glider" %in% names(object@data)) {
                       ## Glider data

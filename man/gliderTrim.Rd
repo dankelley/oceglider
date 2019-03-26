@@ -40,6 +40,12 @@ only \code{payload} data entries for which
 
 }
 }
+\section{Caution}{
+
+This function may be subsumed into \code{\link{subset,glider-method}}, because it
+does similar things, and users are more likely to guess the name of the latter.
+}
+
 \examples{
 files <- system.file("extdata/seaexplorer/realtime",
                      c("sea024.32.gli.sub.200.gz",

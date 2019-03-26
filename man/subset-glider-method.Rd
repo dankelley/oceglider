@@ -3,7 +3,7 @@
 \docType{methods}
 \name{subset,glider-method}
 \alias{subset,glider-method}
-\title{Subset an oceanglider Object}
+\title{Subset a glider Object}
 \usage{
 \S4method{subset}{glider}(x, subset, ...)
 }
@@ -18,12 +18,25 @@
 An oceanglider object.
 }
 \description{
+Select a portion of an glider object, specified according to one
+of two possible schemes, based on the form of the argument named
+\code{subset}. Scheme 1: if \code{subset} is a logical expression written
+in terms of data that are stored in the yos, then this expression is applied
+overall, to each 'yo' in the glider object (see Example 1). Scheme 2:
+if \code{subset} is a logical expression containing the word \code{"levels"},
+but \code{emph} not the names of any columns in the 'yo' data, then the
+expression is used as a filter to select yos (see Example 2). The two
+schemes cannot be combined in on call to the function; use nested
+calls to subset progressively.
+}
+\details{
 Note that \code{NA} values in the \code{subset} value will be dropped from
-the return value, mimicking the behaviour of the base \code{link{subset}}
+the return value, mimicking the behaviour of the base \code{\link{subset}}
 function.
 }
 \examples{
 \dontrun{
+
 # Example 1. remove wild salinities
 library(oceanglider)
 g <- read.glider(filename)
@@ -31,6 +44,9 @@ gg <- subset(g, 0 < salinity & salinity < 40)
 par(mfrow=c(2, 1))
 hist(g[["salinity"]], main="S original")
 hist(gg[["salinity"]], main="S cleaned")
+
+# Example 2. remove short yos
+gg <- subset(g, levels > 4)
 }
 
 }
