@@ -10,7 +10,7 @@
 \arguments{
 \item{x}{an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.}
 
-\item{subset}{a logical expression indicating how to take the subset.}
+\item{subset}{a logical expression indicating how to take the subset. See \dQuote{Details}.}
 
 \item{...}{ignored}
 }
@@ -20,19 +20,23 @@ An oceanglider object.
 \description{
 Select a portion of an glider object, specified according to one
 of two possible schemes, based on the form of the argument named
-\code{subset}. Scheme 1: if \code{subset} is a logical expression written
-in terms of data that are stored in the yos, then this expression is applied
-overall, to each 'yo' in the glider object (see Example 1). Scheme 2:
-if \code{subset} is a logical expression containing the word \code{"levels"},
-but \code{emph} not the names of any columns in the 'yo' data, then the
-expression is used as a filter to select yos (see Example 2). The two
-schemes cannot be combined in one call to the function; use nested
-calls to subset progressively.
+\code{subset}. Note that the schemes cannot be combined, so
+nested calls must be used to accomplish combinations.
 }
 \details{
-Note that \code{NA} values in the \code{subset} value will be dropped from
-the return value, mimicking the behaviour of the base \code{\link{subset}}
-function.
+Scheme 1: if \code{subset} is a logical expression written
+in terms of data that are stored in the yos, then this expression is applied
+overall, to each 'yo' in the glider object (see Example 1).
+
+Scheme 2: if \code{subset} is a logical expression containing
+the word \code{"levels"}, then the expression is used as a filter
+to select yos (see Example 2). Typically, this might be used to avoid
+short yos. If \code{subset} is the word \code{"ascending"}, then
+only ascending segments of yos are retained, while if it is
+\code{"descending"} then only descending segments are retained. These
+schemes only work for seaexplorer data, and they are based on filtering
+by \code{navState} (with 117 meaning an ascending portion and 100
+meaning a descending portion).
 }
 \examples{
 \dontrun{
@@ -47,6 +51,12 @@ hist(gg[["salinity"]], main="S cleaned")
 
 # Example 2. remove short yos
 gg <- subset(g, levels > 4)
+
+# Example 3. retain only ascending portions of yos
+gascending <- subset(g, "ascending")
+
+# Example 4. retain only descending portions of yos
+gdescending <- subset(g, "descending")
 }
 
 }

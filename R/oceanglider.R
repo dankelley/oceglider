@@ -48,12 +48,12 @@ setMethod(f="initialize",
 #'\itemize{
 #'
 #' \item \code{"ascending"}, which retains only \code{glider}
-#' data entries for which the \code{NavState} equals 117, and
+#' data entries for which the \code{navState} equals 117, and
 #' only \code{payload} data entries for which
 #' \code{NAV_RESOURCE} is 117.
 #'
 #' \item \code{"descending"}, which retains only \code{glider}
-#' data entries for which the \code{NavState} equals 100, and
+#' data entries for which the \code{navState} equals 100, and
 #' only \code{payload} data entries for which
 #' \code{NAV_RESOURCE} is 100.
 #'
@@ -101,10 +101,10 @@ gliderTrim <- function(x, method)#, parameters)
         stop("give method")
     res <- x
     if (method == "ascending") {
-        res@data$glider <- subset(res@data$glider, res@data$glider$NavState == 117)
+        res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 117)
     } else if (method == "descending") {
-        res@data$glider <- subset(res@data$glider, res@data$glider$NavState == 100)
+        res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
     ## } else if (method == "length") {
     ##     if (missing(parameters))
@@ -141,21 +141,25 @@ gliderTrim <- function(x, method)#, parameters)
 #'
 #' Select a portion of an glider object, specified according to one
 #' of two possible schemes, based on the form of the argument named
-#' \code{subset}. Scheme 1: if \code{subset} is a logical expression written
-#' in terms of data that are stored in the yos, then this expression is applied
-#' overall, to each 'yo' in the glider object (see Example 1). Scheme 2:
-#' if \code{subset} is a logical expression containing the word \code{"levels"},
-#' but \code{emph} not the names of any columns in the 'yo' data, then the
-#' expression is used as a filter to select yos (see Example 2). The two
-#' schemes cannot be combined in one call to the function; use nested
-#' calls to subset progressively.
+#' \code{subset}. Note that the schemes cannot be combined, so
+#' nested calls must be used to accomplish combinations.
 #'
-#' Note that \code{NA} values in the \code{subset} value will be dropped from
-#' the return value, mimicking the behaviour of the base \code{\link{subset}}
-#' function.
+#' Scheme 1: if \code{subset} is a logical expression written
+#' in terms of data that are stored in the yos, then this expression is applied
+#' overall, to each 'yo' in the glider object (see Example 1).
+#'
+#' Scheme 2: if \code{subset} is a logical expression containing
+#' the word \code{"levels"}, then the expression is used as a filter
+#' to select yos (see Example 2). Typically, this might be used to avoid
+#' short yos. If \code{subset} is the word \code{"ascending"}, then
+#' only ascending segments of yos are retained, while if it is
+#' \code{"descending"} then only descending segments are retained. These
+#' schemes only work for seaexplorer data, and they are based on filtering
+#' by \code{navState} (with 117 meaning an ascending portion and 100
+#' meaning a descending portion).
 #'
 #' @param x an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.
-#' @param subset a logical expression indicating how to take the subset.
+#' @param subset a logical expression indicating how to take the subset. See \dQuote{Details}.
 #' @param ... ignored
 #' @return An oceanglider object.
 #' @examples
@@ -171,6 +175,12 @@ gliderTrim <- function(x, method)#, parameters)
 #'
 #' # Example 2. remove short yos
 #' gg <- subset(g, levels > 4)
+#'
+#' # Example 3. retain only ascending portions of yos
+#' gascending <- subset(g, "ascending")
+#'
+#' # Example 4. retain only descending portions of yos
+#' gdescending <- subset(g, "descending")
 #'}
 #'
 #' @author Dan Kelley
@@ -186,12 +196,12 @@ setMethod(f="subset",
               if (x[["type"]] == "seaexplorer") {
                   ##.message("type is seaexplorer")
                   if (!"payload" %in% names(x@data))
-                      stop("cannot subset seaexplorer objects that lack a 'payload' item in the data slot")
+                      stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload' item in the data slot", call.=FALSE)
                   if (1 == length(grep("levels", subsetString))) {
                       if (!"payload" %in% names(x@data))
-                          stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
+                          stop("In subset,glider-method() : only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data", call.=FALSE)
                       s <- split(x@data$payload, x[["yoNumber"]])
-                      warning("only subsetting 'payload'; contact package authors, if your data have other streams")
+                      warning("In subset,glider-method() : only subsetting 'payload'; contact package authors, if your data have other streams", call.=FALSE)
                       levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
                       keepYo <- eval(substitute(subset), list(levels=levels))
                       ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
@@ -201,6 +211,12 @@ setMethod(f="subset",
                       ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
                       ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
                       res@data$payload <- x@data$payload[keepLevel, ]
+                  } else if (1 == length(grep("ascending", subsetString))) {
+                      res <- x
+                      res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
+                  } else if (1 == length(grep("descending", subsetString))) {
+                      res <- x
+                      res@data$payload <- subset(res@data$payload, res@data$payload$navState == 100)
                   } else {
                       keep <- eval(substitute(subset), x@data$payload, parent.frame())
                       ##.message("keep evaluated")

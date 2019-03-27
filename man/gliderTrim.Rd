@@ -29,12 +29,12 @@ The permitted values of \code{method} are:
 \itemize{
 
 \item \code{"ascending"}, which retains only \code{glider}
-data entries for which the \code{NavState} equals 117, and
+data entries for which the \code{navState} equals 117, and
 only \code{payload} data entries for which
 \code{NAV_RESOURCE} is 117.
 
 \item \code{"descending"}, which retains only \code{glider}
-data entries for which the \code{NavState} equals 100, and
+data entries for which the \code{navState} equals 100, and
 only \code{payload} data entries for which
 \code{NAV_RESOURCE} is 100.
 
