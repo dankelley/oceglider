@@ -37,105 +37,105 @@ setMethod(f="initialize",
           })
 
 
-#' Trim a glider Object
-#'
-#' Return a trimmed version of a glider object.
-#'
-#' At the moment, this only works for SeaExplorer data (i.e. cases in which
-#' \code{x[["type"]]=="seaexplorer"}).
-#'
-#' The permitted values of \code{method} are:
-#'\itemize{
-#'
-#' \item \code{"ascending"}, which retains only \code{glider}
-#' data entries for which the \code{navState} equals 117, and
-#' only \code{payload} data entries for which
-#' \code{NAV_RESOURCE} is 117.
-#'
-#' \item \code{"descending"}, which retains only \code{glider}
-#' data entries for which the \code{navState} equals 100, and
-#' only \code{payload} data entries for which
-#' \code{NAV_RESOURCE} is 100.
-#'
-## \item \code{"length"}, which requires also that
-## \code{parameters} be specified. This retains only \code{glider}
-## yos with more than \code{parameters$minlength} depth levels.
-#'
-#'}
-#'
-#' @param x A \code{glider} object, i.e. one inheriting from
-#' \code{\link{glider-class}}.
-#'
-#' @param method An expression indicating how to subset \code{x}. See
-#' \dQuote{Details}.
-#'
-## @param parameters A list containing extra parameters. At present,
-## this is only used if \code{method="length"}, and must contain
-## an element named \code{minimum}, an integer specifying how many
-## levels a yo must havee to avoid being discarding.
-#'
-#' @return A \code{\link{glider-class}} object that
-#' has been trimmed to contain only the data specified by
-#' \code{subset}.
-#'
-#' @author Dan Kelley
-#'
-#' @examples
-#' files <- system.file("extdata/seaexplorer/realtime",
-#'                      c("sea024.32.gli.sub.200.gz",
-#'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-#' d <- read.glider.seaexplorer.realtime(files)
-#' summary(gliderTrim(d, "ascending"))
-#' summary(gliderTrim(d, "descending"))
-#'
-#' @section Caution:
-#' This function may be subsumed into \code{\link{subset,glider-method}}, because it
-#' does similar things, and users are more likely to guess the name of the latter.
-#'
-#' @export
-gliderTrim <- function(x, method)#, parameters)
-{
-    if (!inherits(x, "glider"))
-        stop("function is only for objects of class 'glider'")
-    if (missing(method))
-        stop("give method")
-    res <- x
-    if (method == "ascending") {
-        res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
-        res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 117)
-    } else if (method == "descending") {
-        res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
-        res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
-    ## } else if (method == "length") {
-    ##     if (missing(parameters))
-    ##         stop("must give parameters, if method=\"length\"")
-    ##     if (!is.list(parameters))
-    ##         stop("parameters must be a list")
-    ##     minimum <- parameters$minimum
-    ##     if (is.null(minimum))
-    ##         stop("parameters must contain an item named \"minimum\"")
-    ##     if (x@metadata$type != "seaexplorer")
-    ##         stop("method only works for seaexplorer data; contact the package authors, if you need this for other types")
-    ##     if (!"payload" %in% names(x@data))
-    ##         stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
-    ##     gs <- split(x@data$payload, x[["yoNumber"]])
-    ##     keepYo <- unlist(lapply(gs, function(yo) {
-    ##                             n <- length(yo[["pressure"]])
-    ##                             n >= parameters$minimum } ) )
-    ##     ##. message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
-    ##     keepLevel <- unlist(lapply(gs, function(yo) {
-    ##                                n <- length(yo[["pressure"]])
-    ##                                rep(n >= parameters$minimum, n) } ) )
-    ##     ## gsk <- gs[keep]
-    ##     ## ## FIXME: do.call() seems slow; try expanding 'keep' and then index x@data$payload.
-    ##     ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keep, ])
-    ##     res@metadata$yo <- x@metadata$yo[keepYo]
-    ##     res@data$payload <- x@data$payload[keepLevel, ]
-    } else {
-        stop("method \"", method, "\" is not permitted; see ?gliderTrim for choices")
-    }
-    res
-}
+##OLD #' Trim a glider Object
+##OLD #'
+##OLD #' Return a trimmed version of a glider object.
+##OLD #'
+##OLD #' At the moment, this only works for SeaExplorer data (i.e. cases in which
+##OLD #' \code{x[["type"]]=="seaexplorer"}).
+##OLD #'
+##OLD #' The permitted values of \code{method} are:
+##OLD #'\itemize{
+##OLD #'
+##OLD #' \item \code{"ascending"}, which retains only \code{glider}
+##OLD #' data entries for which the \code{navState} equals 117, and
+##OLD #' only \code{payload} data entries for which
+##OLD #' \code{NAV_RESOURCE} is 117.
+##OLD #'
+##OLD #' \item \code{"descending"}, which retains only \code{glider}
+##OLD #' data entries for which the \code{navState} equals 100, and
+##OLD #' only \code{payload} data entries for which
+##OLD #' \code{NAV_RESOURCE} is 100.
+##OLD #'
+##OLD ## \item \code{"length"}, which requires also that
+##OLD ## \code{parameters} be specified. This retains only \code{glider}
+##OLD ## yos with more than \code{parameters$minlength} depth levels.
+##OLD #'
+##OLD #'}
+##OLD #'
+##OLD #' @param x A \code{glider} object, i.e. one inheriting from
+##OLD #' \code{\link{glider-class}}.
+##OLD #'
+##OLD #' @param method An expression indicating how to subset \code{x}. See
+##OLD #' \dQuote{Details}.
+##OLD #'
+##OLD ## @param parameters A list containing extra parameters. At present,
+##OLD ## this is only used if \code{method="length"}, and must contain
+##OLD ## an element named \code{minimum}, an integer specifying how many
+##OLD ## levels a yo must havee to avoid being discarding.
+##OLD #'
+##OLD #' @return A \code{\link{glider-class}} object that
+##OLD #' has been trimmed to contain only the data specified by
+##OLD #' \code{subset}.
+##OLD #'
+##OLD #' @author Dan Kelley
+##OLD #'
+##OLD #' @examples
+##OLD #' files <- system.file("extdata/seaexplorer/realtime",
+##OLD #'                      c("sea024.32.gli.sub.200.gz",
+##OLD #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+##OLD #' d <- read.glider.seaexplorer.realtime(files)
+##OLD #' summary(gliderTrim(d, "ascending"))
+##OLD #' summary(gliderTrim(d, "descending"))
+##OLD #'
+##OLD #' @section Caution:
+##OLD #' This function may be subsumed into \code{\link{subset,glider-method}}, because it
+##OLD #' does similar things, and users are more likely to guess the name of the latter.
+##OLD #'
+##OLD #' @export
+##OLD gliderTrim <- function(x, method)#, parameters)
+##OLD {
+##OLD     if (!inherits(x, "glider"))
+##OLD         stop("function is only for objects of class 'glider'")
+##OLD     if (missing(method))
+##OLD         stop("give method")
+##OLD     res <- x
+##OLD     if (method == "ascending") {
+##OLD         res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
+##OLD         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 117)
+##OLD     } else if (method == "descending") {
+##OLD         res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
+##OLD         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
+##OLD     ## } else if (method == "length") {
+##OLD     ##     if (missing(parameters))
+##OLD     ##         stop("must give parameters, if method=\"length\"")
+##OLD     ##     if (!is.list(parameters))
+##OLD     ##         stop("parameters must be a list")
+##OLD     ##     minimum <- parameters$minimum
+##OLD     ##     if (is.null(minimum))
+##OLD     ##         stop("parameters must contain an item named \"minimum\"")
+##OLD     ##     if (x@metadata$type != "seaexplorer")
+##OLD     ##         stop("method only works for seaexplorer data; contact the package authors, if you need this for other types")
+##OLD     ##     if (!"payload" %in% names(x@data))
+##OLD     ##         stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
+##OLD     ##     gs <- split(x@data$payload, x[["yoNumber"]])
+##OLD     ##     keepYo <- unlist(lapply(gs, function(yo) {
+##OLD     ##                             n <- length(yo[["pressure"]])
+##OLD     ##                             n >= parameters$minimum } ) )
+##OLD     ##     ##. message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+##OLD     ##     keepLevel <- unlist(lapply(gs, function(yo) {
+##OLD     ##                                n <- length(yo[["pressure"]])
+##OLD     ##                                rep(n >= parameters$minimum, n) } ) )
+##OLD     ##     ## gsk <- gs[keep]
+##OLD     ##     ## ## FIXME: do.call() seems slow; try expanding 'keep' and then index x@data$payload.
+##OLD     ##     ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keep, ])
+##OLD     ##     res@metadata$yo <- x@metadata$yo[keepYo]
+##OLD     ##     res@data$payload <- x@data$payload[keepLevel, ]
+##OLD     } else {
+##OLD         stop("method \"", method, "\" is not permitted; see ?gliderTrim for choices")
+##OLD     }
+##OLD     res
+##OLD }
 
 #' Subset a glider Object
 #'
@@ -192,9 +192,10 @@ setMethod(f="subset",
               if (missing(subset))
                   stop("must give 'subset'")
               subsetString <- paste(deparse(substitute(subset)), collapse=" ")
-              ##.message("in subset")
+              cat("in subset\n")
+              cat("subsetString is \"", subsetString, "\"\n")
               if (x[["type"]] == "seaexplorer") {
-                  ##.message("type is seaexplorer")
+                  message("type is seaexplorer")
                   if (!"payload" %in% names(x@data))
                       stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload' item in the data slot", call.=FALSE)
                   if (1 == length(grep("levels", subsetString))) {
