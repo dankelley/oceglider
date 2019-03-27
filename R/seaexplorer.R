@@ -578,7 +578,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
 
         res@data <- list(payload=df)
         res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.raw(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+                                                 paste("read.glider.seaexplorer.raw(dir=\"", dir, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     }
 }

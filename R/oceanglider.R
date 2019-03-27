@@ -457,7 +457,7 @@ setMethod(f="summary",
           signature="glider",
           definition=function(object, ...) {
               ##mnames <- names(object@metadata)
-              cat("Glider Summary\n-----------\n\n")
+              cat("Glider Summary\n--------------\n\n")
               if (2 == length(object@metadata$filename)) {
                   cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
                   cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
