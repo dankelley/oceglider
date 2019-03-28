@@ -24,7 +24,7 @@ NULL
 #' A class to hold glider information
 #' @rdname glider
 #' @export
-setClass("glider", contains="oce")
+glider <- setClass("glider", contains="oce")
 
 #' Class for Glider Objects
 #'
@@ -191,6 +191,7 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @export
+#' @aliases glider,subset-method
 setMethod(f="subset",
           signature="glider",
           definition=function(x, subset, ...) {

@@ -3,6 +3,7 @@
 \docType{methods}
 \name{subset,glider-method}
 \alias{subset,glider-method}
+\alias{glider,subset-method}
 \title{Subset a glider Object}
 \usage{
 \S4method{subset}{glider}(x, subset, ...)
