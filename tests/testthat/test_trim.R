@@ -3,14 +3,13 @@ library(oceanglider)
 
 context("oceanglider")
 
-test_that("gliderTrim(g, ascending)", {
+test_that("ascending subset", {
           files <- system.file("extdata/seaexplorer/realtime",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           g <- read.glider.seaexplorer.realtime(files)
-          expect_error(gliderTrim(g, "junk"),
-                       'method must be either "ascending" or "descending"')
-          ascending <- gliderTrim(g, "ascending")
+          ## ascending <- subset(g, "ascending") # why does this fail?
+          ascending <- subset(g, navState==117)
           expect_true(all(ascending[["NAV_RESOURCE"]] == 117))
           expect_true(all(ascending[["NAV_RESOURCE", "payload"]] == 117))
           expect_true(all(ascending[["NavState"]] == 117))
@@ -19,14 +18,13 @@ test_that("gliderTrim(g, ascending)", {
           expect_true(all(ascending[["glider"]]$NavState == 117))
 })
 
-test_that("gliderTrim(g, descending)", {
+test_that("descending subset", {
           files <- system.file("extdata/seaexplorer/realtime",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           g <- read.glider.seaexplorer.realtime(files)
-          expect_error(gliderTrim(g, "junk"),
-                       'method must be either "ascending" or "descending"')
-          descending <- gliderTrim(g, "descending")
+          ## decending <- subset(g, "descending") # why does this fail?
+          decending <- subset(g, navState==100)
           expect_true(all(descending[["NAV_RESOURCE"]] == 100))
           expect_true(all(descending[["NAV_RESOURCE", "payload"]] == 100))
           expect_true(all(descending[["NavState"]] == 100))

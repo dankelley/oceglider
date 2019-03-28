@@ -20,12 +20,22 @@
 #' @name oceanglider
 NULL
 
+#' A class to hold glider information
+#' @rdname glider
+#' @export
+#' @importClassesFrom oce oce
+setClass("glider", contains="oce")
+
 #' Class for Glider Objects
+#'
+#' @param .Object Object.
+#'
+#' @param filename Name of file.
 #'
 #' @author Dan Kelley
 #'
 #' @export
-setClass("glider", contains="oce")
+#' @importFrom methods initialize
 setMethod(f="initialize",
           signature="glider",
           definition=function(.Object, filename) {
