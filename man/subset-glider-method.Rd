@@ -3,7 +3,6 @@
 \docType{methods}
 \name{subset,glider-method}
 \alias{subset,glider-method}
-\alias{glider,subset-method}
 \title{Subset a glider Object}
 \usage{
 \S4method{subset}{glider}(x, subset, ...)
@@ -39,6 +38,13 @@ schemes only work for seaexplorer data, and they are based on filtering
 by \code{navState} (with 117 meaning an ascending portion and 100
 meaning a descending portion).
 }
+\section{Bugs}{
+
+The 'ascending' and 'descending' methods do not work. This seems
+to be a problem of exporting classes using roxygen2 tags. I am looking
+into this.  DK 2019-03-28.
+}
+
 \examples{
 \dontrun{
 

@@ -191,7 +191,11 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @export
-#' @aliases glider,subset-method
+### @aliases subset,glider-method
+#' @section Bugs:
+#' The 'ascending' and 'descending' methods do not work. This seems
+#' to be a problem of exporting classes using roxygen2 tags. I am looking
+#' into this.  DK 2019-03-28.
 setMethod(f="subset",
           signature="glider",
           definition=function(x, subset, ...) {
@@ -220,6 +224,7 @@ setMethod(f="subset",
                           ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
                           res@data$payload <- x@data$payload[keepLevel, ]
                       } else if (subset == "ascending") {
+                          ## FIXME: this fails
                           res <- x
                           res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
                       } else if (subset == "descending") {
