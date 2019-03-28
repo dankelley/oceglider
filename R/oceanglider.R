@@ -20,12 +20,17 @@
 #' @name oceanglider
 NULL
 
+
+#' A class to hold glider information
+#' @rdname glider
+#' @export
+setClass("glider", contains="oce")
+
 #' Class for Glider Objects
 #'
 #' @author Dan Kelley
 #'
 #' @export
-setClass("glider", contains="oce")
 setMethod(f="initialize",
           signature="glider",
           definition=function(.Object, filename) {
@@ -198,27 +203,30 @@ setMethod(f="subset",
                   message("type is seaexplorer")
                   if (!"payload" %in% names(x@data))
                       stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload' item in the data slot", call.=FALSE)
-                  if (1 == length(grep("levels", subsetString))) {
-                      if (!"payload" %in% names(x@data))
-                          stop("In subset,glider-method() : only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data", call.=FALSE)
-                      s <- split(x@data$payload, x[["yoNumber"]])
-                      warning("In subset,glider-method() : only subsetting 'payload'; contact package authors, if your data have other streams", call.=FALSE)
-                      levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
-                      keepYo <- eval(substitute(subset), list(levels=levels))
-                      ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
-                      res <- x
-                      res@metadata$yo <- x@metadata$yo[keepYo]
-                      keepLevel <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], levels[si])))
-                      ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
-                      ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
-                      res@data$payload <- x@data$payload[keepLevel, ]
-                  } else if (1 == length(grep("ascending", subsetString))) {
-                      res <- x
-                      res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
-                  } else if (1 == length(grep("descending", subsetString))) {
-                      res <- x
-                      res@data$payload <- subset(res@data$payload, res@data$payload$navState == 100)
+                  if (is.character(substitute(subset))) {
+                      if (1 == length(grep("levels", subsetString))) {
+                          if (!"payload" %in% names(x@data))
+                              stop("In subset,glider-method() : only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data", call.=FALSE)
+                          s <- split(x@data$payload, x[["yoNumber"]])
+                          warning("In subset,glider-method() : only subsetting 'payload'; contact package authors, if your data have other streams", call.=FALSE)
+                          levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
+                          keepYo <- eval(substitute(subset), list(levels=levels))
+                          ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+                          res <- x
+                          res@metadata$yo <- x@metadata$yo[keepYo]
+                          keepLevel <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], levels[si])))
+                          ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
+                          ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
+                          res@data$payload <- x@data$payload[keepLevel, ]
+                      } else if (subset == "ascending") {
+                          res <- x
+                          res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
+                      } else if (subset == "descending") {
+                          res <- x
+                          res@data$payload <- subset(res@data$payload, res@data$payload$navState == 100)
+                      }
                   } else {
+                      ## subset is not a string, so assume it is logical expression evaluated in parent context
                       keep <- eval(substitute(subset), x@data$payload, parent.frame())
                       ##.message("keep evaluated")
                       keep[is.na(keep)] <- FALSE

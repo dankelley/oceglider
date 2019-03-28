@@ -8,7 +8,8 @@ test_that("ascending subset", {
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           g <- read.glider.seaexplorer.realtime(files)
-          ascending <- subset(g, "ascending")
+          print(class(g))
+          capture_output(ascending <- subset(g, "ascending"), print=TRUE)
           expect_true(all(ascending[["NAV_RESOURCE"]] == 117))
           expect_true(all(ascending[["NAV_RESOURCE", "payload"]] == 117))
           expect_true(all(ascending[["navState"]] == 117))
@@ -22,7 +23,8 @@ test_that("descending subset", {
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           g <- read.glider.seaexplorer.realtime(files)
-          descending <- subset(g, "descending")
+          capture_output(print(class(g)), print=TRUE)
+          capture_output(descending <- subset(g, "descending"), print=TRUE)
           expect_true(all(descending[["NAV_RESOURCE"]] == 100))
           expect_true(all(descending[["NAV_RESOURCE", "payload"]] == 100))
           expect_true(all(descending[["navState"]] == 100))

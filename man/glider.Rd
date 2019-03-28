@@ -3,10 +3,7 @@
 \docType{class}
 \name{glider-class}
 \alias{glider-class}
-\title{Class for Glider Objects}
+\title{A class to hold glider information}
 \description{
-Class for Glider Objects
-}
-\author{
-Dan Kelley
+A class to hold glider information
 }
