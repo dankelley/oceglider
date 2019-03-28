@@ -82,7 +82,7 @@ setMethod(f="initialize",
 ##OLD #' @author Dan Kelley
 ##OLD #'
 ##OLD #' @examples
-##OLD #' files <- system.file("extdata/seaexplorer/realtime",
+##OLD #' files <- system.file("extdata/seaexplorer/sub",
 ##OLD #'                      c("sea024.32.gli.sub.200.gz",
 ##OLD #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
 ##OLD #' d <- read.glider.seaexplorer.sub(files)
@@ -118,7 +118,7 @@ setMethod(f="initialize",
 ##OLD     ##     if (x@metadata$type != "seaexplorer")
 ##OLD     ##         stop("method only works for seaexplorer data; contact the package authors, if you need this for other types")
 ##OLD     ##     if (!"payload" %in% names(x@data))
-##OLD     ##         stop("only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data")
+##OLD     ##         stop("only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data")
 ##OLD     ##     gs <- split(x@data$payload, x[["yoNumber"]])
 ##OLD     ##     keepYo <- unlist(lapply(gs, function(yo) {
 ##OLD     ##                             n <- length(yo[["pressure"]])
@@ -207,7 +207,7 @@ setMethod(f="subset",
                   if (is.character(substitute(subset))) {
                       if (1 == length(grep("levels", subsetString))) {
                           if (!"payload" %in% names(x@data))
-                              stop("In subset,glider-method() : only works for 'raw' datasets, not for 'realtime' ones; contact package authors, if you need to handle realtime data", call.=FALSE)
+                              stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
                           s <- split(x@data$payload, x[["yoNumber"]])
                           warning("In subset,glider-method() : only subsetting 'payload'; contact package authors, if your data have other streams", call.=FALSE)
                           levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))

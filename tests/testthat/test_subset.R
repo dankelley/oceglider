@@ -3,8 +3,8 @@ library(oceanglider)
 
 context("read")
 
-test_that("read realtime", {
-          files <- system.file("extdata/seaexplorer/realtime",
+test_that("read sub", {
+          files <- system.file("extdata/seaexplorer/sub",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           expect_silent(g <- read.glider.seaexplorer.sub(files))
@@ -12,7 +12,7 @@ test_that("read realtime", {
 
 ##context("subset")
 ## test_that("ascending subset", {
-##           files <- system.file("extdata/seaexplorer/realtime",
+##           files <- system.file("extdata/seaexplorer/sub",
 ##                                c("sea024.32.gli.sub.200.gz",
 ##                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
 ##           g <- read.glider.seaexplorer.sub(files)
@@ -28,7 +28,7 @@ test_that("read realtime", {
 ## })
 ## 
 ## test_that("descending subset", {
-##           files <- system.file("extdata/seaexplorer/realtime",
+##           files <- system.file("extdata/seaexplorer/sub",
 ##                                c("sea024.32.gli.sub.200.gz",
 ##                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
 ##           g <- read.glider.seaexplorer.sub(files)
