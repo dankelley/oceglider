@@ -7,7 +7,7 @@ test_that("read realtime", {
           files <- system.file("extdata/seaexplorer/realtime",
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(files))
+          expect_silent(g <- read.glider.seaexplorer.sub(files))
 })
 
 ##context("subset")
@@ -15,7 +15,7 @@ test_that("read realtime", {
 ##           files <- system.file("extdata/seaexplorer/realtime",
 ##                                c("sea024.32.gli.sub.200.gz",
 ##                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-##           g <- read.glider.seaexplorer.realtime(files)
+##           g <- read.glider.seaexplorer.sub(files)
 ##           print(class(g))
 ##           ### ## capture_output(ascending <- subset(g, "ascending"), print=TRUE)
 ##           ### capture_output(ascending <- subset(g, navState==117), print=TRUE)
@@ -31,7 +31,7 @@ test_that("read realtime", {
 ##           files <- system.file("extdata/seaexplorer/realtime",
 ##                                c("sea024.32.gli.sub.200.gz",
 ##                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-##           g <- read.glider.seaexplorer.realtime(files)
+##           g <- read.glider.seaexplorer.sub(files)
 ##           capture_output(print(class(g)), print=TRUE)
 ##           ### ## capture_output(descending <- subset(g, "descending"), print=TRUE)
 ##           ### capture_output(descending <- subset(g, navState == 100), print=TRUE)

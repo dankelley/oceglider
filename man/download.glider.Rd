@@ -53,7 +53,7 @@ url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 files <- download.glider(url, "\\\\.200\\\\.gz$",
                          destdir="~/data/glider/SEA024/M32")
 if (2 == length(files)) {
-    g <- read.glider.seaexplorer.realtime(files)
+    g <- read.glider.seaexplorer.sub(files)
     summary(g)
 }
 

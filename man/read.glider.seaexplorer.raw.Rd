@@ -40,7 +40,7 @@ after recovery.
 \details{
 While the data format is similar to the "real-time" SeaExplorer file
 format, there are some differences and
-\code{read.glider.explorer.realtime()} should be used for the latter.
+\code{\link{read.glider.seaexplorer.sub}} should be used for the latter.
 
 This function can output either "Level 0" or "Level 1" type
 data. Level 0 is simply the raw data as written in the CSV files
@@ -89,7 +89,7 @@ plot(d, which=1)
 }
 \seealso{
 Other functions for seaexplorer gliders: \code{\link{download.glider.seaexplorer}},
-  \code{\link{read.glider.seaexplorer.realtime}}
+  \code{\link{read.glider.seaexplorer.sub}}
 }
 \author{
 Clark Richards and Dan Kelley

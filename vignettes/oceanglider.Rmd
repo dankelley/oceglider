@@ -60,7 +60,7 @@ library(oceanglider)
 files <- system.file("extdata/seaexplorer/realtime",
                      c("sea024.32.gli.sub.200.gz",
                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-g <- read.glider.seaexplorer.realtime(files)
+g <- read.glider.seaexplorer.sub(files)
 ```
 
 In applying this example to other situations, it might be helpful to write a
@@ -78,7 +78,7 @@ between these two types is best explained elsewhere.)
 Now, we could get the engineering data for this yo with
 ```{r eval=FALSE}
 filenames <- download.glider(urlBIO("SEA024", 32), patternBIO(200), debug=1)
-g <- read.glider.seaexplorer.realtime(filenames)
+g <- read.glider.seaexplorer.sub(filenames)
 ```
 (which is not executed here, owing to server accessibility).
 

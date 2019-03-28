@@ -48,7 +48,7 @@
 #' yo <- 200
 #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
 #' files <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' yo2 <- read.glider.seaexplorer.realtime(files)
+#' yo2 <- read.glider.seaexplorer.sub(files)
 #' # Download (or use cache for) a set files
 #' download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 #' }
@@ -176,7 +176,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #'
 #' While the data format is similar to the "raw" SeaExplorer file
 #' format, there are some differences and
-#' \code{read.glider.explorer.raw()} should be used for the latter.
+#' \code{read.glider.seaexplorer.raw()} should be used for the latter.
 #'
 #' @param files Either a single integer, in which case it specifies
 #' a yo number for a local file, or a character value of length 2
@@ -209,7 +209,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' files <- system.file("extdata/seaexplorer/realtime",
 #'                      c("sea024.32.gli.sub.200.gz",
 #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-#' d <- read.glider.seaexplorer.realtime(files)
+#' d <- read.glider.seaexplorer.sub(files)
 #' ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
 #'               longitude=d[['longitude']], latitude=d[['latitude']])
 #' plot(ctd)
@@ -225,7 +225,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
+read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -320,7 +320,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
     }
     res@data <- list(glider=gliData, payload=pldData)
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("read.glider.seaexplorer.realtime(c(\"", files[1], "\", \"",
+                                             paste("read.glider.seaexplorer.sub(c(\"", files[1], "\", \"",
                                                    files[2], "\"), missingValue=", missingValue, ")", sep=""))
     res
 }
@@ -334,7 +334,7 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #'
 #' While the data format is similar to the "real-time" SeaExplorer file
 #' format, there are some differences and
-#' \code{read.glider.explorer.realtime()} should be used for the latter.
+#' \code{\link{read.glider.seaexplorer.sub}} should be used for the latter.
 #'
 #' This function can output either "Level 0" or "Level 1" type
 #' data. Level 0 is simply the raw data as written in the CSV files
@@ -411,7 +411,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         stop("must provide a directory with files")
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
-    navfiles <- dir(dir, pattern='*gli*', full.names=TRUE)
+    navfiles <- dir(dir, pattern='*gli*', full.names=TRUE) # FIXME: not used
     pldfiles <- dir(dir, pattern='*pld*', full.names=TRUE)
     
     yoNumber <- as.numeric(unlist(lapply(strsplit(pldfiles, '.', fixed=TRUE), tail, 1)))
@@ -427,6 +427,8 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
     
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
+    res@metadata$subtype <- "raw"
+    res@metadata$level <- level
     res@metadata$filename <- files
     res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload=list())

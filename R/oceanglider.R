@@ -22,20 +22,16 @@ NULL
 
 
 #' A class to hold glider information
-#' @rdname glider
 #' @export
 glider <- setClass("glider", contains="oce")
-
-#' Class for Glider Objects
-#'
-#' @author Dan Kelley
-#'
-#' @export
 setMethod(f="initialize",
           signature="glider",
           definition=function(.Object, filename) {
               if (!missing(filename))
                   .Object@metadata$filename <- filename
+              .Object@metadata$type <- "?"
+              .Object@metadata$subtype <- "?"
+              .Object@metadata$level <- NA # unknown at start
               .Object@processingLog$time <- as.POSIXct(Sys.time())
               .Object@processingLog$value <- "create 'glider' object"
               return(.Object)
@@ -89,7 +85,7 @@ setMethod(f="initialize",
 ##OLD #' files <- system.file("extdata/seaexplorer/realtime",
 ##OLD #'                      c("sea024.32.gli.sub.200.gz",
 ##OLD #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-##OLD #' d <- read.glider.seaexplorer.realtime(files)
+##OLD #' d <- read.glider.seaexplorer.sub(files)
 ##OLD #' summary(gliderTrim(d, "ascending"))
 ##OLD #' summary(gliderTrim(d, "descending"))
 ##OLD #'
@@ -271,7 +267,7 @@ setMethod(f="subset",
 #' Otherwise, the item is sought in the \code{data} slot. This is straightforward
 #' for objects read by \code{\link{read.glider.slocum}}, which has no
 #' repeated data items, but trickier for objects read by
-#' \code{\link{read.glider.seaexplorer.realtime}} and
+#' \code{\link{read.glider.seaexplorer.sub}} and
 #' \code{\link{read.glider.seaexplorer.raw}}, since SeaExplorer systems
 #' store data from the instrumentation that is integral to the glider
 #' in separate files than those used for the data from instrumentation
@@ -303,7 +299,7 @@ setMethod(f="[[",
           signature(x="glider", i="ANY", j="ANY"),
           definition=function(x, i, j, ...) {
               ##. message("in [[, i='", i, "'")
-              debug <- getOption("gliderDebug", default=0)
+              ##.debug <- getOption("gliderDebug", default=0)
               ## gliderDebug(debug, "glider [[ {\n", unindent=1)
               if (missing(i))
                   stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
@@ -456,10 +452,10 @@ setMethod(f="plot",
           signature="glider",
           definition=function(x, which, ...) {
               if (which == 0 || which == "map") {
-                  lat <- x[["latitude"]]
-                  lon <- x[["longitude"]]
-                  asp <- 1/cos(mean(lat*pi/180))
-                  plot(x[["longitude"]], x[["latitude"]], asp=asp,
+                  latitude <- x[["latitude"]]
+                  longitude <- x[["longitude"]]
+                  asp <- 1 / cos(mean(latitude*pi/180))
+                  plot(longitude, latitude, asp=asp,
                        xlab=resizableLabel("longitude"),
                        ylab=resizableLabel("latitude"), ...)
               } else if (which == 1 || which == "p") {
@@ -733,7 +729,7 @@ urlExists <- function(url, quiet=FALSE)
 #' files <- download.glider(url, "\\.200\\.gz$",
 #'                          destdir="~/data/glider/SEA024/M32")
 #' if (2 == length(files)) {
-#'     g <- read.glider.seaexplorer.realtime(files)
+#'     g <- read.glider.seaexplorer.sub(files)
 #'     summary(g)
 #' }
 #'
@@ -909,7 +905,7 @@ read.glider.netcdf <- function(file, debug)
 #'
 #' This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
 #' if the first argument is a string ending with \code{".nc"}, to
-#' \code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
+#' \code{\link{read.glider.seaexplorer.sub}} if it is a vector of strings, any
 #' of which contains the text \code{".sub."} followed by one or more digits, or to
 #' \code{\link{read.glider.seaexplorer.raw}} if it is a vector of strings, any
 #' contains the text \code{".raw."} followed by one or more digits.
@@ -932,7 +928,7 @@ read.glider <- function(file, debug, ...)
     if (length(file) == 1 && length(grep(".nc$", file))) {
         res <- read.glider.netcdf(file=file, debug=debug-1, ...)
     } else if (0 != length(grep(".sub.[0-9]+", file))) {
-        res <- read.glider.seaexplorer.realtime(file, debug=debug-1, ...)
+        res <- read.glider.seaexplorer.sub(file, debug=debug-1, ...)
     } else if (0 != length(grep(".raw.[0-9]+", file))) {
         res <- read.glider.seaexplorer.raw(file, debug=debug-1, ...)
     } else {

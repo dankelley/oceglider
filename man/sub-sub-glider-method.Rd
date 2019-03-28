@@ -22,7 +22,7 @@ with name given by \code{i}. If this is true, then that value is returned.
 Otherwise, the item is sought in the \code{data} slot. This is straightforward
 for objects read by \code{\link{read.glider.slocum}}, which has no
 repeated data items, but trickier for objects read by
-\code{\link{read.glider.seaexplorer.realtime}} and
+\code{\link{read.glider.seaexplorer.sub}} and
 \code{\link{read.glider.seaexplorer.raw}}, since SeaExplorer systems
 store data from the instrumentation that is integral to the glider
 in separate files than those used for the data from instrumentation
