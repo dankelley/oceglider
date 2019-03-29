@@ -9,9 +9,9 @@ head(g@data$payload[g@data$payload$yoNumber==888,])
 system(paste0("head ", dir, "sea019.54.pld1.raw.888"))
 
 head(g@data$payload[g@data$payload$yoNumber==889,])
-system("head ../data/sea019/m54/all_data/sea019.54.pld1.raw.889")
+system(paste0("head ", dir, "sea019.54.pld1.raw.889"))
 
 head(g@data$payload[g@data$payload$yoNumber==890,])
-system("head ../data/sea019/m54/all_data/sea019.54.pld1.raw.890")
+system(paste0("head ", dir, "sea019.54.pld1.raw.890"))
 
 
