@@ -10,3 +10,4 @@ sea*gz
 .DS_Store
 vignettes/*_files
 
+*.out
