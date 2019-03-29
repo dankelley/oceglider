@@ -272,15 +272,15 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
     gliData[gliData == missingValue] <- NA
 
     ##> print(names(gliData))
-    ## [1] "Timestamp"     "NavState"      "SecurityLevel" "Heading"       "Pitch"         "Roll"          "Depth"        
-    ## [8] "Temperature"   "Pa"            "Lat"           "Lon"           "DesiredH"      "BallastCmd"    "BallastPos"   
-    ## [15] "LinCmd"        "LinPos"        "AngCmd"        "AngPos"        "Voltage"       "Altitude"      "X"       
+    ## [1] "Timestamp"     "NavState"      "SecurityLevel" "Heading"       "Pitch"         "Roll"          "Depth"
+    ## [8] "Temperature"   "Pa"            "Lat"           "Lon"           "DesiredH"      "BallastCmd"    "BallastPos"
+    ## [15] "LinCmd"        "LinPos"        "AngCmd"        "AngPos"        "Voltage"       "Altitude"      "X"
     ##
     ##> print(names(pld1Data))
-    ## [1] "PLD_REALTIMECLOCK"    "NAV_RESOURCE"         "NAV_LONGITUDE"        "NAV_LATITUDE"         "NAV_DEPTH"           
-    ## [6] "FLBBCD_CHL_COUNT"     "FLBBCD_CHL_SCALED"    "FLBBCD_BB_700_COUNT"  "FLBBCD_BB_700_SCALED" "FLBBCD_CDOM_COUNT"   
-    ## [11] "FLBBCD_CDOM_SCALED"   "GPCTD_CONDUCTIVITY"   "GPCTD_TEMPERATURE"    "GPCTD_PRESSURE"       "GPCTD_DOF"           
-    ## [16] "X"                   
+    ## [1] "PLD_REALTIMECLOCK"    "NAV_RESOURCE"         "NAV_LONGITUDE"        "NAV_LATITUDE"         "NAV_DEPTH"
+    ## [6] "FLBBCD_CHL_COUNT"     "FLBBCD_CHL_SCALED"    "FLBBCD_BB_700_COUNT"  "FLBBCD_BB_700_SCALED" "FLBBCD_CDOM_COUNT"
+    ## [11] "FLBBCD_CDOM_SCALED"   "GPCTD_CONDUCTIVITY"   "GPCTD_TEMPERATURE"    "GPCTD_PRESSURE"       "GPCTD_DOF"
+    ## [16] "X"
 
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
@@ -307,6 +307,10 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
         names(gliData) <- gsub("NavState", "navState", names(gliData))
         res@metadata$dataNamesOriginal$glider$navState <- "NavState"
     }
+    if ("SecurityLevel" %in% names(gliData)) {
+        names(gliData) <- gsub("SecurityLevel", "alarm", names(gliData))
+        res@metadata$dataNamesOriginal$glider$alarm <- "SecurityLevel"
+    }
     if ("Heading" %in% names(gliData)) {
         names(gliData) <- gsub("Heading", "heading", names(gliData))
         res@metadata$dataNamesOriginal$glider$heading <- "Heading"
@@ -320,8 +324,16 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
         res@metadata$dataNamesOriginal$glider$roll <- "Roll"
     }
     if ("Depth" %in% names(gliData)) {
-        names(gliData) <- gsub("Depth", "depth", names(gliData))
-        res@metadata$dataNamesOriginal$glider$depth <- "Depth"
+        names(gliData) <- gsub("Depth", "pressureNav", names(gliData))
+        res@metadata$dataNamesOriginal$glider$pressureNav <- "Depth"
+    }
+    if ("Temperature" %in% names(gliData)) {
+        names(gliData) <- gsub("Temperature", "temperatureInternal", names(gliData))
+        res@metadata$dataNamesOriginal$glider$temperatureInternal <- "Temperature"
+    }
+    if ("Pa" %in% names(gliData)) {
+        names(gliData) <- gsub("Pa", "pressureInternal", names(gliData))
+        res@metadata$dataNamesOriginal$glider$pressureInternal <- "Pa"
     }
     if ("Lat" %in% names(gliData)) {
         gliData$Lat <- degreeMinute(gliData$Lat)
@@ -332,6 +344,10 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
         gliData$Lon <- degreeMinute(gliData$Lon)
         names(gliData) <- gsub("Lon", "longitude", names(gliData))
         res@metadata$dataNamesOriginal$glider$longitude <- "Lon"
+    }
+    if ("DesiredH" %in% names(gliData)) {
+        names(gliData) <- gsub("DesiredH", "headingDesired", names(gliData))
+        res@metadata$dataNamesOriginal$glider$desiredHeading <- "DesiredH"
     }
     if ("Voltage" %in% names(gliData)) {
         names(gliData) <- gsub("Voltage", "voltage", names(gliData))
@@ -346,8 +362,8 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
         res@metadata$dataNamesOriginal$payload1$time <- "PLD_REALTIMECLOCK"
     }
     if ("NAV_RESOURCE" %in% names(pld1Data)) {
-        names(pld1Data) <- gsub("NAV_RESOURCE", "navResource", names(pld1Data))
-        res@metadata$dataNamesOriginal$payload1$navResource <- "NAV_RESOURCE"
+        names(pld1Data) <- gsub("NAV_RESOURCE", "navState", names(pld1Data))
+        res@metadata$dataNamesOriginal$payload1$navState <- "NAV_RESOURCE"
     }
     if ("NAV_LONGITUDE" %in% names(pld1Data)) {
         names(pld1Data) <- gsub("NAV_LONGITUDE", "longitude", names(pld1Data))
@@ -364,12 +380,12 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
         res@metadata$dataNamesOriginal$payload1$pressureNav <- "NAV_DEPTH"
     }
     if ("FLBBCD_CHL_COUNT" %in% names(pld1Data)) {
-        names(pld1Data) <- gsub("FLBBCD_CHL_COUNT", "chlorophylCount", names(pld1Data))
-        res@metadata$dataNamesOriginal$payload1$chlorophylCount <- "FLBBCD_CHL_COUNT"
+        names(pld1Data) <- gsub("FLBBCD_CHL_COUNT", "chlorophyllCount", names(pld1Data))
+        res@metadata$dataNamesOriginal$payload1$chlorophyllCount <- "FLBBCD_CHL_COUNT"
     }
     if ("FLBBCD_CHL_SCALED" %in% names(pld1Data)) {
-        names(pld1Data) <- gsub("FLBBCD_CHL_SCALED", "chlorophyl", names(pld1Data))
-        res@metadata$dataNamesOriginal$payload1$chlorophyl <- "FLBBCD_CHL_SCALED"
+        names(pld1Data) <- gsub("FLBBCD_CHL_SCALED", "chlorophyll", names(pld1Data))
+        res@metadata$dataNamesOriginal$payload1$chlorophyll <- "FLBBCD_CHL_SCALED"
     }
     if ("FLBBCD_BB_700_COUNT" %in% names(pld1Data)) {
         names(pld1Data) <- gsub("FLBBCD_BB_700_COUNT", "backscatterCount", names(pld1Data))
@@ -461,9 +477,9 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 #'
 #' \item Calculate Practical salinity from conductivity, temperature
 #' and pressure using \code{swSCTp()}.
-#' 
+#'
 #' }
-#' 
+#'
 #' @param dir The directory in which the raw SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
@@ -508,22 +524,22 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
     navfiles <- dir(dir, pattern='*gli*', full.names=TRUE) # FIXME: not used
-    pld1files <- dir(dir, pattern='*pld1*', full.names=TRUE)
-    pld2files <- dir(dir, pattern='*pld2*', full.names=TRUE)
+    pld1files <- dir(dir, pattern='*.pld1.*', full.names=TRUE)
+    pld2files <- dir(dir, pattern='*.pld2.*', full.names=TRUE)
     if (length(pld2files))
         warning("pld2 files are ignored by this function; contact developers if you need to read them")
-    
+
     yoNumber <- as.numeric(unlist(lapply(strsplit(pld1files, '.', fixed=TRUE), tail, 1)))
     o <- order(yoNumber)
     yoNumber <- yoNumber[o]
     pld1files <- pld1files[o]
-    
+
     if (missing(yo))
         yo <- yoNumber
-    
+
     y <- yoNumber %in% yo
     files <- pld1files[y]
-    
+
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
     res@metadata$subtype <- "raw"
@@ -534,8 +550,8 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
 
     pld1 <- list()
     if (progressBar) {
-        cat('* Reading files...\n')
-        pb <- txtProgressBar(1, length(files), 1, style=3)
+        cat('* Reading', length(files), 'files...\n')
+        pb <- txtProgressBar(0, length(files), 0, style=3) # start at 0 to allow for a single yo
     }
     for (i in 1:length(files)) {
         if (progressBar) setTxtProgressBar(pb, i)
@@ -543,8 +559,8 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         d$yoNumber <- rep(yo[i], dim(d)[1])
         ## Rename items in payload1 data.
         if ("NAV_RESOURCE" %in% names(d)) {
-            names(d) <- gsub("NAV_RESOURCE", "navResource", names(d))
-            res@metadata$dataNamesOriginal$payload1$navResource <- "NAV_RESOURCE"
+            names(d) <- gsub("NAV_RESOURCE", "navState", names(d))
+            res@metadata$dataNamesOriginal$payload1$navState <- "NAV_RESOURCE"
         }
         if ("NAV_DEPTH" %in% names(d)) {
             names(d) <- gsub("NAV_DEPTH", "pressureNav", names(d))
@@ -577,12 +593,12 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
             res@metadata$dataNamesOriginal$payload1$oxygenFrequency <- "GPCTD_DOF"
         }
         if ("FLBBCD_CHL_COUNT" %in% names(d)) {
-            names(d) <- gsub("FLBBCD_CHL_COUNT", "chlorophylCount", names(d))
-            res@metadata$dataNamesOriginal$payload1$chlorophylCount <- "FLBBCD_CHL_COUNT"
+            names(d) <- gsub("FLBBCD_CHL_COUNT", "chlorophyllCount", names(d))
+            res@metadata$dataNamesOriginal$payload1$chlorophyllCount <- "FLBBCD_CHL_COUNT"
         }
         if ("FLBBCD_CHL_SCALED" %in% names(d)) {
-            names(d) <- gsub("FLBBCD_CHL_SCALED", "chlorophyl", names(d))
-            res@metadata$dataNamesOriginal$payload1$chlorophyl <- "FLBBCD_CHL_SCALED"
+            names(d) <- gsub("FLBBCD_CHL_SCALED", "chlorophyll", names(d))
+            res@metadata$dataNamesOriginal$payload1$chlorophyll <- "FLBBCD_CHL_SCALED"
         }
         if ("FLBBCD_BB_700_COUNT" %in% names(d)) {
             names(d) <- gsub("FLBBCD_BB_700_COUNT", "backscatterCount", names(d))
@@ -613,7 +629,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         cat('\n')
         flush.console()
     }
-    
+
     ## First remove all duplicated lon/lat
     df$longitude[which(duplicated(df$longitude))] <- NA
     df$latitude[which(duplicated(df$latitude))] <- NA
