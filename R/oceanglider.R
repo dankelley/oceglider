@@ -198,11 +198,13 @@ setMethod(f="subset",
           definition=function(x, subset, ...) {
               if (missing(subset))
                   stop("must give 'subset'")
+              dots <- list(...)
+              debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
               subsetString <- paste(deparse(substitute(subset)), collapse=" ")
-              cat("in subset\n")
-              cat("subsetString is \"", subsetString, "\"\n")
+              gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
+              gliderDebug(debug, "subsetString is ", subsetString, "\n", sep="")
               if (x[["type"]] == "seaexplorer") {
-                  message("type is seaexplorer")
+                  gliderDebug(debug, "type is seaexplorer\n")
                   if (!"payload" %in% names(x@data))
                       stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload' item in the data slot", call.=FALSE)
                   if (is.character(substitute(subset))) {
@@ -223,6 +225,7 @@ setMethod(f="subset",
                       } else if (subset == "ascending") {
                           ## FIXME: this fails
                           res <- x
+                          browser()
                           res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
                       } else if (subset == "descending") {
                           res <- x
@@ -487,12 +490,13 @@ setMethod(f="summary",
               ##mnames <- names(object@metadata)
               cat("Glider Summary\n--------------\n\n")
               if (2 == length(object@metadata$filename)) {
-                  cat(sprintf("* Input files:          \"%s\"\n", object@metadata$filename[1]))
-                  cat(sprintf("                        \"%s\"\n", object@metadata$filename[2]))
+                  cat("* Input files:\n")
+                  cat(paste("    ", object@metadata$filename[1], "\n"))
+                  cat(paste("    ", object@metadata$filename[2], "\n"))
               } else if (1 == length(object@metadata$filename)) {
                   cat(sprintf("* Input file: \"%s\"\n", object@metadata$filename))
               } else {
-                  cat("* Input file: -\n")
+                  cat("* Input files: (more than 2 files, so not listed)\n")
               }
               type <- object@metadata$type
               cat(sprintf("* Type:       %s\n", type))
@@ -507,18 +511,19 @@ setMethod(f="summary",
               if (!is.null(type) && type == "seaexplorer") {
                   if ("glider" %in% names(object@data)) {
                       ## Glider data
-                      ndata <- length(object@data$glider)
+                      glider <- as.list(object@data$glider) # this makes following code more like oce
+                      ndata <- length(glider)
                       threes <- matrix(nrow=ndata, ncol=4)
                       for (i in 1:ndata)
-                          threes[i, ] <- oce::threenum(object@data$glider[[i]])
+                          threes[i, ] <- oce::threenum(glider[[i]])
                       if (!is.null(threes)) {
-                          rownames(threes) <- paste("    ", names(object@data$glider))
-                          OriginalName <- unlist(lapply(names(object@data$glider), function(n)
+                          rownames(threes) <- paste("    ", names(glider))
+                          OriginalName <- unlist(lapply(names(glider), function(n)
                                                         if (n %in% names(object@metadata$dataNamesOriginal$glider))
                                                             object@metadata$dataNamesOriginal$glider[[n]] else "-"))
                           threes <- cbind(threes, OriginalName)
                           colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                          cat("* Data from glider's sensors:\n")
+                          cat("* Data from sensors on the glider itself:\n")
                           owidth <- options('width')
                           options(width=150) # make wide to avoid line breaks
                           print(threes, quote=FALSE)
@@ -526,20 +531,21 @@ setMethod(f="summary",
                           cat("\n")
                       }
                   }
-                  if ("payload" %in% names(object@data)) {
+                  if ("payload1" %in% names(object@data)) {
                       ## Payload data
-                      ndata <- length(object@data$payload)
+                      payload1 <- as.list(object@data$payload1) # this makes following code more like oce
+                      ndata <- length(payload1)
                       threes <- matrix(nrow=ndata, ncol=4)
                       for (i in 1:ndata)
-                          threes[i, ] <- threenum(object@data$payload[[i]])
+                          threes[i, ] <- threenum(payload1[[i]])
                       if (!is.null(threes)) {
-                          rownames(threes) <- paste("    ", names(object@data$payload))
-                          OriginalName <- unlist(lapply(names(object@data$payload), function(n)
-                                                        if (n %in% names(object@metadata$dataNamesOriginal$payload))
-                                                            object@metadata$dataNamesOriginal$payload[[n]] else "-"))
+                          rownames(threes) <- paste("    ", names(payload1))
+                          OriginalName <- unlist(lapply(names(object@data$payload1), function(n)
+                                                        if (n %in% names(object@metadata$dataNamesOriginal$payload1))
+                                                            object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
                           threes <- cbind(threes, OriginalName)
                           colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                          cat("* Data from payload's sensors:\n")
+                          cat("* Data from sensors on payload1 (any other payloads are ignored here):\n")
                           owidth <- options('width')
                           options(width=150) # make wide to avoid line breaks
                           print(threes, quote=FALSE)
