@@ -15,6 +15,7 @@
 #' options(seaexplorerURL="")
 #'}
 #'
+#' @importFrom methods new
 #' @import knitr
 #' @docType package
 #' @name oceanglider
