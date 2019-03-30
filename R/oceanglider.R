@@ -489,17 +489,27 @@ setMethod(f="summary",
           definition=function(object, ...) {
               ##mnames <- names(object@metadata)
               cat("Glider Summary\n--------------\n\n")
-              if (2 == length(object@metadata$filename)) {
+              nfiles <- length(object@metadata$filename)
+              if (nfiles == 0) {
+                  cat("* Input file: (none)\n")
+              } else if (nfiles == 1) {
+                  cat("* Input file:\n")
+                  cat("    ", object@metadata$filename[1], "\n", sep="")
+              } else if (nfiles == 2) {
                   cat("* Input files:\n")
-                  cat(paste("    ", object@metadata$filename[1], "\n"))
-                  cat(paste("    ", object@metadata$filename[2], "\n"))
-              } else if (1 == length(object@metadata$filename)) {
-                  cat(sprintf("* Input file: \"%s\"\n", object@metadata$filename))
+                  cat("    ", object@metadata$filename[1], "\n", sep="")
+                  cat("    ", object@metadata$filename[2], "\n", sep="")
               } else {
-                  cat("* Input files: (more than 2 files, so not listed)\n")
+                  cat("* Input files:\n")
+                  cat("    ", object@metadata$filename[1], "\n", sep="")
+                  cat("    ", object@metadata$filename[2], "\n", sep="")
+                  cat("    (and ", nfiles - 2, " others)\n", sep="")
               }
-              type <- object@metadata$type
-              cat(sprintf("* Type:       %s\n", type))
+              metadataNames <- names(object@metadata)
+              type <- object@metadata[["type"]]
+              cat("* Type:    ", type, sep="")
+              if ("subtype" %in% metadataNames)
+                  cat("* Subtype: ", object@metadata[["subtype"]], sep="")
               nyo <- length(object@metadata$yo)
               if (nyo == 0)
                   cat("* Yo:         (none)\n")
@@ -509,43 +519,23 @@ setMethod(f="summary",
                   cat(sprintf("* Yo:         %d values, between %d and %d\n",
                               nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               if (!is.null(type) && type == "seaexplorer") {
-                  if ("glider" %in% names(object@data)) {
-                      ## Glider data
-                      glider <- as.list(object@data$glider) # this makes following code more like oce
-                      ndata <- length(glider)
+                  for (streamName in names(object@data)) {
+                      stream <- object@data[[streamName]]
+                      ## Make a list, so following code looks more like oce code.
+                      if (is.data.frame(stream))
+                          stream <- as.list(stream)
+                      ndata <- length(stream)
                       threes <- matrix(nrow=ndata, ncol=4)
                       for (i in 1:ndata)
-                          threes[i, ] <- oce::threenum(glider[[i]])
+                          threes[i, ] <- oce::threenum(stream[[i]])
                       if (!is.null(threes)) {
-                          rownames(threes) <- paste("    ", names(glider))
-                          OriginalName <- unlist(lapply(names(glider), function(n)
-                                                        if (n %in% names(object@metadata$dataNamesOriginal$glider))
-                                                            object@metadata$dataNamesOriginal$glider[[n]] else "-"))
+                          rownames(threes) <- paste("    ", names(stream))
+                          OriginalName <- unlist(lapply(names(stream), function(n)
+                                                        if (n %in% names(object@metadata$dataNamesOriginal[[streamName]]))
+                                                            object@metadata$dataNamesOriginal[[streamName]][[n]] else "-"))
                           threes <- cbind(threes, OriginalName)
                           colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                          cat("* Data from sensors on the glider itself:\n")
-                          owidth <- options('width')
-                          options(width=150) # make wide to avoid line breaks
-                          print(threes, quote=FALSE)
-                          options(width=owidth$width)
-                          cat("\n")
-                      }
-                  }
-                  if ("payload1" %in% names(object@data)) {
-                      ## Payload data
-                      payload1 <- as.list(object@data$payload1) # this makes following code more like oce
-                      ndata <- length(payload1)
-                      threes <- matrix(nrow=ndata, ncol=4)
-                      for (i in 1:ndata)
-                          threes[i, ] <- threenum(payload1[[i]])
-                      if (!is.null(threes)) {
-                          rownames(threes) <- paste("    ", names(payload1))
-                          OriginalName <- unlist(lapply(names(object@data$payload1), function(n)
-                                                        if (n %in% names(object@metadata$dataNamesOriginal$payload1))
-                                                            object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
-                          threes <- cbind(threes, OriginalName)
-                          colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                          cat("* Data from sensors on payload1 (any other payloads are ignored here):\n")
+                          cat("* Data within the \"", streamName, "\" stream:\n", sep="")
                           owidth <- options('width')
                           options(width=150) # make wide to avoid line breaks
                           print(threes, quote=FALSE)

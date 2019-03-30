@@ -8,10 +8,12 @@ test_that("read.glider.seaexplorer.sub", {
                                c("sea024.32.gli.sub.200.gz",
                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
           expect_silent(g <- read.glider.seaexplorer.sub(files))
+          summary(g)
 })
 
 test_that("read.glider.seaexplorer.raw", {
           dir <- system.file("extdata/seaexplorer/raw", package="oceanglider")
           ##expect_silent(g <- read.glider.seaexplorer.raw(dir))
           g <- read.glider.seaexplorer.raw(dir)
+          summary(g)
 })
