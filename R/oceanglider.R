@@ -507,16 +507,16 @@ setMethod(f="summary",
               }
               metadataNames <- names(object@metadata)
               type <- object@metadata[["type"]]
-              cat("* Type:    ", type, sep="")
+              cat("* Type:    ", type, "\n", sep="")
               if ("subtype" %in% metadataNames)
-                  cat("* Subtype: ", object@metadata[["subtype"]], sep="")
+                  cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
               nyo <- length(object@metadata$yo)
               if (nyo == 0)
-                  cat("* Yo:         (none)\n")
+                  cat("* Yo:      (none)\n")
               if (nyo == 1)
-                  cat(sprintf("* Yo:         %d\n", object@metadata$yo))
+                  cat(sprintf("* Yo:      %d\n", object@metadata$yo))
               else if (nyo > 1)
-                  cat(sprintf("* Yo:         %d values, between %d and %d\n",
+                  cat(sprintf("* Yo:      %d values, between %d and %d\n",
                               nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               if (!is.null(type) && type == "seaexplorer") {
                   for (streamName in names(object@data)) {

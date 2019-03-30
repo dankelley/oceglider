@@ -650,7 +650,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
     df <- df[ok,]
 
     if (level == 0) {
-        res@data <- list(payload=df)
+        res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
                                                  paste("read.glider.seaexplorer.raw(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
@@ -694,7 +694,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         df$salinity <- with(df, swSCTp(conductivity, temperature, pressure, conductivityUnit = 'S/m'))
         df$salinity[df$salinity > 40] <- NA
 
-        res@data <- list(payload=df)
+        res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
                                                  paste("read.glider.seaexplorer.raw(dir=\"", dir, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
