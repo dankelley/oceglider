@@ -10,33 +10,42 @@
 \arguments{
 \item{x}{an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.}
 
-\item{subset}{a logical expression indicating how to take the subset. See \dQuote{Details}.}
+\item{subset}{a logical expression or a character string that indicates
+how to take the subset. See \dQuote{Details}.}
 
-\item{...}{ignored}
+\item{...}{Additional arguments, of which the only one permitted at the
+moment is \code{debug}, an integer indicating the level of debugging information
+to be permitted.}
 }
 \value{
 An oceanglider object.
 }
 \description{
 Select a portion of an glider object, specified according to one
-of two possible schemes, based on the form of the argument named
+of several possible schemes, based on the form of the argument named
 \code{subset}. Note that the schemes cannot be combined, so
 nested calls must be used to accomplish combinations.
 }
 \details{
 Scheme 1: if \code{subset} is a logical expression written
 in terms of data that are stored in the yos, then this expression is applied
-overall, to each 'yo' in the glider object (see Example 1).
+to the \code{payload1} item in the \code{data} slot of the object
+(see Example 1).
 
 Scheme 2: if \code{subset} is a logical expression containing
 the word \code{"levels"}, then the expression is used as a filter
 to select yos (see Example 2). Typically, this might be used to avoid
-short yos. If \code{subset} is the word \code{"ascending"}, then
-only ascending segments of yos are retained, while if it is
-\code{"descending"} then only descending segments are retained. These
-schemes only work for seaexplorer data, and they are based on filtering
-by \code{navState} (with 117 meaning an ascending portion and 100
-meaning a descending portion).
+short yos.
+
+Scheme 3: If \code{subset} is the string \code{"ascending"}, then
+only ascending segments of yos are retained. This is done
+by selecting for \code{navState==117} in both the \code{glider}
+and \code{payload1} streams of the \code{data} slot of the object.
+
+Scheme 4: If \code{subset} is the string \code{"descending"}, then
+only descending segments of yos are retained. This is done
+by selecting for \code{navState==100} in both the \code{glider}
+and \code{payload1} streams of the \code{data} slot of the object.
 }
 \section{Bugs}{
 

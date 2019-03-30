@@ -17,8 +17,9 @@
 #'
 #' @importFrom methods new
 #' @import knitr
+#' @import oce
 #' @docType package
-#' @name oceanglider
+#' @name oceanglider-class
 NULL
 
 
@@ -142,28 +143,41 @@ setMethod(f="initialize",
 #' Subset a glider Object
 #'
 #' Select a portion of an glider object, specified according to one
-#' of two possible schemes, based on the form of the argument named
+#' of several possible schemes, based on the form of the argument named
 #' \code{subset}. Note that the schemes cannot be combined, so
 #' nested calls must be used to accomplish combinations.
 #'
 #' Scheme 1: if \code{subset} is a logical expression written
 #' in terms of data that are stored in the yos, then this expression is applied
-#' overall, to each 'yo' in the glider object (see Example 1).
+#' to the \code{payload1} item in the \code{data} slot of the object
+#' (see Example 1).
 #'
 #' Scheme 2: if \code{subset} is a logical expression containing
 #' the word \code{"levels"}, then the expression is used as a filter
 #' to select yos (see Example 2). Typically, this might be used to avoid
-#' short yos. If \code{subset} is the word \code{"ascending"}, then
-#' only ascending segments of yos are retained, while if it is
-#' \code{"descending"} then only descending segments are retained. These
-#' schemes only work for seaexplorer data, and they are based on filtering
-#' by \code{navState} (with 117 meaning an ascending portion and 100
-#' meaning a descending portion).
+#' short yos.
+#'
+#' Scheme 3: If \code{subset} is the string \code{"ascending"}, then
+#' only ascending segments of yos are retained. This is done
+#' by selecting for \code{navState==117} in both the \code{glider}
+#' and \code{payload1} streams of the \code{data} slot of the object.
+#'
+#' Scheme 4: If \code{subset} is the string \code{"descending"}, then
+#' only descending segments of yos are retained. This is done
+#' by selecting for \code{navState==100} in both the \code{glider}
+#' and \code{payload1} streams of the \code{data} slot of the object.
 #'
 #' @param x an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.
-#' @param subset a logical expression indicating how to take the subset. See \dQuote{Details}.
-#' @param ... ignored
+#'
+#' @param subset a logical expression or a character string that indicates
+#' how to take the subset. See \dQuote{Details}.
+#'
+#' @param ... Additional arguments, of which the only one permitted at the
+#' moment is \code{debug}, an integer indicating the level of debugging information
+#' to be permitted.
+#'
 #' @return An oceanglider object.
+#'
 #' @examples
 #'\dontrun{
 #'
@@ -188,7 +202,7 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @export
-### @aliases subset,glider-method
+#' @aliases subset,glider-method
 #' @section Bugs:
 #' The 'ascending' and 'descending' methods do not work. This seems
 #' to be a problem of exporting classes using roxygen2 tags. I am looking
@@ -205,14 +219,28 @@ setMethod(f="subset",
               gliderDebug(debug, "subsetString is ", subsetString, "\n", sep="")
               if (x[["type"]] == "seaexplorer") {
                   gliderDebug(debug, "type is seaexplorer\n")
-                  if (!"payload" %in% names(x@data))
-                      stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload' item in the data slot", call.=FALSE)
+                  if (!"payload1" %in% names(x@data))
+                      stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
                   if (is.character(substitute(subset))) {
+                      gliderDebug(debug, "subset is character\n")
+                      ## subset is a character string
+                      if (subset == "ascending") {
+                          res <- x
+                          res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
+                          res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 117)
+                      } else if (subset == "descending") {
+                          res <- x
+                          res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
+                          res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 100)
+                      }
+                  } else {
+                      gliderDebug(debug, "subset is a logical expression\n")
+                      ## subset is a logical expression
                       if (1 == length(grep("levels", subsetString))) {
-                          if (!"payload" %in% names(x@data))
+                          if (!"payload1" %in% names(x@data))
                               stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
-                          s <- split(x@data$payload, x[["yoNumber"]])
-                          warning("In subset,glider-method() : only subsetting 'payload'; contact package authors, if your data have other streams", call.=FALSE)
+                          s <- split(x@data$payload1, x[["yoNumber"]])
+                          warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
                           levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
                           keepYo <- eval(substitute(subset), list(levels=levels))
                           ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
@@ -221,44 +249,33 @@ setMethod(f="subset",
                           keepLevel <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], levels[si])))
                           ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
                           ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
-                          res@data$payload <- x@data$payload[keepLevel, ]
-                      } else if (subset == "ascending") {
-                          ## FIXME: this fails
+                          res@data$glider <- x@data$glider[keepLevel, ]
+                          res@data$payload1 <- x@data$payload1[keepLevel, ]
+                      } else {
+                          warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
+                          keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
+                          keep[is.na(keep)] <- FALSE
                           res <- x
-                          browser()
-                          res@data$payload <- subset(res@data$payload, res@data$payload$navState == 117)
-                      } else if (subset == "descending") {
-                          res <- x
-                          res@data$payload <- subset(res@data$payload, res@data$payload$navState == 100)
-                      }
-                  } else {
-                      ## subset is not a string, so assume it is logical expression evaluated in parent context
-                      keep <- eval(substitute(subset), x@data$payload, parent.frame())
-                      ##.message("keep evaluated")
-                      keep[is.na(keep)] <- FALSE
-                      ##.message("remove NA from keep")
-                      res <- x
-                      ##.str(keep)
-                      ##.str(x@data$payload)
-                      res@data$payload <- x@data$payload[keep,]
-                      ##.str(res@data$payload)
-                      ##.message("payload done")
-                      for (i in seq_along(x@metadata$flags)) {
-                          ##.message("i=", i)
-                          res@metadata$flags[[i]] <- x$metadata$flags[[i]][keep]
+                          res@data[["payload1"]] <- x@data[["payload1"]][keep,]
+                          for (i in seq_along(x@metadata$flags)) {
+                              res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+                          }
                       }
                   }
               } else {
+                  ## warning("subsetting of non-seaexplorer has not been tested yet")
                   keep <- eval(substitute(subset), x@data, parent.frame())
                   keep[is.na(keep)] <- FALSE
                   res <- x
                   res@data <- subset(x@data, keep)
-                  for (i in seq_along(x@metadata$flags))
+                  for (i in seq_along(x@metadata$flags)) {
                       res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+                  }
               }
               res@processingLog <- processingLogAppend(res@processingLog,
-                                                        paste(deparse(match.call(call=sys.call(sys.parent(1)))),
-                                                              sep="", collapse=""))
+                                                       paste(deparse(match.call(call=sys.call(sys.parent(1)))),
+                                                             sep="", collapse=""))
+              gliderDebug(debug, "} # subset,glider-method\n", sep="", unindent=1)
               res
           })
 
@@ -420,20 +437,36 @@ setMethod(f="[[",
 #' @param which Integer or character value specifying which style is
 #' to be used; see \dQuote{Details}.
 #'
-#' @param ... Ignored in the present version.
+#' @template debug
+#'
+#' @param ... ignored.
 #'
 #' @importFrom oce oce.plot.ts plotTS resizableLabel
+#'
 #' @importFrom graphics plot
 #'
 #' @examples
-#'\dontrun{
 #' library(glider)
+#' files <- system.file("extdata/seaexplorer/sub",
+#'                      c("sea021.49.gli.sub.100.gz",
+#'                        "sea021.49.pld1.sub.100.gz"), package="oceanglider")
+#' g <- read.glider.seaexplorer.sub(files)
+#'
+#' # Example 1. A single yo of (low-resolution) "sub" data
+#' plot(g, which="p")
+#' plot(g, which="S")
+#' plot(g, which="T")
+#' plot(g, which="TS")
+#' plot(g, which="map")
+#'
+#' # FIXME: replace the remnants given below with interesting examples using
+#' # FIXME: raw data, when we get read.glider.seaexplorer.raw() working.
+#'
+#'\dontrun{
 #' # These files are much too large to provide, so no sample
 #' # file is provided.
 #' g <- read.glider(filename)
 #'
-#' # Example 1. Pressure-time plot
-#' plot(g, which="p")
 #'
 #' # Example 2. Pressure-time plot, with dots (which slows things down!)
 #' plot(g, which="p", type="p", cex=0.5)
@@ -451,11 +484,15 @@ setMethod(f="[[",
 #' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
 #'      mar=c(2, 3.5, 2, 4))
 #'}
+#'
 #' @export
 setMethod(f="plot",
           signature="glider",
-          definition=function(x, which, ...) {
+          definition=function(x, which, debug, ...) {
+              debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
+              gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
               if (which == 0 || which == "map") {
+                  gliderDebug(debug, "map plot\n", sep="")
                   latitude <- x[["latitude"]]
                   longitude <- x[["longitude"]]
                   asp <- 1 / cos(mean(latitude*pi/180))
@@ -463,16 +500,18 @@ setMethod(f="plot",
                        xlab=resizableLabel("longitude"),
                        ylab=resizableLabel("latitude"), ...)
               } else if (which == 1 || which == "p") {
-                  oce.plot.ts(x[["time"]], x[["pressure"]], ylab=resizableLabel("p"), ...)
+                  gliderDebug(debug, "pressure time-series plot\n", sep="")
+                  oce.plot.ts(x[["time"]], x[["pressure"]], ylab=resizableLabel("p"), debug=debug-1, ...)
               } else if (which == 2 || which == "T") {
-                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), ...)
+                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, ...)
               } else if (which == 3 || which == "S") {
-                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), ...)
+                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, ...)
               } else if (which == 4 || which == "TS") {
-                  plotTS(x, ...)
+                  plotTS(x, debug=debug-1, ...)
               } else {
                   stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
               }
+              gliderDebug(debug, "} # plot,glider-method\n", sep="", unindent=1)
           })
 
 #' Summarize a glider Object
