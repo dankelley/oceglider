@@ -26,6 +26,8 @@ NULL
 #' A class to hold glider information
 #' @export
 glider <- setClass("glider", contains="oce")
+
+
 setMethod(f="initialize",
           signature="glider",
           definition=function(.Object, filename) {
@@ -44,8 +46,8 @@ seaexplorerNavState <- list("not navigating"=105,
                             "at surface"=116,
                             "inflecting down"=110,
                             "descent"=100,
-                            "inflecting up"=117,
-                            "ascent"=118)
+                            "inflecting up"=118,
+                            "ascent"=117)
 # +105 means the glider is not navigating yet;
 # +115 means the glider is surfacing in preparation for communication;
 # +116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
