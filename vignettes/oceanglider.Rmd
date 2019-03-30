@@ -34,13 +34,38 @@ development.
 
 # Introduction
 
-The first step in working with glider data is normally to download them from a
-server, and the lack of URL conventions for such servers makes this a
-challenging task. The `download.glider()` function is provided to download
-glider files from a server, caching the files locally to speed processing.
-Using this function demands an understanding of the dataset naming convention
-and the server file structure; see the individual examples below, but be aware
-that they are only known to work for a few individual datasets.
+FIXME: write a couple of paragraphs here about what this package is designed
+for, its state of completion, etc.
+
+
+# Data Sources
+
+The first step in working with glider data is often to download them from a
+server. The lack of URL conventions for such servers can make this a somewhat
+challenging task to discuss in general terms, and the same can be said about
+the variety of file layouts and file names, both across glider types and even
+within glider types.
+
+Once data are downloaded, there is an additional task of deciding how to
+organize the data locally. At the time of writing, the developers of this
+package are leaning towards a scheme with directories named like
+```
+/data/glider/2019/seaexplorer/sea021/m49/raw
+/data/glider/2019/seaexplorer/sea021/m49/sub
+```
+for seaexplorer data. Here, `sea021` refers to seaexplorer glider number owned
+by a particular institute, and `m49` refers to the mission number. The first of
+these directories holds "raw" data, i.e. the full datasets as downloaded a
+glider after recovery, and the second holds "sub" data, i.e. subsets provided
+by the glider during its transmissions while underway on a mission.
+
+A similar scheme might be employed for other glider types, replacing
+`seaexplorer` with `slocum`, for example.
+
+Examples of some of these data files are stored within this R package, and are
+available using the `system.file` function, as shown throughout this vignette.
+This should make it easier for readers to learn how to use this package.
+
 
 # SeaExplorer Gliders
 
