@@ -39,6 +39,21 @@ setMethod(f="initialize",
               return(.Object)
           })
 
+seaexplorerNavState <- list("not navigating"=105,
+                            "surfacing"=115,
+                            "at surface"=116,
+                            "inflecting down"=110,
+                            "descent"=100,
+                            "inflecting up"=117,
+                            "ascent"=118)
+# +105 means the glider is not navigating yet;
+# +115 means the glider is surfacing in preparation for communication;
+# +116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
+# +110 means the glider is inflecting downward;
+# +100 means the glider has ballast set to be descending;
+# +118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
+# +117 means the glider has ballast set to be ascending.
+
 
 ##OLD #' Trim a glider Object
 ##OLD #'
@@ -430,6 +445,22 @@ setMethod(f="[[",
 #' \code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
 #' details.
 #'
+#' \item \code{which=5} or \code{which="navState"}: time-series of the
+#' navigation state, stored as the \code{navState} item within
+#' the \code{payload1} element of the \code{data} slot. The meanings
+#' of the states are:
+#' \code{navState=105} means the glider is not navigating yet;
+#' \code{navState=115} means the glider is surfacing
+#' in preparation for communication;
+#' \code{navState=116} means the glider is at the surface,
+#' acquiring a GPS signal, and is communicating;
+#' \code{navState=110} means the glider is inflecting downward;
+#' \code{navState=100} means the glider has ballast set to be descending;
+#' \code{navState=118} means the glider has ballast adjusted to reduce density,
+#' so will be inflecting  upward; and
+#' \code{navState=117} means the glider has ballast set to be ascending.
+#' Lines and notes in the plot border indicate these states and meanings.
+#'
 #'}
 #'
 #' @param x A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
@@ -442,8 +473,7 @@ setMethod(f="[[",
 #' @param ... ignored.
 #'
 #' @importFrom oce oce.plot.ts plotTS resizableLabel
-#'
-#' @importFrom graphics plot
+#' @importFrom graphics abline par plot text
 #'
 #' @examples
 #' library(glider)
@@ -458,6 +488,7 @@ setMethod(f="[[",
 #' plot(g, which="T")
 #' plot(g, which="TS")
 #' plot(g, which="map")
+#' plot(g, which="navState")
 #'
 #' # FIXME: replace the remnants given below with interesting examples using
 #' # FIXME: raw data, when we get read.glider.seaexplorer.raw() working.
@@ -508,6 +539,23 @@ setMethod(f="plot",
                   oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, ...)
               } else if (which == 4 || which == "TS") {
                   plotTS(x, debug=debug-1, ...)
+              } else if (which == 5 || which == "navState") {
+                  oce.plot.ts(x[["time"]], x[["navState"]],
+                              xlab="Time", ylab="navState", type="p",
+                              mar=c(3, 3, 1, 6))
+                  for (ii in seq_along(seaexplorerNavState)) {
+                      abline(h=seaexplorerNavState[[ii]], col="darkgray")
+                  }
+                  # labels in margin, not rotated so we can read them.
+                  oxpd <- par("xpd")
+                  par(xpd=NA)
+                  tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])
+                  for (ii in seq_along(seaexplorerNavState)) {
+                      text(tmax, seaexplorerNavState[[ii]],
+                           paste0(" ", names(seaexplorerNavState[ii])),
+                           col="darkgray", cex=0.75, xpd=TRUE, pos=4)
+                  }
+                  par(xpd=oxpd)
               } else {
                   stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
               }

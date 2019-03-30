@@ -57,6 +57,22 @@ with dots for data and labels indicating density anomaly; see
 \code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
 details.
 
+\item \code{which=5} or \code{which="navState"}: time-series of the
+navigation state, stored as the \code{navState} item within
+the \code{payload1} element of the \code{data} slot. The meanings
+of the states are:
+\code{navState=105} means the glider is not navigating yet;
+\code{navState=115} means the glider is surfacing
+in preparation for communication;
+\code{navState=116} means the glider is at the surface,
+acquiring a GPS signal, and is communicating;
+\code{navState=110} means the glider is inflecting downward;
+\code{navState=100} means the glider has ballast set to be descending;
+\code{navState=118} means the glider has ballast adjusted to reduce density,
+so will be inflecting  upward; and
+\code{navState=117} means the glider has ballast set to be ascending.
+Lines and notes in the plot border indicate these states and meanings.
+
 }
 }
 \examples{
@@ -72,6 +88,7 @@ plot(g, which="S")
 plot(g, which="T")
 plot(g, which="TS")
 plot(g, which="map")
+plot(g, which="navState")
 
 # FIXME: replace the remnants given below with interesting examples using
 # FIXME: raw data, when we get read.glider.seaexplorer.raw() working.

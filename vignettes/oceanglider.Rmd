@@ -155,6 +155,15 @@ g[["navState"]]
 (It is not entirely clear why data were recorded at the first instance of
 `navState` equaling 100, but not at the following instances.)
 
+**Aside:** the `navState` values are as follows:
+105 means the glider is not navigating yet;
+115 means the glider is surfacing in preparation for communication;
+116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
+110 means the glider is inflecting downward;
+100 means the glider has ballast set to be descending;
+118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
+117 means the glider has ballast set to be ascending.
+
 A common operation is to create a `"ctd"` object, with the `as.ctd` from the
 `oce` package, as follows.
 
