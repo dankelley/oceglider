@@ -20,7 +20,7 @@ If \code{stream} is \code{"?"}, the data repository will
 be examined, and a message will be printed about possible values.}
 
 \item{glider}{Name Character value indicating the name of the
-glider. This is probably in a form like \code{"SEA024"}.
+glider. This is probably in a form like \code{"SEA021"}.
 If \code{glider} is \code{"?"}, the data repository will
 be examined, and a message will be printed about possible values.}
 
@@ -55,7 +55,7 @@ will be interrogated to try to determine possible choices.
 \dontrun{
 # Download and read a file (default server, mission, etc)
 yo <- 200
-url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+url <- "ftp://SERVER/PATH"
 files <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
 yo2 <- read.glider.seaexplorer.sub(files)
 # Download (or use cache for) a set files

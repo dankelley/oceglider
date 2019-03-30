@@ -115,13 +115,9 @@ authors, if you need to handle such files.
 
 \examples{
 library(oceanglider)
-## # Download and read a file (default server, mission, etc)
-## yo <- 200
-## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-## filenames <- download.glider(url, paste("\\\\.", yo, "\\\\.gz$", sep=""), debug=1)
 files <- system.file("extdata/seaexplorer/sub",
-                     c("sea024.32.gli.sub.200.gz",
-                       "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+                     c("sea021.49.gli.sub.100.gz",
+                       "sea021.49.pld1.sub.100.gz"), package="oceanglider")
 d <- read.glider.seaexplorer.sub(files)
 ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
               longitude=d[['longitude']], latitude=d[['latitude']])

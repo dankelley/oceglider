@@ -5,16 +5,16 @@ context("read")
 
 test_that("read sub", {
           files <- system.file("extdata/seaexplorer/sub",
-                               c("sea024.32.gli.sub.200.gz",
-                                 "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+                               c("sea021.49.gli.sub.100.gz",
+                                 "sea021.49.pld1.sub.100.gz"), package="oceanglider")
           expect_silent(g <- read.glider.seaexplorer.sub(files))
 })
 
 ##context("subset")
 ## test_that("ascending subset", {
 ##           files <- system.file("extdata/seaexplorer/sub",
-##                                c("sea024.32.gli.sub.200.gz",
-##                                  "sea024.32.pld1.sub.200.gz"), package="oceanglider")
+##                                c("sea021.49.gli.sub.100.gz",
+##                                  "sea021.49.pld1.sub.100.gz"), package="oceanglider")
 ##           g <- read.glider.seaexplorer.sub(files)
 ##           print(class(g))
 ##           ### ## capture_output(ascending <- subset(g, "ascending"), print=TRUE)
