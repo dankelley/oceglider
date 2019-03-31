@@ -34,81 +34,177 @@ development.
 
 # Introduction
 
-The first step in working with glider data is normally to download them from a
-server, and the lack of URL conventions for such servers makes this a
-challenging task. The `download.glider()` function is provided to download
-glider files from a server, caching the files locally to speed processing.
-Using this function demands an understanding of the dataset naming convention
-and the server file structure; see the individual examples below, but be aware
-that they are only known to work for a few individual datasets.
+FIXME: write a couple of paragraphs here about what this package is designed
+for, its state of completion, etc.
+
+
+# Data Sources
+
+The first step in working with glider data is often to download them from a
+server. The lack of URL conventions for such servers can make this a somewhat
+challenging task to discuss in general terms, and the same can be said about
+the variety of file layouts and file names, both across glider types and even
+within glider types.
+
+Once data are downloaded, there is an additional task of deciding how to
+organize the data locally. At the time of writing, the developers of this
+package are leaning towards a scheme with directories named like
+```
+/data/glider/2019/seaexplorer/sea021/m49/raw
+/data/glider/2019/seaexplorer/sea021/m49/sub
+```
+for seaexplorer data. Here, `sea021` refers to seaexplorer glider number owned
+by a particular institute, and `m49` refers to the mission number. The first of
+these directories holds "raw" data, i.e. the full datasets as downloaded a
+glider after recovery, and the second holds "sub" data, i.e. subsets provided
+by the glider during its transmissions while underway on a mission.
+
+A similar scheme might be employed for other glider types, replacing
+`seaexplorer` with `slocum`, for example.
+
+Examples of some of these data files are stored within this R package, and are
+available using the `system.file` function, as shown throughout this vignette.
+This should make it easier for readers to learn how to use this package.
+
 
 # SeaExplorer Gliders
 
-NOTE: The data used in the following are private. The URL structure in the
-following example is subject to change without notice.
+## Reading files
 
-The portion `SEA024` indicates that this is the glider named 24, and the `M25`
-portion refers to the 25-th mission. The pattern, the second argument The
-`pld1` in the file pattern requests data from the science stream, the `.2.`
-portion indicates that data from the the second descent/ascent sequence (or
-'yo') is sought.
-
+This package comes with some sample data files that can be used for practice and
+illustration.  For example,
 ```{r}
 library(oceanglider)
-## url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-## filenames <- download.glider(url, "\\.200\\.gz$")
-files <- system.file("extdata/seaexplorer/realtime",
-                     c("sea024.32.gli.sub.200.gz",
-                       "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-g <- read.glider.seaexplorer.realtime(files)
+files <- system.file("extdata/seaexplorer/sub",
+                     c("sea021.49.gli.sub.100.gz",
+                       "sea021.49.pld1.sub.100.gz"),
+                     package="oceanglider")
 ```
-
-In applying this example to other situations, it might be helpful to write a
-function for generating URLS, e.g. perhaps
+finds the names of two "sub" files (these are files transmitted by the glider
+when it is underway; think of the "sub" as an abbreviation for subset).
+Reading these files is done with the
+[`read.glider.seaexplorer.sub`](../help/read.glider.seaexplorer.sub) function,
+e.g.
 ```{r}
-urlBIO <- function(glider="024", mission=32)
-    paste("ftp://ftp.dfo-mpo.gc.ca/glider/realData/", glider, "/M", mission, sep="")
-patternBIO <- function(yo=2)
-    paste("\\.", yo, "\\.gz$", sep="")
+g <- read.glider.seaexplorer.sub(files)
 ```
-where in \code{patternBIO()} using \code{type="pld1"} will yield the 'science'
-data, and \code{type="gli"}  will yield the navigation data. (The distinction
-between these two types is best explained elsewhere.)
 
-Now, we could get the engineering data for this yo with
-```{r eval=FALSE}
-filenames <- download.glider(urlBIO("SEA024", 32), patternBIO(200), debug=1)
-g <- read.glider.seaexplorer.realtime(filenames)
+Note that the files in the above example have been compressed using gzip, hence
+the `".gz"` in the filenames. This is not always the case.  The presence of
+`"sub"` in the filenames indicates that these are subset files (i.e. files
+transmitted whilst the glider was sampling). Files with `"raw"` in the filename
+hold the fuller datasets that are downloaded from the glider after recover, and
+such files are read with `read.glider.seaexplorer.raw()`.
+
+## Summarizing data
+
+The generic `summary()` function has a specialization for glider data, so a
+good way to learn about a dataset is with e.g.
+```{r}
+summary(g)
 ```
-(which is not executed here, owing to server accessibility).
 
-Once we have the data, it can be useful to examine the `glider` and `payload`
-components, e.g. with
+The output of this function is in a form that will be familiar to users of the
+`oce` package, with a summary of metadata being given first, then a summary of
+the data, and then a listing of some steps in the processing.
+
+Note in particular how variable names have been changed from those in the
+original files.
+
+## Examining data
+
+The data are stored in two streams: one, called `glider`, holds data acquired
+with sensors on the glider itself, and the other, called `payload1`, holds data
+acquired with the first instrumental payload.
+
+The first two lines of the glider stream are given by
+
 ```{r}
 head(g[["glider"]], 3)
-head(g[["payload"]], 3)
 ```
 
-The payload is the preferred data source (consult `help("[[,glider-method")`
-for the details of how `[[` works for `glider` objects), so we can make a CTD
-object and plot it, before and after trimming to the upcast.
+The first two lines in the payload are given by
+```{r}
+head(g[["payload1"]], 3)
+```
+
+Actually, in this particular case, the second call could have been
+written as
+```{r}
+head(g[["payload"]], 3)
+```
+because this glider only had a single payload, However, the first form is
+preferable, in terms of code clarity.
+
+It should be noted that the `"salinity"` item is not actually stored in the
+data file, but is instead computed (as Practical Salinity) during the reading
+process.
+
+## Data extraction
+
+The `[[` notation from the `oce` package is overloaded here. For example,
+the pressures in the glider object may be extracted with
+```{r}
+g[["pressure"]]
+```
+The `NA` values result from the setup of the glider to record only in
+particular states of its vertical trajectory. Those states may be found with
+```{r}
+g[["navState"]]
+```
+(It is not entirely clear why data were recorded at the first instance of
+`navState` equaling 100, but not at the following instances.)
+
+**Aside:** the `navState` values are as follows:
+105 means the glider is not navigating yet;
+115 means the glider is surfacing in preparation for communication;
+116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
+110 means the glider is inflecting downward;
+100 means the glider has ballast set to be descending;
+118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
+117 means the glider has ballast set to be ascending.
+
+A common operation is to create a `"ctd"` object, with the `as.ctd` from the
+`oce` package, as follows.
+
 ```{r}
 library(oce)
 ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
               longitude=g[["longitude"]], latitude=g[["latitude"]])
+```
+
+The `oce` package has a `summary()` function that provides output that is similar
+to that of the present package, e.g.
+```{r}
 summary(ctd)
+```
+
+The `oce` package also provides a way to get a simple summary plot, as follows.
+
+```{r fig.cap="**Figure 1.** CTD plot of a glider yo."}
 oce::plot(ctd)
 ```
 
-Note that there seems to be a retracing in the diagrams. To see why, use
-```{r}
+In Figure 1, the top left panel shows profiles of salinity and temperature, the
+top right panel shows potential density anomaly and the square of buoyancy
+frequency, the lower left panel is a temperature-salinity diagram, and the
+bottom right panel is a map showing the sampling location (southeast of
+Halifax, Nova Scotia).
+
+Note the retracing in some of the panels of Figure 1. To see why, we may use
+the `plotScan` function provided by the `oce` package.
+```{r fig.cap="**Figure 2.** Time history of pressure and scan-number for a glider yo. (The scan is a sequence number in the CTD object.)"}
 plotScan(ctd, type="o")
 ```
-which tells us that there is a stray point from a surface interval. We *should* be
-able to isolate the upcast by keying on `g[["NAV_RESOURCE"]]==100` but that does not
-work, because of this stray point. But, as a stopgap measure, we can use `ctdTrim()` to
-get better results:
-```{r}
+
+Figure 2 indicates that there are two points near the surface, then a lack of
+points during what a descent phase, and then a series of points during the
+ascent phase.
+
+The `oce` package offers a way to isolate the data, using `ctdTrim`; thus, we
+can get a standard CTD plot as follows.
+
+```{r fig.cap="**Figure 3.** Trimmed CTD plot, showing just data measured during the upcast."}
 oce::plot(ctdTrim(ctd, "upcast"))
 ```
 

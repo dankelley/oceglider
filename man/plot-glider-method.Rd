@@ -5,7 +5,7 @@
 \alias{plot,glider-method}
 \title{Plot a glider Object}
 \usage{
-\S4method{plot}{glider}(x, which, ...)
+\S4method{plot}{glider}(x, which, debug, ...)
 }
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
@@ -13,7 +13,18 @@
 \item{which}{Integer or character value specifying which style is
 to be used; see \dQuote{Details}.}
 
-\item{...}{Ignored in the present version.}
+\item{debug}{an integer specifying whether debugging information is
+to be printed during processing. If this is not provided, then
+the value of \code{\link{getOption}("gliderDebug",0)} is used.
+The printing is done by a call to \code{\link{gliderDebug}}.
+Setting \code{debug=0} turns off this form of debugging, while
+higher values may yield more information, depending on the
+function. If one \code{glider} function calls another, it
+passes the value of \code{debug} but decreased by 1, which means
+that the value of \code{debug} controls not just the breadth
+of debugging, but also the depth.}
+
+\item{...}{ignored.}
 }
 \description{
 This is a limited function that is intended for quick views of a dataset.
@@ -46,17 +57,47 @@ with dots for data and labels indicating density anomaly; see
 \code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
 details.
 
+\item \code{which=5} or \code{which="navState"}: time-series of the
+navigation state, stored as the \code{navState} item within
+the \code{payload1} element of the \code{data} slot. The meanings
+of the states are:
+\code{navState=105} means the glider is not navigating yet;
+\code{navState=115} means the glider is surfacing
+in preparation for communication;
+\code{navState=116} means the glider is at the surface,
+acquiring a GPS signal, and is communicating;
+\code{navState=110} means the glider is inflecting downward;
+\code{navState=100} means the glider has ballast set to be descending;
+\code{navState=118} means the glider has ballast adjusted to reduce density,
+so will be inflecting  upward; and
+\code{navState=117} means the glider has ballast set to be ascending.
+Lines and notes in the plot border indicate these states and meanings.
+
 }
 }
 \examples{
-\dontrun{
 library(glider)
+files <- system.file("extdata/seaexplorer/sub",
+                     c("sea021.49.gli.sub.100.gz",
+                       "sea021.49.pld1.sub.100.gz"), package="oceanglider")
+g <- read.glider.seaexplorer.sub(files)
+
+# Example 1. A single yo of (low-resolution) "sub" data
+plot(g, which="p")
+plot(g, which="S")
+plot(g, which="T")
+plot(g, which="TS")
+plot(g, which="map")
+plot(g, which="navState")
+
+# FIXME: replace the remnants given below with interesting examples using
+# FIXME: raw data, when we get read.glider.seaexplorer.raw() working.
+
+\dontrun{
 # These files are much too large to provide, so no sample
 # file is provided.
 g <- read.glider(filename)
 
-# Example 1. Pressure-time plot
-plot(g, which="p")
 
 # Example 2. Pressure-time plot, with dots (which slows things down!)
 plot(g, which="p", type="p", cex=0.5)
@@ -74,4 +115,5 @@ drawPalette(colormap=cm)
 plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
      mar=c(2, 3.5, 2, 4))
 }
+
 }
