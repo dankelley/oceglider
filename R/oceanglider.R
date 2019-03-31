@@ -234,7 +234,7 @@ setMethod(f="subset",
               debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
               subsetString <- paste(deparse(substitute(subset)), collapse=" ")
               gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
-              gliderDebug(debug, "subsetString is ", subsetString, "\n", sep="")
+              gliderDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
               if (x[["type"]] == "seaexplorer") {
                   gliderDebug(debug, "type is seaexplorer\n")
                   if (!"payload1" %in% names(x@data))
@@ -273,6 +273,7 @@ setMethod(f="subset",
                           warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
                           keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
                           keep[is.na(keep)] <- FALSE
+                          gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
                           res <- x
                           res@data[["payload1"]] <- x@data[["payload1"]][keep,]
                           for (i in seq_along(x@metadata$flags)) {
@@ -344,11 +345,10 @@ setMethod(f="subset",
 #'
 #' \item the \code{payload1} item in \code{data} slot, with e.g. \code{x[["payload1"]]}
 #'
-#' \item the Conservative Temperature calculated from water properties, with e.g. 
-#' \code{x[["CT"]]}
-#'
-#' \item the Absolute Salinity calculated from water properties, with e.g. 
-#' \code{x[["SA"]]}
+#' \item the Absolute Salinity is returned with e.g.
+#' \code{x[["SA"]]}. This is computed with
+#' \code{\link[gsw]{gsw_SA_from_SP}}, based on the water properties
+#' stoed in the object. (See also the item for Conservative Temperature)
 #'
 #' \item the sigma-theta density anomaly calculated using
 #' \code{\link[oce]{swSigmaTheta}} on the water properties stored in the object,
@@ -356,17 +356,24 @@ setMethod(f="subset",
 #' equation of state, set up \code{\link{options}(oceEOS="gsw")} for the
 #' TEOS-10/GSW variant or \code{\link{options}(oceEOS="unesco")} for the
 #' older UNESCO variant.
+#'
+#' \item the Conservative Temperatuer is returned with e.g.
+#' \code{x[["CT"]]}. This is computed with
+#' \code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
+#' stoed in the object. (See also the item for Absolute Salinity.)
 #' 
-#' \item the sigma0 density anomaly calculated using \code{\link[oce]{swSigma0}}
-#' using the water properties stored in the object, with e.g. 
-#' \code{x[["sigma0"]]}. This obeys the setting of the equation of state,
+#' \item the sigma0 density anomaly is returned with e.g.
+#' \code{x[["sigma0"]]}. This is computed with
+#' \code{\link[oce]{swSigma0}}  based on the water properties
+#' stored in the object.
+#' Note that the computation depends on the setting of the equation of state,
 #' set up \code{\link{options}(oceEOS="gsw")} for the TEOS-10/GSW variant
 #' or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
 #'
-#' \item the spiciness0 water property calculated using
-#' \code{\link[gsw]{gsw_spiciness0}}
-#' using the water properties stored in the object. (Note that this
-#' is the TEOS-10/GSW variant.)
+#' \item the spiciness0 water property is returned with e.g.
+#' \code{x[["spiciness0"]]}. This is computed with
+#' \code{\link[gsw]{gsw_spiciness0}}, based on the water properties
+#' stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 #'
 #' \item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
 #' yo.
@@ -408,19 +415,29 @@ setMethod(f="[[",
                   stop("'type' is NULL")
               if (i == "type")
                   return(type)
-              if (i == "sigmaTheta") {
+              if (i == "sigmaTheta")
                   return(swSigmaTheta(salinity=x[["salinity"]],
                                       temperature=x[["temperature"]],
                                       pressure=x[["pressure"]],
                                       longitude=x[["longitude"]],
                                       latitude=x[["latitude"]]))
-              } else if (i == "sigma0") {
+              if (i == "sigma0")
                   return(swSigma0(salinity=x[["salinity"]],
                                   temperature=x[["temperature"]],
                                   pressure=x[["pressure"]],
                                   longitude=x[["longitude"]],
                                   latitude=x[["latitude"]]))
-              } else if (i == "spiciness0") {
+              if (i == "SA")
+                  return(gsw_SA_from_SP(SP=x[["salinity"]], p=x[["pressure"]],
+                                        longitude=x[["longitude"]], latitude=x[["latitude"]]))
+              if (i == "CT") {
+                  t <- x[["temperature"]]
+                  SP <- x[["salinity"]] # stored as practical salinity
+                  p <- x[["pressure"]]
+                  SA <- gsw_SA_from_SP(SP=SP, p=p, longitude=x[["longitude"]], latitude=x[["latitude"]])
+                  return(gsw_CT_from_t(SA, t, p))
+              }
+              if (i == "spiciness0") {
                   t <- x[["temperature"]]
                   SP <- x[["salinity"]] # stored as practical salinity
                   p <- x[["pressure"]]
@@ -601,7 +618,7 @@ setMethod(f="plot",
                   plotTS(x, debug=debug-1, ...)
               } else if (which == 5 || which == "navState") {
                   oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
-                              type="p", mar=c(2, 3, 1, 7))
+                              mar=c(2, 3, 1, 7), ...)
                   for (ii in seq_along(seaexplorerNavState)) {
                       abline(h=seaexplorerNavState[[ii]], col="darkgray")
                   }

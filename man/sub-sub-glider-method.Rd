@@ -62,11 +62,10 @@ return the following.
 
 \item the \code{payload1} item in \code{data} slot, with e.g. \code{x[["payload1"]]}
 
-\item the Conservative Temperature calculated from water properties, with e.g. 
-\code{x[["CT"]]}
-
-\item the Absolute Salinity calculated from water properties, with e.g. 
-\code{x[["SA"]]}
+\item the Absolute Salinity is returned with e.g.
+\code{x[["SA"]]}. This is computed with
+\code{\link[gsw]{gsw_SA_from_SP}}, based on the water properties
+stoed in the object. (See also the item for Conservative Temperature)
 
 \item the sigma-theta density anomaly calculated using
 \code{\link[oce]{swSigmaTheta}} on the water properties stored in the object,
@@ -75,16 +74,23 @@ equation of state, set up \code{\link{options}(oceEOS="gsw")} for the
 TEOS-10/GSW variant or \code{\link{options}(oceEOS="unesco")} for the
 older UNESCO variant.
 
-\item the sigma0 density anomaly calculated using \code{\link[oce]{swSigma0}}
-using the water properties stored in the object, with e.g. 
-\code{x[["sigma0"]]}. This obeys the setting of the equation of state,
+\item the Conservative Temperatuer is returned with e.g.
+\code{x[["CT"]]}. This is computed with
+\code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
+stoed in the object. (See also the item for Absolute Salinity.)
+
+\item the sigma0 density anomaly is returned with e.g.
+\code{x[["sigma0"]]}. This is computed with
+\code{\link[oce]{swSigma0}}  based on the water properties
+stored in the object.
+Note that the computation depends on the setting of the equation of state,
 set up \code{\link{options}(oceEOS="gsw")} for the TEOS-10/GSW variant
 or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
 
-\item the spiciness0 water property calculated using
-\code{\link[gsw]{gsw_spiciness0}}
-using the water properties stored in the object. (Note that this
-is the TEOS-10/GSW variant.)
+\item the spiciness0 water property is returned with e.g.
+\code{x[["spiciness0"]]}. This is computed with
+\code{\link[gsw]{gsw_spiciness0}}, based on the water properties
+stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 
 \item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
 yo.
