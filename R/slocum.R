@@ -28,9 +28,12 @@
 #' library(oceanglider)
 #' gfile <- download.glider.slocum(destddir="~/data/glider")
 #'}
+#'
 #' @family functions for slocum gliders
 #' @family functions to download data
+#'
 #' @importFrom utils download.file
+#'
 #' @export
 download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
                                    item="view_sci_water.csv",
@@ -79,6 +82,7 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' @author Dan Kelley
 #'
 #' @examples
+#' library(oceanglider)
 #' if (file.exists("~/slocum.csv")) {
 #'     g <- read.glider.slocum("~/slocum.csv")
 #'     summary(g)

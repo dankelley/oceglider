@@ -76,7 +76,7 @@ Lines and notes in the plot border indicate these states and meanings.
 }
 }
 \examples{
-library(glider)
+library(oceanglider)
 files <- system.file("extdata/seaexplorer/sub",
                      c("sea021.49.gli.sub.100.gz",
                        "sea021.49.pld1.sub.100.gz"), package="oceanglider")
