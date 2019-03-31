@@ -72,6 +72,7 @@ The file is downloaded with \code{\link{download.file}}.
 library(oceanglider)
 gfile <- download.glider.slocum(destddir="~/data/glider")
 }
+
 }
 \seealso{
 Other functions for slocum gliders: \code{\link{read.glider.slocum}}
