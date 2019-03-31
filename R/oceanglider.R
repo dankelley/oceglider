@@ -600,9 +600,8 @@ setMethod(f="plot",
               } else if (which == 4 || which == "TS") {
                   plotTS(x, debug=debug-1, ...)
               } else if (which == 5 || which == "navState") {
-                  oce.plot.ts(x[["time"]], x[["navState"]],
-                              xlab="Time", ylab="navState", type="p",
-                              mar=c(3, 3, 1, 7))
+                  oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
+                              type="p", mar=c(2, 3, 1, 7))
                   for (ii in seq_along(seaexplorerNavState)) {
                       abline(h=seaexplorerNavState[[ii]], col="darkgray")
                   }

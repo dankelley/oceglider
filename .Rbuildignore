@@ -10,3 +10,4 @@ man-roxygen
 ^vignettes/*.R$
 ^vignettes/*.html$
 
+Rplot.png
