@@ -9,5 +9,6 @@ man-roxygen
 ^vignettes/figure$
 ^vignettes/*.R$
 ^vignettes/*.html$
-
 Rplot.png
+^create_data$
+
