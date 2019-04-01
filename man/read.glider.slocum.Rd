@@ -77,8 +77,6 @@ if (file.exists("~/slocum.csv")) {
 }
 }
 \seealso{
-Other functions for slocum gliders: \code{\link{download.glider.slocum}}
-
 Other functions to read glider data: \code{\link{read.glider.netcdf}},
   \code{\link{read.glider.seaexplorer.delayed}},
   \code{\link{read.glider.seaexplorer.realtime}}

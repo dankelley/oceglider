@@ -4,19 +4,26 @@
 \alias{read.glider.seaexplorer.realtime}
 \title{Read real-time SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.realtime(files, debug, missingValue = 9999)
+read.glider.seaexplorer.realtime(dir, yo, level = 1,
+  progressBar = TRUE, missingValue = 9999, debug)
 }
 \arguments{
-\item{files}{Either a single integer, in which case it specifies
-a yo number for a local file, or a character value of length 2
-that provides the names of two local files, one (typically
-with \code{gli} in its filename) representing
-measurements made by sensors on the glider,
-and the other (with \code{pld1} in its filename) representing
-measurements made by sensors in the glider's payload. For the
-the case of \code{files} being an integer, all local filenames are
-found, and name-matching is done to try to find the \code{gli}
-and \code{pld1} files.}
+\item{dir}{The directory in which the realtime SeaExplorer files are located.}
+
+\item{yo}{A numeric value (or vector) specifying the yo numbers to
+read. If this is not provided, \code{read.glider.seaexplorer.delayed}
+will read all yo numbers for which files are present in \code{dir}.}
+
+\item{level}{Ignored by \code{read.glider.seaexplorer.realtime} and
+only included for similarity with
+\code{\link{read.glider.seaexplorer.delayed}}.}
+
+\item{progressBar}{A logical indicating whether to show progress
+bars while reading the data. Can be useful when reading full
+datasets.}
+
+\item{missingValue}{A value that indicates missing data; all
+values that match this are set to \code{NA}.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
@@ -28,13 +35,6 @@ function. If one \code{glider} function calls another, it
 passes the value of \code{debug} but decreased by 1, which means
 that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
-
-\item{missingValue}{Numerical value for missing data; all such values
-are set to \code{NA} in the data as interpreted. The default value
-works for one particular mission that was examined, but it might
-not apply to other missions. When in doubt as to the correct value,
-use \code{summary()} on the returned object, and check to see if the
-data maximum is a peculiar value, e.g. 99, 999 or, as the default, 9999.}
 }
 \description{
 Reads real-time CSV files produced by a SeaExplorer glider, as
@@ -120,10 +120,8 @@ authors, if you need to handle such files.
 
 \examples{
 library(oceanglider)
-files <- system.file("extdata/seaexplorer/sub",
-                     c("sea021.49.gli.sub.100.gz",
-                       "sea021.49.pld1.sub.100.gz"), package="oceanglider")
-d <- read.glider.seaexplorer.sub(files)
+dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+d <- read.glider.seaexplorer.realtime(dir, yo=1)
 ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
               longitude=d[['longitude']], latitude=d[['latitude']])
 plot(ctd)
@@ -135,8 +133,7 @@ plot(subset(ctd, d[["NAV_RESOURCE"]]==117))
 
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{download.glider.seaexplorer}},
-  \code{\link{read.glider.seaexplorer.delayed}}
+Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.delayed}}
 
 Other functions to read glider data: \code{\link{read.glider.netcdf}},
   \code{\link{read.glider.seaexplorer.delayed}},

@@ -4,18 +4,22 @@
 \alias{read.glider.seaexplorer.delayed}
 \title{Read delayed-mode SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.delayed(dir, yo, level = 1, debug,
-  progressBar = TRUE)
+read.glider.seaexplorer.delayed(dir, yo, level = 1, progressBar = TRUE,
+  debug)
 }
 \arguments{
-\item{dir}{The directory in which the raw SeaExplorer files are located.}
+\item{dir}{The directory in which the delayed-mode SeaExplorer files are located.}
 
 \item{yo}{A numeric value (or vector) specifying the yo numbers to
-read. If not provided will read all yo numbers for which files
-are present in \code{dir}.}
+read. If this is not provided, \code{read.glider.seaexplorer.delayed}
+will read all yo numbers for which files are present in \code{dir}.}
 
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
+
+\item{progressBar}{A logical indicating whether to show progress
+bars while reading the data. Can be useful when reading full
+datasets.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
@@ -27,10 +31,6 @@ function. If one \code{glider} function calls another, it
 passes the value of \code{debug} but decreased by 1, which means
 that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
-
-\item{progressBar}{A logical indicating whether to show progress
-bars while reading the data. Can be useful when reading full
-datasets.}
 }
 \description{
 Reads delayed-mode CSV files produced by a SeaExplorer glider,
@@ -162,8 +162,7 @@ plot(d, which=1)
 
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{download.glider.seaexplorer}},
-  \code{\link{read.glider.seaexplorer.realtime}}
+Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.realtime}}
 
 Other functions to read glider data: \code{\link{read.glider.netcdf}},
   \code{\link{read.glider.seaexplorer.realtime}},

@@ -317,13 +317,15 @@ setMethod(f="subset",
 #' in the meantime.}
 #'
 #' For objects of type \code{seaexplorer}, i.e. as read by
-#' \code{\link{read.glider.seaexplorer.sub}} and
-#' \code{\link{read.glider.seaexplorer.raw}}. the \code{data} slot
+#' \code{\link{read.glider.seaexplorer.realtime}} and
+#' \code{\link{read.glider.seaexplorer.delayed}}. the \code{data} slot
 #' may contain multiple items.  In some cases, there will be an item
 #' named \code{glider} and another named \code{payload1}. In others,
 #' the first of these may be missing.  (Also, it seems likely that
 #' the package will be updated to include multiple payloads, when
-#' users start deploying such gliders.) If \code{j} is not specified, then
+#' users start deploying such gliders.)
+#'
+#' If \code{j} is not specified, then
 #' \code{i} is sought first in \code{payload1}, with
 #' \code{glider} being checked thereafter. For example, this means that a
 #' thermometer within the payload will be preferred to one attached to
@@ -332,7 +334,8 @@ setMethod(f="subset",
 #' or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
 #' \code{x[["temperature","payload1"]]} retrieve values from
 #' the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
-#' values from the glider thermister.
+#' values from the glider thermister. For clarity of code, it might make
+#' sense to always specify \code{j}.
 #'
 #' In addition to retrieving data stored in the object, \code{\[\[} can also
 #' return the following.
@@ -466,6 +469,10 @@ setMethod(f="[[",
                           return(x@data[[i]])
                       } else {
                           ##. message("returning i from within payload")
+                          if (i %in% names(x@data[["payload1"]]))
+                              return(x@data$payload1[[i]])
+                          else
+                              return(x@data$glider[[i]]) # what if there is no glider?
                           return(x@data$payload[[i]])
                       }
                   }
@@ -473,7 +480,7 @@ setMethod(f="[[",
                   if (j == "glider")
                       return(x@data$glider[[i]])
                   if (j == "payload")
-                      return(x@data$payload[[i]])
+                      return(x@data$payload1[[i]])
                   return(NULL)
               } else if (type == "slocum") {
                   return(x@data[[i]])
@@ -554,10 +561,8 @@ setMethod(f="[[",
 #'
 #' @examples
 #' library(oceanglider)
-#' files <- system.file("extdata/seaexplorer/sub",
-#'                      c("sea021.49.gli.sub.100.gz",
-#'                        "sea021.49.pld1.sub.100.gz"), package="oceanglider")
-#' g <- read.glider.seaexplorer.sub(files)
+#' dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+#' g <- read.glider.seaexplorer.realtime(dir, yo=100)
 #'
 #' # Example 1. A single yo of (low-resolution) "sub" data
 #' plot(g, which="p")
@@ -842,131 +847,131 @@ urlExists <- function(url, quiet=FALSE)
     }
 }
 
-#' Download and Cache a Glider File
-#'
-#' This function visits a server that holds glider data,
-#' looking for one or more files matching a given pattern. If such
-#' files are found on the server, then those files that do
-#' not already exist locally are downloaded
-#' using \code{\link[utils]{download.file}}, which produces
-#' messages to indicate the course of its progress. If no
-#' files on the server match the pattern, then the return value
-#' is \code{NULL}; otherwise, it is a vector of character values
-#' giving the names of the files that have been downloaded.
-#'
-#' @param url Character value providing the web location of the
-#' server.
-#'
-#' @param pattern A specification of the yos to be downloaded. This
-#' only makes sense for seaexplorer files, since slocum files (at
-#' least those the author works with) combine all yos together.
-#' There are three choices for \code{pattern}. First, it may be
-#' a vector of integers indicating the \code{yo}
-#' numbers that are desired. Second, it may be a single character
-#' value specifying a \code{\link{regexp}} pattern that will be
-#' used to identify the name(s) of the desired file(s). Third,
-#' it may be \code{NA} which means to download/cache all \code{pld1}
-#' (payload) and \code{gli} (glider) files in the indicated server
-#' directory.
-#'
-#' @param destdir Character value indicating the directory in which
-#' to save the downloaded data.
-#'
-#' @param debug Integer indicating the debugging level; 0 for quiet
-#' action and higher values for more indications of the processing
-#' steps.
-#'
-#' @return Either a vector of character values for the full-path names of the
-#' desired files (whether they were downloaded or already present
-#' locally), or \code{NULL} if the server had no files
-#' matching the indicated pattern.
-#'
-#' @author Dan Kelley
-#'
-#' @examples
-#' # 1. Download and read yo 200 of glider SEA024 on mission 32.
-#'\dontrun{
-#' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
-#' files <- download.glider(url, "\\.200\\.gz$",
-#'                          destdir="~/data/glider/SEA024/M32")
-#' if (2 == length(files)) {
-#'     g <- read.glider.seaexplorer.sub(files)
-#'     summary(g)
-#' }
-#'
-#' # 2. Download yo 100, 101, and 102.
-#' files <- download.glider(url, pattern=100:102,
-#'                          destdir="~/data/glider/SEA024/M32")
-#'
-#' # 3. Download all yos from this mission.
-#' files <- download.glider(url, pattern=NA,
-#'                          destdir="~/data/glider/SEA024/M32")
-#'}
-#'
-#' @family functions to download data
-#' @importFrom RCurl getURL
-#' @importFrom utils download.file
-#' @export
-download.glider <- function(url, pattern, destdir=".", debug=0)
-{
-    if (missing(url))
-        stop("must supply url")
-    if (missing(pattern))
-        stop("must supply pattern")
-    patternIsNA <- FALSE
-    patternIsNumeric <- FALSE
-    if (is.na(pattern[1])) {
-        patternIsNA <- TRUE
-    } else {
-        patternIsNumeric <- is.numeric(pattern[1])
-    }
-    if (!urlExists(url=url, quiet=FALSE))
-        stop("no such url")
-    ## Ensure url ends with "/", specifying a directory.
-    if ("/" != substr(url, nchar(url), nchar(url)))
-        url <- paste(url, "/", sep="")
-    filesString <- RCurl::getURL(url, ftp.use.epsv=FALSE, dirlistonly=TRUE)
-    files <- strsplit(filesString, "\n")[[1]]
-    if (patternIsNA) {
-        regexp <- paste("^sea[0-9]+\\.*(pld1)|(gli)*\\.sub\\.[0-9]+\\.gz$",sep="")
-        files <- files[grep(regexp, files)]
-        if (0 == length(files)) {
-            cat(url, " has no pld1 or gli files\n")
-            return(NULL)
-        }
-    } else if (patternIsNumeric) {
-        fileSubset <- NULL
-        for (yo in pattern) {
-            regexp <- paste("^sea[0-9]+\\.*(pld1)|(gli)*\\.sub\\.", yo, "\\.gz$",sep="")
-            fileSubset <- c(fileSubset, files[grep(regexp, files)])
-        }
-        files <- fileSubset
-        if (0 == length(files)) {
-            cat(url, " has no files with yo number as specified by pattern\n")
-            return(NULL)
-        }
-    } else {
-        w <- grep(pattern, files)
-        wlen <- length(w)
-        if (wlen == 0) {
-            cat(url, " has no files matching pattern \"", pattern, "\"", sep="")
-            return(NULL)
-        }
-        files <- files[w]
-    }
-    gliderDebug(debug, 'Found files: "', paste(files, collapse='", "'), '"\n', sep="")
-    destfiles <- paste(destdir, files, sep="/")
-    for (i in seq_along(files)) {
-        if (!file.exists(destfiles[i])) {
-            path <- paste(url, files[i], sep="")
-            utils::download.file(path, destfiles[i])
-            gliderDebug(debug, 'downloaded "', destfiles[i], '"\n', sep="")
-        } else {
-            gliderDebug(debug, 'already have "', destfiles[i], '", so not downloading\n', sep="")
-        }
-    }
-    destfiles
-}
+#### #' Download and Cache a Glider File
+#### #'
+#### #' This function visits a server that holds glider data,
+#### #' looking for one or more files matching a given pattern. If such
+#### #' files are found on the server, then those files that do
+#### #' not already exist locally are downloaded
+#### #' using \code{\link[utils]{download.file}}, which produces
+#### #' messages to indicate the course of its progress. If no
+#### #' files on the server match the pattern, then the return value
+#### #' is \code{NULL}; otherwise, it is a vector of character values
+#### #' giving the names of the files that have been downloaded.
+#### #'
+#### #' @param url Character value providing the web location of the
+#### #' server.
+#### #'
+#### #' @param pattern A specification of the yos to be downloaded. This
+#### #' only makes sense for seaexplorer files, since slocum files (at
+#### #' least those the author works with) combine all yos together.
+#### #' There are three choices for \code{pattern}. First, it may be
+#### #' a vector of integers indicating the \code{yo}
+#### #' numbers that are desired. Second, it may be a single character
+#### #' value specifying a \code{\link{regexp}} pattern that will be
+#### #' used to identify the name(s) of the desired file(s). Third,
+#### #' it may be \code{NA} which means to download/cache all \code{pld1}
+#### #' (payload) and \code{gli} (glider) files in the indicated server
+#### #' directory.
+#### #'
+#### #' @param destdir Character value indicating the directory in which
+#### #' to save the downloaded data.
+#### #'
+#### #' @param debug Integer indicating the debugging level; 0 for quiet
+#### #' action and higher values for more indications of the processing
+#### #' steps.
+#### #'
+#### #' @return Either a vector of character values for the full-path names of the
+#### #' desired files (whether they were downloaded or already present
+#### #' locally), or \code{NULL} if the server had no files
+#### #' matching the indicated pattern.
+#### #'
+#### #' @author Dan Kelley
+#### #'
+#### #' @examples
+#### #' # 1. Download and read yo 200 of glider SEA024 on mission 32.
+#### #'\dontrun{
+#### #' url <- "ftp://ftp.dfo-mpo.gc.ca/glider/realData/SEA024/M32"
+#### #' files <- download.glider(url, "\\.200\\.gz$",
+#### #'                          destdir="~/data/glider/SEA024/M32")
+#### #' if (2 == length(files)) {
+#### #'     g <- read.glider.seaexplorer.sub(files)
+#### #'     summary(g)
+#### #' }
+#### #'
+#### #' # 2. Download yo 100, 101, and 102.
+#### #' files <- download.glider(url, pattern=100:102,
+#### #'                          destdir="~/data/glider/SEA024/M32")
+#### #'
+#### #' # 3. Download all yos from this mission.
+#### #' files <- download.glider(url, pattern=NA,
+#### #'                          destdir="~/data/glider/SEA024/M32")
+#### #'}
+#### #'
+#### #' @family functions to download data
+#### #' @importFrom RCurl getURL
+#### #' @importFrom utils download.file
+#### #' @export
+#### download.glider <- function(url, pattern, destdir=".", debug=0)
+#### {
+####     if (missing(url))
+####         stop("must supply url")
+####     if (missing(pattern))
+####         stop("must supply pattern")
+####     patternIsNA <- FALSE
+####     patternIsNumeric <- FALSE
+####     if (is.na(pattern[1])) {
+####         patternIsNA <- TRUE
+####     } else {
+####         patternIsNumeric <- is.numeric(pattern[1])
+####     }
+####     if (!urlExists(url=url, quiet=FALSE))
+####         stop("no such url")
+####     ## Ensure url ends with "/", specifying a directory.
+####     if ("/" != substr(url, nchar(url), nchar(url)))
+####         url <- paste(url, "/", sep="")
+####     filesString <- RCurl::getURL(url, ftp.use.epsv=FALSE, dirlistonly=TRUE)
+####     files <- strsplit(filesString, "\n")[[1]]
+####     if (patternIsNA) {
+####         regexp <- paste("^sea[0-9]+\\.*(pld1)|(gli)*\\.sub\\.[0-9]+\\.gz$",sep="")
+####         files <- files[grep(regexp, files)]
+####         if (0 == length(files)) {
+####             cat(url, " has no pld1 or gli files\n")
+####             return(NULL)
+####         }
+####     } else if (patternIsNumeric) {
+####         fileSubset <- NULL
+####         for (yo in pattern) {
+####             regexp <- paste("^sea[0-9]+\\.*(pld1)|(gli)*\\.sub\\.", yo, "\\.gz$",sep="")
+####             fileSubset <- c(fileSubset, files[grep(regexp, files)])
+####         }
+####         files <- fileSubset
+####         if (0 == length(files)) {
+####             cat(url, " has no files with yo number as specified by pattern\n")
+####             return(NULL)
+####         }
+####     } else {
+####         w <- grep(pattern, files)
+####         wlen <- length(w)
+####         if (wlen == 0) {
+####             cat(url, " has no files matching pattern \"", pattern, "\"", sep="")
+####             return(NULL)
+####         }
+####         files <- files[w]
+####     }
+####     gliderDebug(debug, 'Found files: "', paste(files, collapse='", "'), '"\n', sep="")
+####     destfiles <- paste(destdir, files, sep="/")
+####     for (i in seq_along(files)) {
+####         if (!file.exists(destfiles[i])) {
+####             path <- paste(url, files[i], sep="")
+####             utils::download.file(path, destfiles[i])
+####             gliderDebug(debug, 'downloaded "', destfiles[i], '"\n', sep="")
+####         } else {
+####             gliderDebug(debug, 'already have "', destfiles[i], '", so not downloading\n', sep="")
+####         }
+####     }
+####     destfiles
+#### }
 
 #' Read a glider file in netcdf format
 #'
@@ -1066,10 +1071,10 @@ read.glider.netcdf <- function(file, debug)
 #'
 #' This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
 #' if the first argument is a string ending with \code{".nc"}, to
-#' \code{\link{read.glider.seaexplorer.sub}} if it is a vector of strings, any
-#' of which contains the text \code{".sub."} followed by one or more digits, or to
-#' \code{\link{read.glider.seaexplorer.raw}} if it is a vector of strings, any
-#' contains the text \code{".raw."} followed by one or more digits.
+#' \code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
+#' of which contains the text \code{"pld1.sub."} followed by one or more digits, or to
+#' \code{\link{read.glider.seaexplorer.delayed}} if it is a vector of strings, any
+#' contains the text \code{"pld1.raw."} followed by one or more digits.
 #'
 #' @param file Character value giving the name of the file.
 #'
@@ -1088,10 +1093,10 @@ read.glider <- function(file, debug, ...)
         stop("'file' must be a character value (or values) giving filename(s)")
     if (length(file) == 1 && length(grep(".nc$", file))) {
         res <- read.glider.netcdf(file=file, debug=debug-1, ...)
-    } else if (0 != length(grep(".sub.[0-9]+", file))) {
-        res <- read.glider.seaexplorer.sub(file, debug=debug-1, ...)
-    } else if (0 != length(grep(".raw.[0-9]+", file))) {
-        res <- read.glider.seaexplorer.raw(file, debug=debug-1, ...)
+    } else if (0 != length(grep("pld1.sub", file))) {
+        res <- read.glider.seaexplorer.realtime(file, debug=debug-1, ...)
+    } else if (0 != length(grep("pld1.raw", file))) {
+        res <- read.glider.seaexplorer.delayed(file, debug=debug-1, ...)
     } else {
         stop("only .nc and .gz files handled")
     }

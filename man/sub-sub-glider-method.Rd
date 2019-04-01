@@ -34,13 +34,15 @@ format used in local laboratories seems to have changed, possibly twice,
 in the meantime.}
 
 For objects of type \code{seaexplorer}, i.e. as read by
-\code{\link{read.glider.seaexplorer.sub}} and
-\code{\link{read.glider.seaexplorer.raw}}. the \code{data} slot
+\code{\link{read.glider.seaexplorer.realtime}} and
+\code{\link{read.glider.seaexplorer.delayed}}. the \code{data} slot
 may contain multiple items.  In some cases, there will be an item
 named \code{glider} and another named \code{payload1}. In others,
 the first of these may be missing.  (Also, it seems likely that
 the package will be updated to include multiple payloads, when
-users start deploying such gliders.) If \code{j} is not specified, then
+users start deploying such gliders.)
+
+If \code{j} is not specified, then
 \code{i} is sought first in \code{payload1}, with
 \code{glider} being checked thereafter. For example, this means that a
 thermometer within the payload will be preferred to one attached to
@@ -49,7 +51,8 @@ process can be controlled by setting \code{j} to either \code{"glider"}
 or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
 \code{x[["temperature","payload1"]]} retrieve values from
 the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
-values from the glider thermister.
+values from the glider thermister. For clarity of code, it might make
+sense to always specify \code{j}.
 
 In addition to retrieving data stored in the object, \code{\[\[} can also
 return the following.

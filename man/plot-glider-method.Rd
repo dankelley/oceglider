@@ -77,10 +77,8 @@ Lines and notes in the plot border indicate these states and meanings.
 }
 \examples{
 library(oceanglider)
-files <- system.file("extdata/seaexplorer/sub",
-                     c("sea021.49.gli.sub.100.gz",
-                       "sea021.49.pld1.sub.100.gz"), package="oceanglider")
-g <- read.glider.seaexplorer.sub(files)
+dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+g <- read.glider.seaexplorer.realtime(dir, yo=100)
 
 # Example 1. A single yo of (low-resolution) "sub" data
 plot(g, which="p")
