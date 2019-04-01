@@ -48,7 +48,7 @@
 #' yo <- 200
 #' url <- "ftp://SERVER/PATH"
 #' files <- download.glider(url, paste("\\.", yo, "\\.gz$", sep=""), debug=1)
-#' yo2 <- read.glider.seaexplorer.sub(files)
+#' yo2 <- read.glider.seaexplorer.realtime(files)
 #' # Download (or use cache for) a set files
 #' download.glider.seaexplorer(yo=download.glider.seaexplorer(yo="?"))
 #' }
@@ -168,13 +168,15 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 }
 
 
-#' Read subset (real-time) SeaExplorer glider data
+#' Read real-time SeaExplorer glider data
 #'
-#' Reads real-time CSV files produced by a SeaExplorer glider. The
-#' real-time data are decimated before transmission, and thus do not
+#' Reads real-time CSV files produced by a SeaExplorer glider, as
+#' detected by the presence of \code{".sub."} in their names.
+#' Such real-time data are decimated before transmission, and thus do not
 #' represent the full data collected by the glider sensors.
-#' Use \code{\link{read.glider.seaexplorer.raw}} for the full data,
-#' as downloaded from the glider after recovery.
+#' (Use \code{\link{read.glider.seaexplorer.delayed}} instead of
+#' this, to read delayed-mode data, as downloaded from the glider
+#' after recovery.)
 #'
 #' @param files Either a single integer, in which case it specifies
 #' a yo number for a local file, or a character value of length 2
@@ -221,11 +223,11 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
+read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    gliderDebug(debug, "read.glider.seaexplorer.sub() {\n", unindent=1)
+    gliderDebug(debug, "read.glider.seaexplorer.realtime() {\n", unindent=1)
     if (missing(files))
         stop("must provide `files'")
     nfiles <- length(files)
@@ -292,7 +294,7 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 
     ## Rename items in glider data.
     ## FIXME: add more conversions here, and also to the corresponding
-    ## spot in the .raw() function. When both are added, adjust
+    ## spot in the .delayed() function. When both are added, adjust
     ## ../man-roxygen/seaexplorer_names.R accordingly.
     if ("Timestamp" %in% names(gliData)) {
         gliData$Timestamp <- as.POSIXct(gliData$Timestamp, format="%d/%m/%Y %H:%M:%S", tz="UTC")
@@ -343,11 +345,39 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
     }
     if ("DesiredH" %in% names(gliData)) {
         names(gliData) <- gsub("DesiredH", "headingDesired", names(gliData))
-        res@metadata$dataNamesOriginal$glider$desiredHeading <- "DesiredH"
+        res@metadata$dataNamesOriginal$glider$headingDesired <- "DesiredH"
+    }
+    if ("BallastCmd" %in% names(gliData)) {
+        names(gliData) <- gsub("BallastCmd", "ballastCmd", names(gliData))
+        res@metadata$dataNamesOriginal$glider$ballastCmd<- "BallastCmd"
+    }
+    if ("BallastPos" %in% names(gliData)) {
+        names(gliData) <- gsub("BallastPos", "ballastPos", names(gliData))
+        res@metadata$dataNamesOriginal$glider$ballastPos <- "BallastPos"
+    }
+    if ("LinCmd" %in% names(gliData)) {
+        names(gliData) <- gsub("LinCmd", "linCmd", names(gliData))
+        res@metadata$dataNamesOriginal$glider$linCmd <- "LinCmd"
+    }
+    if ("LinPos" %in% names(gliData)) {
+        names(gliData) <- gsub("LinPos", "linPos", names(gliData))
+        res@metadata$dataNamesOriginal$glider$linPos <- "LinPos"
+    }
+    if ("AngCmd" %in% names(gliData)) {
+        names(gliData) <- gsub("AngCmd", "angCmd", names(gliData))
+        res@metadata$dataNamesOriginal$glider$angCmd <- "AngCmd"
+    }
+    if ("AngPos" %in% names(gliData)) {
+        names(gliData) <- gsub("AngPos", "angPos", names(gliData))
+        res@metadata$dataNamesOriginal$glider$angPos <- "AngPos"
     }
     if ("Voltage" %in% names(gliData)) {
         names(gliData) <- gsub("Voltage", "voltage", names(gliData))
         res@metadata$dataNamesOriginal$glider$voltage <- "Voltage"
+    }
+    if ("Altitude" %in% names(gliData)) {
+        names(gliData) <- gsub("Altitude", "altitude", names(gliData))
+        res@metadata$dataNamesOriginal$glider$altitude <- "Altitude"
     }
 
     ## Rename items in payload1 data.
@@ -422,22 +452,22 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 
     res@data <- list(glider=gliData, payload1=pld1Data)
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("read.glider.seaexplorer.sub(c(\"", files[1], "\", \"",
+                                             paste("read.glider.seaexplorer.realtime(c(\"", files[1], "\", \"",
                                                    files[2], "\"), missingValue=", missingValue, ")", sep=""))
-    gliderDebug(debug, "} # read.glider.seaexplorer.sub()\n", unindent=1)
+    gliderDebug(debug, "} # read.glider.seaexplorer.realtime()\n", unindent=1)
     res
 }
 
 
-#' Read raw SeaExplorer glider data
+#' Read delayed-mode SeaExplorer glider data
 #'
-#' Reads raw CSV files produced by a SeaExplorer glider. The raw data
-#' are the full resolution data stored on the glider and downloaded
-#' after recovery.
-#'
-#' While the data format is similar to the "real-time" SeaExplorer file
-#' format, there are some differences and
-#' \code{\link{read.glider.seaexplorer.sub}} should be used for the latter.
+#' Reads delayed-mode CSV files produced by a SeaExplorer glider,
+#' as detected by the presence of \code{".raw."} in their names.
+#' Such delayed-mode data are the full resolution data stored on
+#' the glider and downloaded after recovery.
+#' (Use \code{\link{read.glider.seaexplorer.realtime}} instead
+#' of this, to read data as transmitted by the glider while
+#' it is in the field.)
 #'
 #' This function can output either "Level 0" or "Level 1" type
 #' data. Level 0 is simply the raw data as written in the CSV files
@@ -499,7 +529,7 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 #' \dontrun{
 #' library(oceanglider)
 #' dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
-#' d <- read.glider.seaexplorer.raw(dir, yo=1:100)
+#' d <- read.glider.seaexplorer.delayed(dir, yo=1:100)
 #' plot(d, which=1)
 #' }
 #'
@@ -511,7 +541,7 @@ read.glider.seaexplorer.sub <- function(files, debug, missingValue=9999)
 #' @importFrom stats approx
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 #' @export
-read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRUE)
+read.glider.seaexplorer.delayed <- function(dir, yo, level=1, debug, progressBar=TRUE)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -648,7 +678,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
     if (level == 0) {
         res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.raw(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+                                                 paste("read.glider.seaexplorer.delayed(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     } else if (level == 1) {
         inflectUp <- as.integer(df$navState == 118)
@@ -692,7 +722,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
 
         res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.raw(dir=\"", dir, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+                                                 paste("read.glider.seaexplorer.delayed(dir=\"", dir, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     }
 }
