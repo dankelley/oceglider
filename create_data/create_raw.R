@@ -6,8 +6,9 @@ dir <- "~/git/glider/data/sea021/m49/raw"
 if (!exists("g"))
     g <- read.glider.seaexplorer.delayed(dir)
 
-gli <- list.files(dir, ".gli.", full.names=TRUE)
-all <- list.files(dir, full.names=TRUE)
+gli <- list.files(dir, ".gli", full.names=TRUE)
+head(gli)
+all <- list.files(dir, ".sub.", full.names=TRUE)
 all[1:2]
 read.glider.seaexplorer.realtime(gli[1])
 sink("a");gli[1];sink()
