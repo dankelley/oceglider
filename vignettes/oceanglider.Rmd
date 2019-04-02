@@ -75,7 +75,7 @@ This package comes with some sample data files that can be used for practice and
 illustration.  For example,
 ```{r}
 library(oceanglider)
-dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 ```
 finds the names of two "sub" files (these are files transmitted by the glider
 when it is underway; think of the "sub" as an abbreviation for subset).
@@ -83,7 +83,7 @@ Reading these files is done with the
 [`read.glider.seaexplorer.realtime`](../help/read.glider.seaexplorer.realtime) function,
 e.g.
 ```{r}
-g <- read.glider.seaexplorer.realtime(dir)
+g <- read.glider.seaexplorer.realtime(directory)
 ```
 
 Note that the files in the above example have been compressed using gzip, hence

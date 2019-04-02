@@ -178,7 +178,7 @@
 #' this, to read delayed-mode data, as downloaded from the glider
 #' after recovery.)
 #'
-#' @param dir The directory in which the realtime SeaExplorer files are located.
+#' @param directory The directory in which the realtime SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
 #'     read. If this is not provided, \code{read.glider.seaexplorer.delayed}
@@ -203,16 +203,16 @@
 #'
 #' @examples
 #' library(oceanglider)
-#' dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-#' d <- read.glider.seaexplorer.realtime(dir, yo=1)
-#' ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
-#'               longitude=d[['longitude']], latitude=d[['latitude']])
+#' directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+#' g <- read.glider.seaexplorer.realtime(directory, yo=1)
+#' ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
+#'               longitude=g[['longitude']], latitude=g[['latitude']])
 #' plot(ctd)
 #' ## Isolate the upcast, inferred with oce::ctdTrim().
 #' plot(ctdTrim(ctd, "upcast"))
-#' ## Isolate the upcast, using d[["NAV_RESOURCE"]]==117;
+#' ## Isolate the upcast, using g[["NAV_RESOURCE"]]==117;
 #' ## note that the downcast has code 100.
-#' plot(subset(ctd, d[["NAV_RESOURCE"]]==117))
+#' plot(subset(ctd, g[["NAV_RESOURCE"]]==117))
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data
@@ -220,16 +220,16 @@
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer.realtime <- function(dir, yo, level=1, progressBar=TRUE, missingValue=9999, debug)
+read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=TRUE, missingValue=9999, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
     gliderDebug(debug, "read.glider.seaexplorer.realtime() {\n", unindent=1)
-    if (missing(dir))
-        stop("must supply 'dir', a directory containing seaexplorer files")
+    if (missing(directory))
+        stop("must provide 'directory', in which glider files reside")
     yoGiven <- !missing(yo)
-    glifiles <- dir(dir, pattern='*gli*', full.names=TRUE)
-    pld1files <- dir(dir, pattern='*.pld1.*', full.names=TRUE)
+    glifiles <- dir(directory, pattern='*gli*', full.names=TRUE)
+    pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
     if (length(glifiles) != length(pld1files))
         stop("There is an unequal number of *gli* files (", length(glifiles),
              ") and *pld1* files (", length(pld1files), "), but they ought to be paired")
@@ -472,7 +472,7 @@ read.glider.seaexplorer.realtime <- function(dir, yo, level=1, progressBar=TRUE,
 
     res@data <- list(glider=gliData, payload1=pld1Data)
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("read.glider.seaexplorer.realtime(dir=\"", dir, "\",",
+                                             paste("read.glider.seaexplorer.realtime(directory=\"", directory, "\",",
                                                    "yo=c(", paste(yo, collapse=","), "),",
                                                    "missingValue=", missingValue, ")", sep=""))
     gliderDebug(debug, "} # read.glider.seaexplorer.realtime()\n", unindent=1)
@@ -527,7 +527,7 @@ read.glider.seaexplorer.realtime <- function(dir, yo, level=1, progressBar=TRUE,
 #'
 #' }
 #'
-#' @param dir The directory in which the delayed-mode SeaExplorer files are located.
+#' @param directory The directory in which the delayed-mode SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
 #'     read. If this is not provided, \code{read.glider.seaexplorer.delayed}
@@ -549,8 +549,8 @@ read.glider.seaexplorer.realtime <- function(dir, yo, level=1, progressBar=TRUE,
 #' @examples
 #' \dontrun{
 #' library(oceanglider)
-#' dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
-#' d <- read.glider.seaexplorer.delayed(dir, yo=1:100)
+#' directory <- '/data/archive/glider/2019/sx/sea021m49/raw'
+#' d <- read.glider.seaexplorer.delayed(directory, yo=1:100)
 #' plot(d, which=1)
 #' }
 #'
@@ -562,17 +562,17 @@ read.glider.seaexplorer.realtime <- function(dir, yo, level=1, progressBar=TRUE,
 #' @importFrom stats approx
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 #' @export
-read.glider.seaexplorer.delayed <- function(dir, yo, level=1, progressBar=TRUE, debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=TRUE, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    if (missing(dir))
-        stop("must provide a directory with files")
+    if (missing(directory))
+        stop("must provide 'directory', in which glider files reside")
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
-    navfiles <- dir(dir, pattern='*gli*', full.names=TRUE) # FIXME: not used
-    pld1files <- dir(dir, pattern='*.pld1.*', full.names=TRUE)
-    pld2files <- dir(dir, pattern='*.pld2.*', full.names=TRUE)
+    navfiles <- dir(directory, pattern='*gli*', full.names=TRUE) # FIXME: not used
+    pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
+    pld2files <- dir(directory, pattern='*.pld2.*', full.names=TRUE)
     if (length(pld2files))
         warning("pld2 files are ignored by this function; contact developers if you need to read them")
 
@@ -699,7 +699,7 @@ read.glider.seaexplorer.delayed <- function(dir, yo, level=1, progressBar=TRUE, 
     if (level == 0) {
         res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.delayed(dir=", dir, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+                                                 paste("read.glider.seaexplorer.delayed(directory=", directory, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     } else if (level == 1) {
         inflectUp <- as.integer(df$navState == 118)
@@ -743,7 +743,7 @@ read.glider.seaexplorer.delayed <- function(dir, yo, level=1, progressBar=TRUE, 
 
         res@data <- list(payload1=df)
         res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.delayed(dir=\"", dir, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+                                                 paste("read.glider.seaexplorer.delayed(directory=\"", directory, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     }
 }

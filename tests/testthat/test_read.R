@@ -4,8 +4,8 @@ library(oceanglider)
 context("read seaexplorer")
 
 test_that("read.glider.seaexplorer.realtime", {
-          dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(dir=dir, yo=100, progressBar=FALSE))
+          directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+          expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=100, progressBar=FALSE))
           expect_output(summary(g), "Input files:")
           expect_equal(c("glider", "payload1"), names(g[["data"]]))
           ## dimensionality and names in glider stream

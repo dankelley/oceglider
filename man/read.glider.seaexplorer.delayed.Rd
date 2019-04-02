@@ -4,11 +4,11 @@
 \alias{read.glider.seaexplorer.delayed}
 \title{Read delayed-mode SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.delayed(dir, yo, level = 1, progressBar = TRUE,
-  debug)
+read.glider.seaexplorer.delayed(directory, yo, level = 1,
+  progressBar = TRUE, debug)
 }
 \arguments{
-\item{dir}{The directory in which the delayed-mode SeaExplorer files are located.}
+\item{directory}{The directory in which the delayed-mode SeaExplorer files are located.}
 
 \item{yo}{A numeric value (or vector) specifying the yo numbers to
 read. If this is not provided, \code{read.glider.seaexplorer.delayed}
@@ -155,8 +155,8 @@ authors, if you need to handle such files.
 \examples{
 \dontrun{
 library(oceanglider)
-dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
-d <- read.glider.seaexplorer.delayed(dir, yo=1:100)
+directory <- '/data/archive/glider/2019/sx/sea021m49/raw'
+d <- read.glider.seaexplorer.delayed(directory, yo=1:100)
 plot(d, which=1)
 }
 

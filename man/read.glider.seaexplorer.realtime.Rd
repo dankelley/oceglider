@@ -4,11 +4,11 @@
 \alias{read.glider.seaexplorer.realtime}
 \title{Read real-time SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.realtime(dir, yo, level = 1,
+read.glider.seaexplorer.realtime(directory, yo, level = 1,
   progressBar = TRUE, missingValue = 9999, debug)
 }
 \arguments{
-\item{dir}{The directory in which the realtime SeaExplorer files are located.}
+\item{directory}{The directory in which the realtime SeaExplorer files are located.}
 
 \item{yo}{A numeric value (or vector) specifying the yo numbers to
 read. If this is not provided, \code{read.glider.seaexplorer.delayed}
@@ -120,16 +120,16 @@ authors, if you need to handle such files.
 
 \examples{
 library(oceanglider)
-dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-d <- read.glider.seaexplorer.realtime(dir, yo=1)
-ctd <- as.ctd(d[['salinity']], d[['temperature']], d[['pressure']],
-              longitude=d[['longitude']], latitude=d[['latitude']])
+directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+g <- read.glider.seaexplorer.realtime(directory, yo=1)
+ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
+              longitude=g[['longitude']], latitude=g[['latitude']])
 plot(ctd)
 ## Isolate the upcast, inferred with oce::ctdTrim().
 plot(ctdTrim(ctd, "upcast"))
-## Isolate the upcast, using d[["NAV_RESOURCE"]]==117;
+## Isolate the upcast, using g[["NAV_RESOURCE"]]==117;
 ## note that the downcast has code 100.
-plot(subset(ctd, d[["NAV_RESOURCE"]]==117))
+plot(subset(ctd, g[["NAV_RESOURCE"]]==117))
 
 }
 \seealso{
