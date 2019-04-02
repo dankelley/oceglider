@@ -5,11 +5,11 @@ context("read seaexplorer")
 
 test_that("read.glider.seaexplorer.realtime", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=100, progressBar=FALSE))
+          expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=1, progressBar=FALSE))
           expect_output(summary(g), "Input files:")
           expect_equal(c("glider", "payload1"), names(g[["data"]]))
           ## dimensionality and names in glider stream
-          expect_equal(dim(g[["glider"]]), c(71, 21))
+          expect_equal(dim(g[["glider"]]), c(66, 21)) # the 66 works for this particular file
           gliderNamesExpected <- c("time", "navState", "alarm", "heading",
                                    "pitch", "roll", "pressureNav",
                                    "temperatureInternal", "pressureInternal",
@@ -19,8 +19,8 @@ test_that("read.glider.seaexplorer.realtime", {
                                    "altitude", "yoNumberNav")
           expect_equal(names(g[["glider"]]), gliderNamesExpected)
           ## dimensionality and names in payload1 stream (and payload nickname)
-          expect_equal(dim(g[["payload1"]]), c(22, 17))
-          expect_equal(dim(g[["payload"]]), c(22, 17))
+          expect_equal(dim(g[["payload1"]]), c(20, 17)) # the 20 works for this particular file
+          expect_equal(dim(g[["payload"]]), c(20, 17))
           payloadNamesExpected <- c("time", "navState", "longitude", "latitude",
                                     "pressureNav", "chlorophyllCount",
                                     "chlorophyll", "backscatterCount",
@@ -31,9 +31,22 @@ test_that("read.glider.seaexplorer.realtime", {
           expect_equal(names(g[["payload"]]), payloadNamesExpected)
 })
 
-## test_that("read.glider.seaexplorer.raw", {
-##           dir <- system.file("extdata/seaexplorer/raw", package="oceanglider")
-##           expect_silent(g <- read.glider.seaexplorer.raw(dir))
-##           summary(g)
-## })
+test_that("read.glider.seaexplorer.delayed", {
+          directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+          expect_silent(g <- read.glider.seaexplorer.delayed(directory=directory, progressBar=FALSE))
+          ## Note that this data structure does not have a "glider" component.
+          ## The purpose in testing for this is to ensure that if that component
+          ## gets added, a developer will notice the change and invent new tests
+          ## for that component.
+          expect_equal(names(g@data), "payload1")
+          payloadNamesExpected<-c("time", "navState", "longitude", "latitude",
+                                  "pressureNav", "chlorophyllCount",
+                                  "chlorophyll", "backscatterCount",
+                                  "backscatter", "cdomCount", "cdom",
+                                  "conductivity", "temperature", "pressure",
+                                  "oxygenFrequency", "yoNumber", "salinity")
+          expect_equal(names(g@data$payload1), payloadNamesExpected)
+          expect_equal(names(g[["payload1"]]), payloadNamesExpected)
+          expect_equal(names(g[["payload"]]), payloadNamesExpected)
+})
 

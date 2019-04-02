@@ -230,9 +230,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     yoGiven <- !missing(yo)
     glifiles <- dir(directory, pattern='*gli*', full.names=TRUE)
     pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
-    if (length(glifiles) != length(pld1files))
-        stop("There is an unequal number of *gli* files (", length(glifiles),
-             ") and *pld1* files (", length(pld1files), "), but they ought to be paired")
+    if (length(glifiles) != length(pld1files)) {
+        warning("There is an unequal number of *gli* files (", length(glifiles),
+                ") and *pld1* files (", length(pld1files), "), but they ought to be paired. This may indicate a problem in the data directory. Try calling this function with debug=2 to see filenames.")
+    }
 
     if (debug > 1) {
         cat("gli files:\n")
@@ -262,12 +263,12 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     pld1 <- list()
     for (i in seq_len(nfiles)) {
         if (progressBar) setTxtProgressBar(pb, i)
-        gliderDebug(debug, "reading", glifiles[i], "\n")
+        gliderDebug(debug, "reading gli file:  ", glifiles[i], "\n")
         gliData <- utils::read.delim(glifiles[i], sep=";")
         ## remove junk file from trailing semicolon in file
         if ("X" %in% names(gliData) && all(is.na(gliData$X)))
             gliData$X <- NULL
-        gliderDebug(debug, "reading", pld1files[i], "\n")
+        gliderDebug(debug, "reading pld1 file: ", pld1files[i], "\n")
         pld1Data <- utils::read.delim(pld1files[i], sep=";")
         ## remove junk file from trailing semicolon in file
         if ("X" %in% names(pld1Data) && all(is.na(pld1Data$X)))
@@ -576,7 +577,11 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     if (length(pld2files))
         warning("pld2 files are ignored by this function; contact developers if you need to read them")
 
-    yoNumber <- as.numeric(unlist(lapply(strsplit(pld1files, '.', fixed=TRUE), tail, 1)))
+    ## Note the removal of .gz at the end of filenames. This is to permit both compressed
+    ## and uncompressed files.  (For example, the files stored within inst/extdata/ in the
+    ## present package have been gzipped to save space, even though the original files were
+    ## not gzipped.)
+    yoNumber <- as.numeric(unlist(lapply(strsplit(gsub(".gz$","",pld1files), '.', fixed=TRUE), tail, 1)))
     o <- order(yoNumber)
     yoNumber <- yoNumber[o]
     pld1files <- pld1files[o]
