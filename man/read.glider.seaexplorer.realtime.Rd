@@ -5,7 +5,7 @@
 \title{Read real-time SeaExplorer glider data}
 \usage{
 read.glider.seaexplorer.realtime(directory, yo, level = 1,
-  progressBar = TRUE, missingValue = 9999, debug)
+  progressBar = interactive(), missingValue = 9999, debug)
 }
 \arguments{
 \item{directory}{The directory in which the realtime SeaExplorer files are located.}

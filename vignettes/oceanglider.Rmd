@@ -77,25 +77,38 @@ illustration.  For example,
 library(oceanglider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 ```
-finds the names of two "sub" files (these are files transmitted by the glider
-when it is underway; think of the "sub" as an abbreviation for subset).
-Reading these files is done with the
+finds the names of a few selected `"sub"` files (these are files transmitted by
+the glider when it is underway; think of the "sub" as an abbreviation for
+subset).  Reading these files is done with the
 [`read.glider.seaexplorer.realtime`](../help/read.glider.seaexplorer.realtime) function,
 e.g.
 ```{r}
 g <- read.glider.seaexplorer.realtime(directory)
 ```
+(when called interactively, this function will print a progress-bar, unless
+instructed otherwise by setting the argument \code{progressBar} to
+\code{FALSE}.)
 
-Note that the files in the above example have been compressed using gzip, hence
-the `".gz"` in the filenames. This is not always the case.  The presence of
-`"sub"` in the filenames indicates that these real-time data transmitted during
-the mission are actually just subsets of the full data being acquired.
-
-Files with `"raw"` in the filename hold the fuller datasets that are downloaded
-from the glider after recovery. In the oceanographic convention, these are
-called delayed-mode data, and so the function to read them is called
+The package also comes with a few `"raw"` files, which are larger datasets
+downloaded from the glider after recovery.  In the oceanographic convention,
+these are called delayed-mode data, so the function to read them is called
 [`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
-function,
+```{r}
+directory2 <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g2 <- read.glider.seaexplorer.delayed(directory2)
+```
+
+Here is how to plot a time-series of pressure from this dataset:
+```{r}
+plot(g2, which="p")
+```
+
+FIXME: why the S4 error here?
+
+(see the help for [`plot,glider-method`](../help/plot-glider-method) for other
+plot types).
+
+FIXME: why is only one surfacing? There should be two, I think.
 
 ## Summarizing data
 
@@ -145,16 +158,12 @@ process.
 
 The `[[` notation from the `oce` package is overloaded here. For example,
 the pressures in the glider object may be extracted with
-```{r}
-g[["pressure"]]
-```
+`g[["pressure"]]`.
+
 The `NA` values result from the setup of the glider to record only in
 particular states of its vertical trajectory. Those states may be found with
-```{r}
-g[["navState"]]
-```
-(It is not entirely clear why data were recorded at the first instance of
-`navState` equaling 100, but not at the following instances.)
+`g[["navState"]]`.  (It is not entirely clear why data were recorded at the
+first instance of `navState` equaling 100, but not at the following instances.)
 
 **Aside:** the `navState` values are as follows:
 105 means the glider is not navigating yet;
@@ -168,6 +177,9 @@ g[["navState"]]
 A common operation is to create a `"ctd"` object, with the `as.ctd` from the
 `oce` package, as follows.
 
+FIXME: need to trim in glider-space before making a ctd, I think. And should
+split into yos, then plot them in a 3x2 plot I think.
+
 ```{r}
 library(oce)
 ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
@@ -180,11 +192,17 @@ to that of the present package, e.g.
 summary(ctd)
 ```
 
-The `oce` package also provides a way to get a simple summary plot, as follows.
+The `oce` package also provides a way to get a simple TS plot, as follows.
 
 ```{r fig.cap="**Figure 1.** CTD plot of a glider yo."}
-oce::plot(ctd)
+oce::plotTS(ctd)
 ```
+
+Note the single very low salinity point.
+
+FIXME: say more about this low S.
+
+
 
 In Figure 1, the top left panel shows profiles of salinity and temperature, the
 top right panel shows potential density anomaly and the square of buoyancy
@@ -202,12 +220,6 @@ Figure 2 indicates that there are two points near the surface, then a lack of
 points during what a descent phase, and then a series of points during the
 ascent phase.
 
-The `oce` package offers a way to isolate the data, using `ctdTrim`; thus, we
-can get a standard CTD plot as follows.
-
-```{r fig.cap="**Figure 3.** Trimmed CTD plot, showing just data measured during the upcast."}
-oce::plot(ctdTrim(ctd, "upcast"))
-```
 
 
 # Slocum gliders

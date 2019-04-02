@@ -223,7 +223,7 @@
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
 #' @export
-read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=TRUE, missingValue=9999, debug)
+read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive(), missingValue=9999, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -239,10 +239,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     }
 
     if (debug > 1) {
-        cat("gli files:\n")
+        cat("Originally, gli files:\n")
         print(glifiles)
         cat("\n")
-        cat("pld1 files:\n")
+        cat("Originally, pld1 files:\n")
         print(pld1files)
         cat("\n")
     }
@@ -255,28 +255,45 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
         yo <- gsub(".*/", "", pld1files) # now just filename
         yo <- gsub("^.*pld1.sub.([0-9]+).*$", "\\1", yo) # now just yo number
         yo <- as.numeric(yo)
-        gliderDebug(debug, "yo=", paste(yo, collapase=" "), "\n")
+        gliderDebug(debug, "yo=", paste(yo, collapase=" "), "\n", sep="")
     }
     ## Narrow glifiles and pld1files, to just those that match the yo pattern
-    keepglifiles <- grep(paste("\\.",yo[1],"\\.",sep=""), glifiles)
+    keepglifiles <- NULL
+    for (y in yo) {
+        found <- grep(paste("\\.",y,"\\.",sep=""), glifiles)
+        if (length(found) == 1)
+            keepglifiles <- c(keepglifiles, glifiles[found])
+    }
     if (!length(keepglifiles))
-        stop("no gli file found for yo=", yo)
-    glifiles <- glifiles[keepglifiles]
-    keeppld1files <- grep(paste("\\.",yo[1],"\\.",sep=""), pld1files)
+        stop("no gli file found for yo=", paste(yo, collapse=" "), sep="")
+    glifiles <- keepglifiles
+    keeppld1files <- NULL
+    for (y in yo) {
+        found <- grep(paste("\\.",y,"\\.",sep=""), pld1files)
+        if (length(found) == 1)
+            keeppld1files <- c(keeppld1files, pld1files[found])
+    }
     if (!length(keeppld1files))
-        stop("no pld1 file found for yo=", yo)
-    pld1files <- pld1files[keeppld1files]
+        stop("no pld1 file found for yo=", paste(yo, collapse=" "))
+    pld1files <- keeppld1files
 
-    gliderDebug(debug, "glifiles: ", paste(glifiles, collapse=" "), "\n")
-    gliderDebug(debug, "pld1files: ", paste(pld1files, collapse=" "), "\n")
+    if (debug > 1) {
+        cat("After trimming to the yo subset, gli files:\n")
+        print(glifiles)
+        cat("\n")
+        cat("After trimming to the yo subset, pld1 files:\n")
+        print(pld1files)
+        cat("\n")
+    }
 
     ## gli files
+    nfiles <- length(glifiles)
     if (progressBar) {
         cat('* Reading', nfiles, ifelse(nfiles==1, 'gli file\n', 'gli files...\n'))
         pb <- txtProgressBar(0, nfiles, 0, style=3) # start at 0 to allow for a single yo
     }
     gli <- list()
-    for (i in seq_along(glifiles)) {
+    for (i in seq_len(nfiles)) {
         if (progressBar)
             setTxtProgressBar(pb, i)
         gliderDebug(debug, "reading gli file:  ", glifiles[i], "\n")
@@ -287,15 +304,18 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     gliData <- do.call(rbind.data.frame, gli)
     gliData$X <- NULL
     ## pld1 files
+    nfiles <- length(pld1files)
     if (progressBar) {
+        cat('\n')
+        flush.console()
         cat('* Reading', nfiles, ifelse(nfiles==1, 'pld1 file\n', 'pld1 files...\n'))
-        pb <- txtProgressBar(1, n, 1, style=3)
+        pb <- txtProgressBar(0, nfiles, 0, style=3)
     }
     pld1 <- list()
-    for (i in seq_along(pld1files)) {
+    for (i in seq_len(nfiles)) {
         if (progressBar)
             setTxtProgressBar(pb, i)
-        gliderDebug(debug, "reading pld1 file: ", pld1files[i], "\n")
+        gliderDebug(debug, "reading pld1 file: ", pld1files[i], "?\n")
         pld1Data <- utils::read.delim(pld1files[i], sep=";")
         pld1Data$yoNumber <- rep(yo[i], dim(pld1Data)[1])
         pld1[[i]] <- pld1Data
@@ -583,7 +603,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @importFrom stats approx
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 #' @export
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=TRUE, debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)

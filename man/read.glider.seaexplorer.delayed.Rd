@@ -5,7 +5,7 @@
 \title{Read delayed-mode SeaExplorer glider data}
 \usage{
 read.glider.seaexplorer.delayed(directory, yo, level = 1,
-  progressBar = TRUE, debug)
+  progressBar = interactive(), debug)
 }
 \arguments{
 \item{directory}{The directory in which the delayed-mode SeaExplorer files are located.}
