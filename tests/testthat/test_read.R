@@ -5,11 +5,11 @@ context("read seaexplorer")
 
 test_that("read.glider.seaexplorer.realtime", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=1, progressBar=FALSE))
+          expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=101, progressBar=FALSE))
           expect_output(summary(g), "Input files:")
           expect_equal(c("glider", "payload1"), names(g[["data"]]))
           ## dimensionality and names in glider stream
-          expect_equal(dim(g[["glider"]]), c(66, 21)) # the 66 works for this particular file
+          expect_equal(dim(g[["glider"]]), c(119, 21)) # the first number works for this particular file
           gliderNamesExpected <- c("time", "navState", "alarm", "heading",
                                    "pitch", "roll", "pressureNav",
                                    "temperatureInternal", "pressureInternal",
@@ -19,8 +19,8 @@ test_that("read.glider.seaexplorer.realtime", {
                                    "altitude", "yoNumberNav")
           expect_equal(names(g[["glider"]]), gliderNamesExpected)
           ## dimensionality and names in payload1 stream (and payload nickname)
-          expect_equal(dim(g[["payload1"]]), c(20, 17)) # the 20 works for this particular file
-          expect_equal(dim(g[["payload"]]), c(20, 17))
+          expect_equal(dim(g[["payload1"]]), c(36, 17)) # the first number works for this particular file
+          expect_equal(dim(g[["payload"]]), c(36, 17))
           payloadNamesExpected <- c("time", "navState", "longitude", "latitude",
                                     "pressureNav", "chlorophyllCount",
                                     "chlorophyll", "backscatterCount",

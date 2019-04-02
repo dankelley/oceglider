@@ -73,7 +73,7 @@
 ####                 ', mission="', mission, '"',
 ####                 ', yo=c(', paste(yo, collapse=","), ')',
 ####                 ', debug=', debug, ')\n', sep="")
-#### 
+####
 ####     if ("?" == url) {
 ####         guess <- "ftp://ftp.dfo-mpo.gc.ca/glider"
 ####         cat("try using url=\"", guess, "\" (or not specifying url, because this is the default)\n", sep="")
@@ -204,15 +204,18 @@
 #' @examples
 #' library(oceanglider)
 #' directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-#' g <- read.glider.seaexplorer.realtime(directory, yo=1)
-#' ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
-#'               longitude=g[['longitude']], latitude=g[['latitude']])
-#' plot(ctd)
-#' ## Isolate the upcast, inferred with oce::ctdTrim().
-#' plot(ctdTrim(ctd, "upcast"))
-#' ## Isolate the upcast, using g[["NAV_RESOURCE"]]==117;
-#' ## note that the downcast has code 100.
-#' plot(subset(ctd, g[["NAV_RESOURCE"]]==117))
+#' g <- read.glider.seaexplorer.realtime(directory)
+#' plot(g, "navState")
+#' plot(g, "S")
+#' plot(g, "T")
+## ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
+##               longitude=g[['longitude']], latitude=g[['latitude']])
+## plot(ctd)
+## ## Isolate the upcast, inferred with oce::ctdTrim().
+## plot(ctdTrim(ctd, "upcast"))
+## ## Isolate the upcast, using g[["NAV_RESOURCE"]]==117;
+## ## note that the downcast has code 100.
+## plot(subset(ctd, g[["NAV_RESOURCE"]]==117))
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data
@@ -254,38 +257,55 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
         yo <- as.numeric(yo)
         gliderDebug(debug, "yo=", paste(yo, collapase=" "), "\n")
     }
-    nfiles <- length(yo)
+    ## Narrow glifiles and pld1files, to just those that match the yo pattern
+    keepglifiles <- grep(paste("\\.",yo[1],"\\.",sep=""), glifiles)
+    if (!length(keepglifiles))
+        stop("no gli file found for yo=", yo)
+    glifiles <- glifiles[keepglifiles]
+    keeppld1files <- grep(paste("\\.",yo[1],"\\.",sep=""), pld1files)
+    if (!length(keeppld1files))
+        stop("no pld1 file found for yo=", yo)
+    pld1files <- pld1files[keeppld1files]
+
+    gliderDebug(debug, "glifiles: ", paste(glifiles, collapse=" "), "\n")
+    gliderDebug(debug, "pld1files: ", paste(pld1files, collapse=" "), "\n")
+
+    ## gli files
     if (progressBar) {
-        cat('* Reading', nfiles, ifelse(nfiles==1, 'file pair\n', 'file pairs...\n'))
+        cat('* Reading', nfiles, ifelse(nfiles==1, 'gli file\n', 'gli files...\n'))
         pb <- txtProgressBar(0, nfiles, 0, style=3) # start at 0 to allow for a single yo
     }
     gli <- list()
-    pld1 <- list()
-    for (i in seq_len(nfiles)) {
-        if (progressBar) setTxtProgressBar(pb, i)
+    for (i in seq_along(glifiles)) {
+        if (progressBar)
+            setTxtProgressBar(pb, i)
         gliderDebug(debug, "reading gli file:  ", glifiles[i], "\n")
         gliData <- utils::read.delim(glifiles[i], sep=";")
-        ## remove junk file from trailing semicolon in file
-        if ("X" %in% names(gliData) && all(is.na(gliData$X)))
-            gliData$X <- NULL
-        gliderDebug(debug, "reading pld1 file: ", pld1files[i], "\n")
-        pld1Data <- utils::read.delim(pld1files[i], sep=";")
-        ## remove junk file from trailing semicolon in file
-        if ("X" %in% names(pld1Data) && all(is.na(pld1Data$X)))
-            pld1Data$X <- NULL
         gliData$yoNumberNav <- rep(yo[i], dim(gliData)[1])
-        pld1Data$yoNumber <- rep(yo[i], dim(pld1Data)[1])
         gli[[i]] <- gliData
-        pld1[[i]] <- pld1Data
     }
     gliData <- do.call(rbind.data.frame, gli)
-    gliData[["X"]] <- NULL
-    pld1Data <- do.call(rbind.data.frame, pld1)
-    pld1Data[["X"]] <- NULL
+    gliData$X <- NULL
+    ## pld1 files
     if (progressBar) {
-        cat('\n')
-        flush.console()
+        cat('* Reading', nfiles, ifelse(nfiles==1, 'pld1 file\n', 'pld1 files...\n'))
+        pb <- txtProgressBar(1, n, 1, style=3)
     }
+    pld1 <- list()
+    for (i in seq_along(pld1files)) {
+        if (progressBar)
+            setTxtProgressBar(pb, i)
+        gliderDebug(debug, "reading pld1 file: ", pld1files[i], "\n")
+        pld1Data <- utils::read.delim(pld1files[i], sep=";")
+        pld1Data$yoNumber <- rep(yo[i], dim(pld1Data)[1])
+        pld1[[i]] <- pld1Data
+    }
+    pld1Data <- do.call(rbind.data.frame, pld1)
+    pld1Data$X <- NULL
+    if (progressBar)
+        cat('\n')
+
+    ## change missingValue to NA
     gliData[gliData == missingValue] <- NA
     pld1Data[pld1Data == missingValue] <- NA
 

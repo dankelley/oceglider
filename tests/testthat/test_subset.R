@@ -5,7 +5,7 @@ context("subset")
 
 test_that("subset seaexplorer by 'ascending'", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=100, progressBar=FALSE))
+          expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=101, progressBar=FALSE))
           ##capture_output(gdeep <- subset(g, "ascending", debug=3), print=TRUE)
           capture_output(gdeep <- subset(g, "ascending"), print=TRUE)
           ##expect_equal(gdeep[["payload1"]], g[["payload1"]][deep,])
@@ -14,7 +14,7 @@ test_that("subset seaexplorer by 'ascending'", {
 
 test_that("subset seaexplorer by pressure", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-          expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=100, progressBar=FALSE))
+          expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=101, progressBar=FALSE))
           deep <- g[["pressure"]] > 20
           deep[is.na(deep)] <- FALSE
           expect_warning(gdeep <- subset(g, pressure > 20),

@@ -121,15 +121,10 @@ authors, if you need to handle such files.
 \examples{
 library(oceanglider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-g <- read.glider.seaexplorer.realtime(directory, yo=1)
-ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
-              longitude=g[['longitude']], latitude=g[['latitude']])
-plot(ctd)
-## Isolate the upcast, inferred with oce::ctdTrim().
-plot(ctdTrim(ctd, "upcast"))
-## Isolate the upcast, using g[["NAV_RESOURCE"]]==117;
-## note that the downcast has code 100.
-plot(subset(ctd, g[["NAV_RESOURCE"]]==117))
+g <- read.glider.seaexplorer.realtime(directory)
+plot(g, "navState")
+plot(g, "S")
+plot(g, "T")
 
 }
 \seealso{
