@@ -29,16 +29,22 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 
 **Abstract.** This vignette explains the basics of using the oceanglider
 package on Seaexplorer and Slocum data. It is \emph{very much} a work in
-progress, because the functions provided by this package are still much under
+progress, because the functions provided by this package are under active
 development.
 
 # Introduction
 
-FIXME: write a couple of paragraphs here about what this package is designed
-for, its state of completion, etc.
+This package is intended to make it easier for analysts to work with data
+acquired by ocean gliders. There is a wide variety of glider types and of file
+formats, and the purpose of this vignette is to acquaint the reader with a
+particular type (the seaexplorer from Alseamar) and particular approach (using
+data files produced by the glider itself).
 
+Rather than simply state what might be best practices, I will present a sort of
+illustrated diary, showing how I worked my way through a small sample dataset
+that is provided with the package.
 
-# Data Sources
+# Data Sources and file organization
 
 The first step in working with glider data is often to download them from a
 server. The lack of URL conventions for such servers can make this a somewhat
@@ -68,8 +74,6 @@ This should make it easier for readers to learn how to use this package.
 
 
 # SeaExplorer Gliders
-
-## Reading files
 
 This package comes with some sample data files that can be used for practice and
 illustration.  For example,
@@ -111,9 +115,10 @@ Notice that some of the spots seem to have only a few data. This can be checked 
 ```{r}
 table(g2[["yoNumber"]])
 ```
-which shows that yoNumber 101, 103 and 105 contain too few data to be considered profiles. There are
-several ways to explore this further, but for the present purpose, let's make a new object
-that contains only those yos that have more than, say, 5 points:
+which shows that some `yoNumber` values contain too few data to be considered
+profiles. There are several ways to explore this further, but for the present
+purpose, let's make a new object that contains only those yos that have more
+than, say, 5 points:
 ```{r}
 g3 <- subset(g2, levels >= 5)
 ```
@@ -132,14 +137,14 @@ The individual yos can be examined by splitting the `payload` portion:
 ```{r}
 payload <- g3[["payload"]] # or [["payload1"]]
 s <- split(payload, payload$yoNumber)
-par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+par(mfrow=c(2, 3)) # we happen to know there are 3 significant yos
 for (ss in s) {
    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
                       temperature=ss[["temperature"]],
                       pressure=ss[["pressure"]],
                       longitude=ss[["longitude"]],
                       latitude=ss[["latitude"]])
-   oce::plotProfile(ctd, which="temperature", eos="unesco")
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
 ```
 
@@ -149,8 +154,9 @@ present version of the package at the end of a dataset, owing to how
 [`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed) is
 works.)
 
-Note how there is a line connecting near-surface and deep data. To learn more about that, let's use
-an oce function to create a ``scan'' plot, say with the last of these `ctd` objects just created.
+Note how there is a line connecting near-surface and deep data. To learn more
+about that, let's use an \CRANpkg{oce} function to create a ``scan'' plot, say
+with the last of these `ctd` objects just created.
 ```{r}
 plotScan(ctd, type="p")
 ```
@@ -173,7 +179,7 @@ Noting that the `navState` values are as follows:
 * 100 means the glider has ballast set to be descending;
 * 118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
 * 117 means the glider has ballast set to be ascending.
-it may be sensible to select for 117, if the desire is to focuss on the ascent
+it may be sensible to select for 117, if the desire is to focus on the ascent
 portion of the yo. So, retracing our steps, we have
 
 
@@ -181,14 +187,14 @@ portion of the yo. So, retracing our steps, we have
 g4 <- subset(g3, navState==117)
 payload <- g4[["payload"]] # or [["payload1"]]
 s <- split(payload, payload$yoNumber)
-par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
 for (ss in s) {
    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
                       temperature=ss[["temperature"]],
                       pressure=ss[["pressure"]],
                       longitude=ss[["longitude"]],
                       latitude=ss[["latitude"]])
-   oce::plotProfile(ctd, which="temperature", eos="unesco")
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
 ```
 
@@ -196,7 +202,7 @@ These results are not much better! Selecting by `navState` is clearly not
 sufficient. However, `oce` provides the `ctdTrim()` function for
 isolating the ascent (called `"upcast"` in the CTD context), e.g.
 ```{r}
-par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
 for (ss in s) {
    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
                       temperature=ss[["temperature"]],
@@ -204,13 +210,13 @@ for (ss in s) {
                       longitude=ss[["longitude"]],
                       latitude=ss[["latitude"]])
    ctd <- oce::ctdTrim(ctd, "upcast")
-   oce::plotProfile(ctd, which="temperature", eos="unesco")
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
 ```
 
-This looks reasonable now. Let's try a colour-coded TS plot, black
-for the first of these yos, red for the second, and green for the
-third.
+This looks reasonable now. Let's try a waterfall temperature plot, with black
+for the first yo, red for the second, green for the third, and blue for the
+fourth, as explained in the legend.
 ```{r}
 par(mfrow=c(1, 1))
 for (i in seq_along(s)) {
@@ -222,17 +228,20 @@ for (i in seq_along(s)) {
                        latitude=ss[["latitude"]])
     ctd <- oce::ctdTrim(ctd, "upcast")
     if (i == 1) {
-       oce::plotTS(ctd, eos="unesco")
+       oce::plotProfile(ctd, xtype="temperature", eos="unesco")
     } else {
-       points(ctd[["salinity"]], ctd[["temperature"]], col=i)
+       lines(ctd[["temperature"]], ctd[["pressure"]], col=i)
     }
 }
+legend("bottomright", lwd=1, col=seq_along(s),
+    legend=paste("yo",
+        as.character(lapply(s,function(ss) ss$yoNumber[1]))))
 ````
 
 At this stage, readers will likely have some ideas for doing more with this
 sample dataset, and ought to be aware that many of the steps here might not
 be appropriate for other datasets, e.g. those in which data were acquired on
-both ascent and descent, or only on descent. 
+both ascent and descent, or only on descent.
 
 # Slocum gliders
 
