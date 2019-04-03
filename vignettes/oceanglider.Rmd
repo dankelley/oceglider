@@ -95,7 +95,7 @@ these are called delayed-mode data, so the function to read them is called
 [`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
 ```{r}
 directory2 <- system.file("extdata/seaexplorer/raw", package="oceanglider")
-g2 <- read.glider.seaexplorer.delayed(directory2)
+g2 <- read.glider.seaexplorer.delayed(directory2, level=1)
 ```
 
 Here is how to plot a time-series of pressure from this dataset:
@@ -103,124 +103,136 @@ Here is how to plot a time-series of pressure from this dataset:
 plot(g2, which="p")
 ```
 
-FIXME: why the S4 error here?
-
-(see the help for [`plot,glider-method`](../help/plot-glider-method) for other
-plot types).
-
-FIXME: why is only one surfacing? There should be two, I think.
-
-## Summarizing data
-
-The generic `summary()` function has a specialization for glider data, so a
-good way to learn about a dataset is with e.g.
+Here is how to see locations in space:
 ```{r}
-summary(g)
+plot(g2, which="map")
+```
+Notice that some of the spots seem to have only a few data. This can be checked with
+```{r}
+table(g2[["yoNumber"]])
+```
+which shows that yoNumber 101, 103 and 105 contain too few data to be considered profiles. There are
+several ways to explore this further, but for the present purpose, let's make a new object
+that contains only those yos that have more than, say, 5 points:
+```{r}
+g3 <- subset(g2, levels >= 5)
+```
+As a check that,
+```{r}
+unique(g3[["yoNumber"]])
+```
+verifies that we got the yos we want.
+
+Quite often, it will be desirable to work with individual yos. With only 3, as in this
+small test case, we might as well plot them (say as temperature profiles). For that, it
+is helpful to split by yo number, and then cycle though the subsets, converting to CTD
+objects and plotting with functions from the \CRANpkg{oce} package.
+
+The individual yos can be examined by splitting the `payload` portion:
+```{r}
+payload <- g3[["payload"]] # or [["payload1"]]
+s <- split(payload, payload$yoNumber)
+par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   oce::plotProfile(ctd, which="temperature", eos="unesco")
+}
 ```
 
-The output of this function is in a form that will be familiar to users of the
-`oce` package, with a summary of metadata being given first, then a summary of
-the data, and then a listing of some steps in the processing.
+(Here, the UNESCO equation of state is used, because the newer TEOS10/GSW version requires
+longitude and latitude information to be valid, which is not the case in the
+present version of the package at the end of a dataset, owing to how
+[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed) is
+works.)
 
-Note in particular how variable names have been changed from those in the
-original files.
-
-## Examining data
-
-The data are stored in two streams: one, called `glider`, holds data acquired
-with sensors on the glider itself, and the other, called `payload1`, holds data
-acquired with the first instrumental payload.
-
-The first few lines of the glider stream are given by
-
+Note how there is a line connecting near-surface and deep data. To learn more about that, let's use
+an oce function to create a ``scan'' plot, say with the last of these `ctd` objects just created.
 ```{r}
-head(g[["glider"]], 3)
+plotScan(ctd, type="p")
 ```
 
-The first few lines in the payload are given by
+This makes it clear that the yo contains near-surface data, then skips to
+depth, and then returns to the surface. A more careful examination with
 ```{r}
-head(g[["payload1"]], 3)
+par(mfrow=c(1, 3))
+plot(s[[1]][["time"]], s[[1]][["pressure"]])
+plot(s[[1]][["time"]], s[[1]][["navState"]])
 ```
+shows us that if the desire was to obtain a simple upcast, we might consider
+subsetting by the value of the `navState` variable.
 
-Actually, in this particular case, the second call could have been
-written as
-```{r}
-head(g[["payload"]], 3)
-```
-because this glider only had a single payload, However, the first form is
-preferable, in terms of code clarity.
+Noting that the `navState` values are as follows:
+* 105 means the glider is not navigating yet;
+* 115 means the glider is surfacing in preparation for communication;
+* 116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
+* 110 means the glider is inflecting downward;
+* 100 means the glider has ballast set to be descending;
+* 118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
+* 117 means the glider has ballast set to be ascending.
+it may be sensible to select for 117, if the desire is to focuss on the ascent
+portion of the yo. So, retracing our steps, we have
 
-It should be noted that the `"salinity"` item is not actually stored in the
-data file, but is instead computed (as Practical Salinity) during the reading
-process.
-
-## Data extraction
-
-The `[[` notation from the `oce` package is overloaded here. For example,
-the pressures in the glider object may be extracted with
-`g[["pressure"]]`.
-
-The `NA` values result from the setup of the glider to record only in
-particular states of its vertical trajectory. Those states may be found with
-`g[["navState"]]`.  (It is not entirely clear why data were recorded at the
-first instance of `navState` equaling 100, but not at the following instances.)
-
-**Aside:** the `navState` values are as follows:
-105 means the glider is not navigating yet;
-115 means the glider is surfacing in preparation for communication;
-116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
-110 means the glider is inflecting downward;
-100 means the glider has ballast set to be descending;
-118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
-117 means the glider has ballast set to be ascending.
-
-A common operation is to create a `"ctd"` object, with the `as.ctd` from the
-`oce` package, as follows.
-
-FIXME: need to trim in glider-space before making a ctd, I think. And should
-split into yos, then plot them in a 3x2 plot I think.
 
 ```{r}
-library(oce)
-ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
-              longitude=g[["longitude"]], latitude=g[["latitude"]])
+g4 <- subset(g3, navState==117)
+payload <- g4[["payload"]] # or [["payload1"]]
+s <- split(payload, payload$yoNumber)
+par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   oce::plotProfile(ctd, which="temperature", eos="unesco")
+}
 ```
 
-The `oce` package has a `summary()` function that provides output that is similar
-to that of the present package, e.g.
+These results are not much better! Selecting by `navState` is clearly not
+sufficient. However, `oce` provides the `ctdTrim()` function for
+isolating the ascent (called `"upcast"` in the CTD context), e.g.
 ```{r}
-summary(ctd)
+par(mfrow=c(1, 3)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   ctd <- oce::ctdTrim(ctd, "upcast")
+   oce::plotProfile(ctd, which="temperature", eos="unesco")
+}
 ```
 
-The `oce` package also provides a way to get a simple TS plot, as follows.
+This looks reasonable now. Let's try a colour-coded TS plot, black
+for the first of these yos, red for the second, and green for the
+third.
+```{r}
+par(mfrow=c(1, 1))
+for (i in seq_along(s)) {
+    ss <- s[[i]]
+    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                       temperature=ss[["temperature"]],
+                       pressure=ss[["pressure"]],
+                       longitude=ss[["longitude"]],
+                       latitude=ss[["latitude"]])
+    ctd <- oce::ctdTrim(ctd, "upcast")
+    if (i == 1) {
+       oce::plotTS(ctd, eos="unesco")
+    } else {
+       points(ctd[["salinity"]], ctd[["temperature"]], col=i)
+    }
+}
+````
 
-```{r fig.cap="**Figure 1.** CTD plot of a glider yo."}
-oce::plotTS(ctd)
-```
-
-Note the single very low salinity point.
-
-FIXME: say more about this low S.
-
-
-
-In Figure 1, the top left panel shows profiles of salinity and temperature, the
-top right panel shows potential density anomaly and the square of buoyancy
-frequency, the lower left panel is a temperature-salinity diagram, and the
-bottom right panel is a map showing the sampling location (southeast of
-Halifax, Nova Scotia).
-
-Note the retracing in some of the panels of Figure 1. To see why, we may use
-the `plotScan` function provided by the `oce` package.
-```{r fig.cap="**Figure 2.** Pressures in a sample file, with 'Scan' being sequence number of observation."}
-plotScan(ctd, type="o")
-```
-
-Figure 2 indicates that there are two points near the surface, then a lack of
-points during what a descent phase, and then a series of points during the
-ascent phase.
-
-
+At this stage, readers will likely have some ideas for doing more with this
+sample dataset, and ought to be aware that many of the steps here might not
+be appropriate for other datasets, e.g. those in which data were acquired on
+both ascent and descent, or only on descent. 
 
 # Slocum gliders
 

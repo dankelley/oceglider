@@ -552,6 +552,11 @@ setMethod(f="[[",
 #' @param which Integer or character value specifying which style is
 #' to be used; see \dQuote{Details}.
 #'
+#' @param type Type of plot, as defined in \code{\link{par}}, e.g. \code{"p"} (the
+#' default) for points, \code{"l"} for connected line segments, or \code{"o"}
+#' for an overlay of points and lines, etc. The default is \code{"o"}, which is
+#' perhaps the best for short sequences.
+#'
 #' @template debug
 #'
 #' @param ... ignored.
@@ -601,7 +606,8 @@ setMethod(f="[[",
 #' @export
 setMethod(f="plot",
           signature="glider",
-          definition=function(x, which, debug, ...) {
+          definition=function(x, which, type="o", debug, ...) {
+              dots <- list(...)
               debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
               gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
               if (which == 0 || which == "map") {
@@ -611,19 +617,20 @@ setMethod(f="plot",
                   asp <- 1 / cos(mean(latitude*pi/180))
                   plot(longitude, latitude, asp=asp,
                        xlab=resizableLabel("longitude"),
-                       ylab=resizableLabel("latitude"), ...)
+                       ylab=resizableLabel("latitude"), type=type, ...)
               } else if (which == 1 || which == "p") {
                   gliderDebug(debug, "pressure time-series plot\n", sep="")
-                  oce.plot.ts(x[["time"]], x[["pressure"]], ylab=resizableLabel("p"), debug=debug-1, ...)
+                  p <- x[["pressure"]]
+                  oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, type=type, ...)
               } else if (which == 2 || which == "T") {
-                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, ...)
+                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, type=type, ...)
               } else if (which == 3 || which == "S") {
-                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, ...)
+                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, type=type, ...)
               } else if (which == 4 || which == "TS") {
-                  plotTS(x, debug=debug-1, ...)
+                  plotTS(x, debug=debug-1, type=type, ...)
               } else if (which == 5 || which == "navState") {
                   oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
-                              mar=c(2, 3, 1, 7), ...)
+                              mar=c(2, 3, 1, 7), type=type, ...)
                   for (ii in seq_along(seaexplorerNavState)) {
                       abline(h=seaexplorerNavState[[ii]], col="darkgray")
                   }

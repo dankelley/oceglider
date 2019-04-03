@@ -5,13 +5,18 @@
 \alias{plot,glider-method}
 \title{Plot a glider Object}
 \usage{
-\S4method{plot}{glider}(x, which, debug, ...)
+\S4method{plot}{glider}(x, which, type = "o", debug, ...)
 }
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
 
 \item{which}{Integer or character value specifying which style is
 to be used; see \dQuote{Details}.}
+
+\item{type}{Type of plot, as defined in \code{\link{par}}, e.g. \code{"p"} (the
+default) for points, \code{"l"} for connected line segments, or \code{"o"}
+for an overlay of points and lines, etc. The default is \code{"o"}, which is
+perhaps the best for short sequences.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then

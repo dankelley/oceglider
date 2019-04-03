@@ -122,9 +122,9 @@ authors, if you need to handle such files.
 library(oceanglider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 g <- read.glider.seaexplorer.realtime(directory)
-plot(g, "navState")
-plot(g, "S")
-plot(g, "T")
+plot(g, which="navState")
+plot(g, which="S")
+plot(g, which="T")
 
 }
 \seealso{
