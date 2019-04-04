@@ -111,22 +111,31 @@ Here is how to see locations in space:
 ```{r}
 plot(g2, which="map")
 ```
-Notice that some of the spots seem to have only a few data. This can be checked with
+
+The points are on a line because
+[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
+interpolates longitude and latitude between surfacings, and this small subset
+of glider data was selected to have a position record at the first and last of
+the sequenc.
+
+It is also noteworthy that some of the spots seem to have only a few data. This
+can be checked with
 ```{r}
 table(g2[["yoNumber"]])
 ```
-which shows that some `yoNumber` values contain too few data to be considered
-profiles. There are several ways to explore this further, but for the present
-purpose, let's make a new object that contains only those yos that have more
-than, say, 5 points:
+
+the result of which show that some `yoNumber` values contain too few data to be
+considered profiles. There are several ways to explore this further, but for
+the present purpose, let's make a new object that contains only those yos that
+have more than, say, 5 points:
 ```{r}
 g3 <- subset(g2, levels >= 5)
 ```
-As a check that,
+As a check on that idea, note that
 ```{r}
 unique(g3[["yoNumber"]])
 ```
-verifies that we got the yos we want.
+verifies that we got the desired yos.
 
 Quite often, it will be desirable to work with individual yos. With only 3, as in this
 small test case, we might as well plot them (say as temperature profiles). For that, it
@@ -164,11 +173,12 @@ plotScan(ctd, type="p")
 This makes it clear that the yo contains near-surface data, then skips to
 depth, and then returns to the surface. A more careful examination with
 ```{r}
-par(mfrow=c(1, 3))
-plot(s[[1]][["time"]], s[[1]][["pressure"]])
-plot(s[[1]][["time"]], s[[1]][["navState"]])
+par(mfrow=c(1, 2))
+plot(s[[1]][["time"]], s[[1]][["pressure"]], xlab="Time", ylab="Pressure")
+plot(s[[1]][["time"]], s[[1]][["navState"]], xlab="Time", ylab="navState")
 ```
-shows us that if the desire was to obtain a simple upcast, we might consider
+
+reveals that if the desire was to obtain a simple upcast, we might consider
 subsetting by the value of the `navState` variable.
 
 Noting that the `navState` values are as follows:
