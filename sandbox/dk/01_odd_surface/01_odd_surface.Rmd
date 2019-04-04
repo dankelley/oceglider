@@ -1,0 +1,51 @@
+---
+author: Dan Kelley
+title: Odd near-surface glider values
+date: 2019 Apr 4
+fig_caption: yes
+---
+
+## Introduction
+
+I've noticed something odd in the near-surface salinity and temperature values
+for glider sea019, mission m44. The code block below will be self-explanatory
+to R users; for others, I'm just reading the data using a function in the
+`oceanglider` package, skipping the first point (dated in 2009) and then
+plotting 2000 points that follow, to show a few yos. I put a vertical red line
+at a time just before the first ascent, as judged by eye based on the pressure
+timeseries (top panel below).
+
+## Discussion
+
+1. Why is the first point dated in 2009?
+2. What explains the variation of S and T at the stat of ascent patterns, e.g.
+just to the right of the red line on the graphs?  During that interval, $S$
+varies over a range that is much larger than the range over the profile that
+follows, and $T$ varies over half the range displayed in the rest of the
+journey up the water column. The conductivity signal does not show an odd
+pattern, which makes me thik the $S$ oddness results from the $T$ oddness. But
+what causes that?
+
+## Methods and results
+
+```{r fig.cap="Some early data for sea019/m54.", fig.height=9, fig.width=7}
+library(oce)
+library(oceanglider)
+g <- read.glider.seaexplorer.delayed("/data/glider/sea019/m54/all_data")
+look <- 2:2001
+t <- g[["time"]][look]
+p <- g[["pressure"]][look]
+T <- g[["temperature"]][look]
+S <- g[["salinity"]][look]
+C <- g[["conductivity"]][look]
+par(mfcol=c(2, 2))
+oce.plot.ts(t, p, type="p")
+tline <- numberAsPOSIXct(1532442701) # by clicking mouse
+abline(v=tline, col="red")
+oce.plot.ts(t, T, type="p", drawTimeRange=FALSE)
+abline(v=tline, col="red")
+oce.plot.ts(t, S, type="p", drawTimeRange=FALSE)
+abline(v=tline, col="red")
+oce.plot.ts(t, C, type="p", drawTimeRange=FALSE)
+abline(v=tline, col="red")
+```
