@@ -2,6 +2,7 @@
 
 export(degreeMinute)
 export(gliderDebug)
+export(navStateCodes)
 export(read.glider)
 export(read.glider.netcdf)
 export(read.glider.seaexplorer.delayed)

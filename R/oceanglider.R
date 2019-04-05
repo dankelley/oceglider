@@ -42,22 +42,6 @@ setMethod(f="initialize",
               return(.Object)
           })
 
-seaexplorerNavState <- list("not navigating"=105,
-                            "surfacing"=115,
-                            "at surface"=116,
-                            "inflecting down"=110,
-                            "descent"=100,
-                            "inflecting up"=118,
-                            "ascent"=117)
-# +105 means the glider is not navigating yet;
-# +115 means the glider is surfacing in preparation for communication;
-# +116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
-# +110 means the glider is inflecting downward;
-# +100 means the glider has ballast set to be descending;
-# +118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
-# +117 means the glider has ballast set to be ascending.
-
-
 ##OLD #' Trim a glider Object
 ##OLD #'
 ##OLD #' Return a trimmed version of a glider object.
@@ -631,19 +615,20 @@ setMethod(f="plot",
               } else if (which == 4 || which == "TS") {
                   plotTS(x, debug=debug-1, type=type, ...)
               } else if (which == 5 || which == "navState") {
+                  ns <- navStateCodes(x)
                   oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
                               mar=c(2, 3, 1, 7), type=type, ...)
-                  for (ii in seq_along(seaexplorerNavState)) {
-                      abline(h=seaexplorerNavState[[ii]], col="darkgray")
+                  for (ii in seq_along(ns)) {
+                      abline(h=ns[[ii]], col="darkgray")
                   }
                   # labels in margin, not rotated so we can read them.
                   oxpd <- par("xpd")
                   par(xpd=NA)
                   tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])
-                  for (ii in seq_along(seaexplorerNavState)) {
-                      text(tmax, seaexplorerNavState[[ii]],
-                           sprintf(" %d: %s", seaexplorerNavState[[ii]],
-                                   names(seaexplorerNavState[ii])),
+                  for (ii in seq_along(ns)) {
+                      text(tmax, ns[[ii]],
+                           sprintf(" %d: %s", ns[[ii]],
+                                   names(ns[ii])),
                            col="darkgray", cex=0.75, xpd=TRUE, pos=4)
                   }
                   par(xpd=oxpd)
