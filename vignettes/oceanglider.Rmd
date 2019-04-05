@@ -129,7 +129,7 @@ considered profiles. There are several ways to explore this further, but for
 the present purpose, let's make a new object that contains only those yos that
 have more than, say, 5 points:
 ```{r}
-g3 <- subset(g2, levels >= 5)
+g3 <- subset(g2, yolength >= 5)
 ```
 As a check on that idea, note that
 ```{r}

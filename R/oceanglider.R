@@ -171,9 +171,11 @@ seaexplorerNavState <- list("not navigating"=105,
 #' (see Example 1).
 #'
 #' Scheme 2: if \code{subset} is a logical expression containing
-#' the word \code{"levels"}, then the expression is used as a filter
-#' to select yos (see Example 2). Typically, this might be used to avoid
-#' short yos.
+#' the word \code{"yolength"}, then the expression is used as a filter
+#' to select yos based on the number of samples they
+#' contain (see Example 2). Typically, this might be used to avoid
+#' very short yos that might have been inferred erroneously
+#' by the glider instrumentation.
 #'
 #' Scheme 3: If \code{subset} is the string \code{"ascending"}, then
 #' only ascending segments of yos are retained. This is done
@@ -208,7 +210,7 @@ seaexplorerNavState <- list("not navigating"=105,
 #' hist(gg[["salinity"]], main="S cleaned")
 #'
 #' # Example 2. remove short yos
-#' gg <- subset(g, levels > 4)
+#' gg <- subset(g, yolength > 4)
 #'
 #' # Example 3. retain only ascending portions of yos
 #' gascending <- subset(g, "ascending")
@@ -254,21 +256,21 @@ setMethod(f="subset",
                   } else {
                       gliderDebug(debug, "subset is a logical expression\n")
                       ## subset is a logical expression
-                      if (1 == length(grep("levels", subsetString))) {
+                      if (1 == length(grep("yolength", subsetString))) {
                           if (!"payload1" %in% names(x@data))
                               stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
                           s <- split(x@data$payload1, x[["yoNumber"]])
                           warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
-                          levels <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
-                          keepYo <- eval(substitute(subset), list(levels=levels))
+                          thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
+                          keepYo <- eval(substitute(subset), list(yolength=thisYolength))
                           ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
                           res <- x
                           res@metadata$yo <- x@metadata$yo[keepYo]
-                          keepLevel <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], levels[si])))
+                          keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
                           ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
                           ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
-                          res@data$glider <- x@data$glider[keepLevel, ]
-                          res@data$payload1 <- x@data$payload1[keepLevel, ]
+                          res@data$glider <- x@data$glider[keepData, ]
+                          res@data$payload1 <- x@data$payload1[keepData, ]
                       } else {
                           warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
                           keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
@@ -364,7 +366,7 @@ setMethod(f="subset",
 #' \code{x[["CT"]]}. This is computed with
 #' \code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
 #' stoed in the object. (See also the item for Absolute Salinity.)
-#' 
+#'
 #' \item the sigma0 density anomaly is returned with e.g.
 #' \code{x[["sigma0"]]}. This is computed with
 #' \code{\link[oce]{swSigma0}}  based on the water properties
