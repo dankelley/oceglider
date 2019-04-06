@@ -305,9 +305,9 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    gliderDebug(debug, "read.glider.seaexplorer.realtime() {\n", unindent=1)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
+    gliderDebug(debug, "read.glider.seaexplorer.realtime() {\n", unindent=1)
     yoGiven <- !missing(yo)
     glifiles <- dir(directory, pattern='*gli*', full.names=TRUE)
     pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
@@ -590,6 +590,32 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     }
 
     res@data <- list(glider=gliData, payload1=pld1Data)
+    ## BOOKMARK START assure that this is echoed in read.glider.seaexplorer.realtime()
+    ## insert units
+    for (stream in names(res@data)) {
+        ## FIXME: add more units here, if any of them are certain to be known
+        res@metadata$units[[stream]] <- list()
+        dataNames <- names(res@data[[stream]])
+        if ("salinity" %in% dataNames)
+            res@metadata$units[[stream]]$salinity <- list(unit=expression(), scale="PSS-78") # FIXME: is this modern?
+        if ("temperature" %in% dataNames)
+            res@metadata$units[[stream]]$temperature <- list(unit=expression(degree*C), scale="ITS-90")
+        if ("pressure" %in% dataNames)
+            res@metadata$units[[stream]]$pressure <- list(unit=expression(dbar), scale="")
+        if ("longitude" %in% dataNames)
+            res@metadata$units[[stream]]$longitude <- list(unit=expression(degree*E), scale="")
+        if ("latitude" %in% dataNames)
+            res@metadata$units[[stream]]$latitude <- list(unit=expression(degree*N), scale="")
+        if ("heading" %in% dataNames)
+            res@metadata$units[[stream]]$heading <- list(unit=expression(degree), scale="")
+        if ("pitch" %in% dataNames)
+            res@metadata$units[[stream]]$pitch <- list(unit=expression(degree), scale="")
+        if ("roll" %in% dataNames)
+            res@metadata$units[[stream]]$roll <- list(unit=expression(degree), scale="")
+    }
+    ## TODO set up flags
+    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
+    ## BOOKMARK END
     res@processingLog <- processingLogAppend(res@processingLog,
                                              paste("read.glider.seaexplorer.realtime(directory=\"", directory, "\",",
                                                    "yo=c(", paste(yo, collapse=","), "),",
@@ -666,12 +692,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @examples
-#' \dontrun{
 #' library(oceanglider)
-#' directory <- '/data/archive/glider/2019/sx/sea021m49/raw'
-#' d <- read.glider.seaexplorer.delayed(directory, yo=1:100)
-#' plot(d, which=1)
-#' }
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' g <- read.glider.seaexplorer.delayed(directory)
+#' plot(g, which="p")
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data
@@ -687,6 +711,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         debug <- getOption("gliderDebug", default=0)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
+    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
     navfiles <- dir(directory, pattern='*gli*', full.names=TRUE) # FIXME: not used
@@ -865,8 +890,34 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         df$salinity[df$salinity > 40] <- NA
 
         res@data <- list(payload1=df)
-        res@processingLog <- processingLogAppend(res@processingLog,
-                                                 paste("read.glider.seaexplorer.delayed(directory=\"", directory, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
-        return(res)
     }
+    ## BOOKMARK START assure that this is echoed in read.glider.seaexplorer.realtime()
+    ## insert units
+    for (stream in names(res@data)) {
+        ## FIXME: add more units here, if any of them are certain to be known
+        res@metadata$units[[stream]] <- list()
+        dataNames <- names(res@data[[stream]])
+        if ("salinity" %in% dataNames)
+            res@metadata$units[[stream]]$salinity <- list(unit=expression(), scale="PSS-78") # FIXME: is this modern?
+        if ("temperature" %in% dataNames)
+            res@metadata$units[[stream]]$temperature <- list(unit=expression(degree*C), scale="ITS-90")
+        if ("pressure" %in% dataNames)
+            res@metadata$units[[stream]]$pressure <- list(unit=expression(dbar), scale="")
+        if ("longitude" %in% dataNames)
+            res@metadata$units[[stream]]$longitude <- list(unit=expression(degree*E), scale="")
+        if ("latitude" %in% dataNames)
+            res@metadata$units[[stream]]$latitude <- list(unit=expression(degree*N), scale="")
+        if ("heading" %in% dataNames)
+            res@metadata$units[[stream]]$heading <- list(unit=expression(degree), scale="")
+        if ("pitch" %in% dataNames)
+            res@metadata$units[[stream]]$pitch <- list(unit=expression(degree), scale="")
+        if ("roll" %in% dataNames)
+            res@metadata$units[[stream]]$roll <- list(unit=expression(degree), scale="")
+    }
+    ## TODO set up flags
+    ## BOOKMARK END
+    res@processingLog <- processingLogAppend(res@processingLog,
+                                             paste("read.glider.seaexplorer.delayed(directory=\"", directory, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
+    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
+    res
 }

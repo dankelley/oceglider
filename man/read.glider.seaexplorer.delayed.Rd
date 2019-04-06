@@ -153,12 +153,10 @@ authors, if you need to handle such files.
 }
 
 \examples{
-\dontrun{
 library(oceanglider)
-directory <- '/data/archive/glider/2019/sx/sea021m49/raw'
-d <- read.glider.seaexplorer.delayed(directory, yo=1:100)
-plot(d, which=1)
-}
+directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g <- read.glider.seaexplorer.delayed(directory)
+plot(g, which="p")
 
 }
 \seealso{

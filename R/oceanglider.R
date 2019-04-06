@@ -631,7 +631,7 @@ setMethod(f="plot",
 #'
 #' @param ... Further arguments passed to or from other methods.
 #'
-#' @importFrom oce threenum processingLogShow
+#' @importFrom oce dataLabel threenum processingLogShow
 #' @importFrom methods callNextMethod
 #'
 #' @export
@@ -662,8 +662,6 @@ setMethod(f="summary",
               if ("subtype" %in% metadataNames)
                   cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
               nyo <- length(object@metadata$yo)
-              if (nyo == 0)
-                  cat("* Yo:      (none)\n")
               if (nyo == 1)
                   cat(sprintf("* Yo:      %d\n", object@metadata$yo))
               else if (nyo > 1)
@@ -678,8 +676,46 @@ setMethod(f="summary",
                   threes <- matrix(nrow=ndata, ncol=4)
                   for (i in 1:ndata)
                       threes[i, ] <- oce::threenum(stream[[i]])
+                  if ("units" %in% metadataNames) {
+                      units <- object@metadata$units[[streamName]]
+                      unitsNames <- names(object@metadata$units[[streamName]])
+                      units <- unlist(lapply(seq_along(object@metadata$units[[streamName]]),
+                                             function(i) {
+                                                 u <- object@metadata$units[[streamName]][[i]]
+                                                 if (0 == length(u[1][[1]])) {
+                                                     if (2 == length(u)) return(u[2]) else return("")
+                                                 }
+                                                 if (length(u) == 1) {
+                                                     res <- if (is.expression(u)) as.character(u) else u
+                                                 } else if (length(u) == 2) {
+                                                     res <- if (nchar(u[2])) paste(u[[1]], u[[2]], sep=", ") else u[[1]]
+                                                 } else {
+                                                     res <- ""
+                                                 }
+                                                 res <- as.character(res)[1] # the [1] is in case the unit is mixed up
+                                                 ## Clean up notation, by stages. (The order may matter.)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+C", "\u00B0C", res)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+F", "\u00B0F", res)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+E", "\u00B0E", res)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+W", "\u00B0W", res)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+N", "\u00B0N", res)
+                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+S", "\u00B0S", res)
+                                                 if (nchar(res)) res <- gsub("percent", "%", res)
+                                                 if (nchar(res)) res <- gsub("degree", "\u00B0", res)
+                                                 if (nchar(res)) res <- gsub("^,[ ]*", "", res)
+                                                 if (nchar(res)) res <- gsub("mu . ", "\u03BC", res)
+                                                 if (nchar(res)) res <- gsub("per . mil", "\u2030", res)
+                                                 if (nchar(res)) res <- gsub("10\\^\\(-8\\)[ ]*\\*", "10\u207B\u2078", res)
+                                                 if (nchar(res)) res <- gsub("\\^2", "\u00B2", res)
+                                                 if (nchar(res)) res <- gsub("\\^3", "\u00B3", res)
+                                                 res
+                                             }))
+                      names(units) <- unitsNames
+                      rownames(threes) <- paste("    ", oce::dataLabel(names(stream), units), sep="")
+                  } else {
+                      rownames(threes) <- paste("    ", names(stream), sep="")
+                  }
                   if (!is.null(threes)) {
-                      rownames(threes) <- paste("    ", names(stream))
                       OriginalName <- unlist(lapply(names(stream), function(n)
                                                     if (n %in% names(object@metadata$dataNamesOriginal[[streamName]]))
                                                         object@metadata$dataNamesOriginal[[streamName]][[n]] else "-"))
@@ -1109,5 +1145,61 @@ read.glider <- function(file, debug, ...)
         stop("only .nc and .gz files handled")
     }
     gliderDebug(debug, '} # read.glider()', unindent=1, sep="")
+    res
+}
+
+#' Convert data to glider format
+#'
+#' This function returns a glider object that holds data as provided
+#' in the \code{data} argument, with units as provided by the \code{units}
+#' argument. The \code{units} argument is optional, making the function
+#' easy to use in interactive sessions, but production code ought to
+#' be written with units fully specified.
+#'
+#' @param type Character value giving the type of glider, e.g.
+#' be either \code{seaexplorer} or \code{slocum}.
+#'
+#' @param data A data frame containing the data. This is copied straight into
+#' the \code{payload1} item in the \code{data} slot of the returned value,
+#' \emph{without} name translation. For most functions in this package to work,
+#' \code{data} ought to have items named \code{longitude},
+#' \code{latitude}, \code{salinity}, \code{temperature} and 
+#' \code{pressure}.
+#'
+#' @param units A list holding units, with names corresponding to the
+#' names in the data. See the example for the format to be used
+#' for \code{units}, but note that there are several items in this
+#' dataset that are not given units, in this example.
+#'
+#' @examples
+#' library(oceanglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' g <- read.glider.seaexplorer.delayed(directory)
+#' data <- g[["payload"]]
+#' units <- list(temperature=list(unit=expression(degree*C), scale="ITS-90"),
+#'      salinity=list(unit=expression(), scale="PSS-78"),
+#'      pressure=list(unit=expression(dbar), scale=""),
+#'      longitude=list(unit=expression(degree*E), scale=""),
+#'      latitude=list(unit=expression(degree*N), scale=""))
+#' gg <- as.glider("seaexplorer", data, units)
+#' par(mfrow=c(2, 1))
+#' plot(g, which="p")
+#' plot(gg, which="p")
+#'
+#' @export
+as.glider <- function(type, data, units)
+{
+    if (missing(type))
+        stop("'type' must be given")
+    if (missing(data))
+        stop("'data' must be given")
+    res <- new("glider")
+    res@metadata$type <- type
+    streamname <- "payload1"
+    res@metadata$dataNamesOriginal <- list(names=names(data))
+    res@data[[streamname]] <- data
+    if (!missing(units)) {
+        res@metadata$units <- list(payload1=units)
+    }
     res
 }
