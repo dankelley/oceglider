@@ -221,60 +221,50 @@ setMethod(f="subset",
               subsetString <- paste(deparse(substitute(subset)), collapse=" ")
               gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
               gliderDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
-              if (x[["type"]] == "seaexplorer") {
-                  gliderDebug(debug, "type is seaexplorer\n")
-                  if (!"payload1" %in% names(x@data))
-                      stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
-                  if (is.character(substitute(subset))) {
-                      gliderDebug(debug, "subset is character\n")
-                      ## subset is a character string
-                      if (subset == "ascending") {
-                          res <- x
-                          res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
-                          res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 117)
-                      } else if (subset == "descending") {
-                          res <- x
-                          res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
-                          res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 100)
-                      }
-                  } else {
-                      gliderDebug(debug, "subset is a logical expression\n")
-                      ## subset is a logical expression
-                      if (1 == length(grep("yolength", subsetString))) {
-                          if (!"payload1" %in% names(x@data))
-                              stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
-                          s <- split(x@data$payload1, x[["yoNumber"]])
-                          warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
-                          thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
-                          keepYo <- eval(substitute(subset), list(yolength=thisYolength))
-                          ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
-                          res <- x
-                          res@metadata$yo <- x@metadata$yo[keepYo]
-                          keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
-                          ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
-                          ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
-                          res@data$glider <- x@data$glider[keepData, ]
-                          res@data$payload1 <- x@data$payload1[keepData, ]
-                      } else {
-                          warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
-                          keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
-                          keep[is.na(keep)] <- FALSE
-                          gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
-                          res <- x
-                          res@data[["payload1"]] <- x@data[["payload1"]][keep,]
-                          for (i in seq_along(x@metadata$flags)) {
-                              res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
-                          }
-                      }
+
+              gliderDebug(debug, "type is seaexplorer\n")
+              if (!"payload1" %in% names(x@data))
+                  stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
+              if (is.character(substitute(subset))) {
+                  gliderDebug(debug, "subset is character\n")
+                  ## subset is a character string
+                  if (subset == "ascending") {
+                      res <- x
+                      res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
+                      res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 117)
+                  } else if (subset == "descending") {
+                      res <- x
+                      res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
+                      res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 100)
                   }
               } else {
-                  ## warning("subsetting of non-seaexplorer has not been tested yet")
-                  keep <- eval(substitute(subset), x@data, parent.frame())
-                  keep[is.na(keep)] <- FALSE
-                  res <- x
-                  res@data <- subset(x@data, keep)
-                  for (i in seq_along(x@metadata$flags)) {
-                      res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+                  gliderDebug(debug, "subset is a logical expression\n")
+                  ## subset is a logical expression
+                  if (1 == length(grep("yolength", subsetString))) {
+                      if (!"payload1" %in% names(x@data))
+                          stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
+                      s <- split(x@data$payload1, x[["yoNumber"]])
+                      warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
+                      thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
+                      keepYo <- eval(substitute(subset), list(yolength=thisYolength))
+                      ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+                      res <- x
+                      res@metadata$yo <- x@metadata$yo[keepYo]
+                      keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
+                      ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
+                      ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
+                      res@data$glider <- x@data$glider[keepData, ]
+                      res@data$payload1 <- x@data$payload1[keepData, ]
+                  } else {
+                      warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
+                      keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
+                      keep[is.na(keep)] <- FALSE
+                      gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
+                      res <- x
+                      res@data[["payload1"]] <- x@data[["payload1"]][keep,]
+                      for (i in seq_along(x@metadata$flags)) {
+                          res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+                      }
                   }
               }
               res@processingLog <- processingLogAppend(res@processingLog,
@@ -437,51 +427,40 @@ setMethod(f="[[",
                   CT <- gsw_CT_from_t(SA, t, p)
                   return(gsw_spiciness0(SA=SA, CT=CT))
               }
-              if (type == "seaexplorer") {
-                  ##. message("it is a seaexplorer")
-                  if (i == "glider")
-                      return(x@data$glider)
-                  if (i == "payload")
-                      return(x@data$payload)
-                  if (i == "yo")
-                      return(x@metadata$yo)
-                  if (missing(j)) {
-                      ##. message("j is missing")
-                      if (i %in% names(x@metadata)) {
-                          ##. message("i in metadata")
-                          return(x@metadata[[i]])
-                      } else if (i %in% names(x@data)) {
-                          ##. message("i in data")
-                          return(x@data[[i]])
-                      } else {
-                          ##. message("returning i from within payload")
-                          if (i %in% names(x@data[["payload1"]]))
-                              return(x@data$payload1[[i]])
-                          else
-                              return(x@data$glider[[i]]) # what if there is no glider?
-                          return(x@data$payload[[i]])
-                      }
-                  }
-                  ##. message("j is not missing. j='", j, "'")
-                  if (j == "glider")
-                      return(x@data$glider[[i]])
-                  if (j == "payload")
-                      return(x@data$payload1[[i]])
-                  return(NULL)
-              } else if (type == "slocum") {
-                  return(x@data[[i]])
-              } else {
-                  stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
-              }
+              ##. message("it is a seaexplorer")
+              if (i == "glider")
+                  return(x@data$glider)
+              if (i == "payload")
+                  return(x@data$payload)
+              if (i == "yo")
+                  return(x@metadata$yo)
               if (missing(j)) {
+                  ##. message("j is missing")
                   if (i %in% names(x@metadata)) {
+                      ##. message("i in metadata")
                       return(x@metadata[[i]])
+                  } else if (i %in% names(x@data)) {
+                      ##. message("i in data")
+                      return(x@data[[i]])
                   } else {
-                      return(x@data[[i]]) # FIXME: extend this for 'j'
+                      ##. message("returning i from within payload")
+                      if (i %in% names(x@data[["payload1"]]))
+                          return(x@data$payload1[[i]])
+                      else
+                          return(x@data$glider[[i]]) # what if there is no glider?
+                      return(x@data$payload[[i]])
                   }
-              } else {
-                  message("FIXME: code [[ to handle j")
               }
+              ##. message("j is not missing. j='", j, "'")
+              if (j == "glider")
+                  return(x@data$glider)
+              if (j == "payload")
+                  return(x@data$payload1)
+              if (j == "payload1")
+                  return(x@data$payload1)
+              if (j == "payload2")
+                  return(x@data$payload2)
+              stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
           })
 
 #' Plot a glider Object
@@ -518,18 +497,38 @@ setMethod(f="[[",
 #' \item \code{which=5} or \code{which="navState"}: time-series of the
 #' navigation state, stored as the \code{navState} item within
 #' the \code{payload1} element of the \code{data} slot. The meanings
-#' of the states are:
-#' \code{navState=105} means the glider is not navigating yet;
-#' \code{navState=115} means the glider is surfacing
-#' in preparation for communication;
-#' \code{navState=116} means the glider is at the surface,
-#' acquiring a GPS signal, and is communicating;
-#' \code{navState=110} means the glider is inflecting downward;
-#' \code{navState=100} means the glider has ballast set to be descending;
-#' \code{navState=118} means the glider has ballast adjusted to reduce density,
-#' so will be inflecting  upward; and
-#' \code{navState=117} means the glider has ballast set to be ascending.
-#' Lines and notes in the plot border indicate these states and meanings.
+#' of the \code{navState} values for \code{seaexplorer} data
+#' are:
+#'
+#' \itemize{
+#'
+#' \item \code{105}: glider is not navigating yet
+#'
+#' \item \code{115}: glider is surfacing, with ballast and
+#' centre of gravity being adjusted to put antenna out
+#' of the water
+#'
+#' \item \code{116}: glider is at the surface,
+#' acquiring a GPS signal, and communicating
+#'
+#' \item \code{110}: ballast and centre of mass are
+#' adjusted to cause glider to inflect downward
+#'
+#' \item \code{100}: ballast is in diving position; adjustments
+#' may be made to adjust pitch and heading
+#'
+#' \item \code{118}: target depth or altitude has been achieved,
+#' so ballast and centre of mass are adjusted to inflect glider
+#' upwards
+#'
+#' \item \code{117}: glider is ascending, with controls being
+#' adjusted for desired pitch and heading
+#'
+#'}
+#'
+#' Lines and notes in the plot border indicate these states, both
+#' numerically and with phrases, as inferred by
+#' \code{\link{navStateCodes}}.
 #'
 #'}
 #'
@@ -552,42 +551,30 @@ setMethod(f="[[",
 #'
 #' @examples
 #' library(oceanglider)
-#' dir <- system.file("extdata/seaexplorer/sub", package="oceanglider")
-#' g <- read.glider.seaexplorer.realtime(dir, yo=100)
 #'
-#' # Example 1. A single yo of (low-resolution) "sub" data
+#' ## Examples 1: a single yo of low-resolution real-time data
+#' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+#' g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
 #' plot(g, which="p")
 #' plot(g, which="S")
 #' plot(g, which="T")
-#' plot(g, which="TS")
+#' plot(g, which="TS") # note odd connections between points
 #' plot(g, which="map")
 #' plot(g, which="navState")
 #'
-#' # FIXME: replace the remnants given below with interesting examples using
-#' # FIXME: raw data, when we get read.glider.seaexplorer.raw() working.
+#' # Example 2: navState and pressure history of some delayed-mode yos,
+#' # from a deployment in which sampling was supposed to be
+#' # suppressed during the descending phases of motion.
+#' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' g <- read.glider.seaexplorer.delayed(dirRaw)
+#' plot(g, which="navState")
 #'
-#'\dontrun{
-#' # These files are much too large to provide, so no sample
-#' # file is provided.
-#' g <- read.glider(filename)
-#'
-#'
-#' # Example 2. Pressure-time plot, with dots (which slows things down!)
-#' plot(g, which="p", type="p", cex=0.5)
-#'
-#' # Example 3. Pressure-time plot, colour-coded for temperature
-#' # (using an oce function to define the color map) and arranged
-#' # with high pressure at the bottom, to make a time-pressure
-#' # section plot of temperature. Several arguments
-#' # are passed to oce.plot.ts(), and users may find it
-#' # agreeable to simply call that function directly.
+#' # Note: colormap and drawPalette are oce functions.
 #' cm <- colormap(g[["temperature"]])
-#' ylim <- rev(range(g[["pressure"]], na.rm=TRUE))
+#' # Note the setting of mar, here and in th plot.
 #' par(mar=c(2, 3.5, 2, 4))
 #' drawPalette(colormap=cm)
-#' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
-#'      mar=c(2, 3.5, 2, 4))
-#'}
+#' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
 #'
 #' @export
 setMethod(f="plot",
@@ -607,7 +594,8 @@ setMethod(f="plot",
               } else if (which == 1 || which == "p") {
                   gliderDebug(debug, "pressure time-series plot\n", sep="")
                   p <- x[["pressure"]]
-                  oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, type=type, ...)
+                  if ("ylim" %in% names(dots)) oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, type=type, ...)
+                  else oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, type=type, ...)
               } else if (which == 2 || which == "T") {
                   oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, type=type, ...)
               } else if (which == 3 || which == "S") {
@@ -617,9 +605,9 @@ setMethod(f="plot",
               } else if (which == 5 || which == "navState") {
                   ns <- navStateCodes(x)
                   oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
-                              mar=c(2, 3, 1, 7), type=type, ...)
+                              mar=c(2, 3, 1, 9), type=type, ...)
                   for (ii in seq_along(ns)) {
-                      abline(h=ns[[ii]], col="darkgray")
+                      abline(h=ns[[ii]], col="blue")
                   }
                   # labels in margin, not rotated so we can read them.
                   oxpd <- par("xpd")
@@ -629,7 +617,7 @@ setMethod(f="plot",
                       text(tmax, ns[[ii]],
                            sprintf(" %d: %s", ns[[ii]],
                                    names(ns[ii])),
-                           col="darkgray", cex=0.75, xpd=TRUE, pos=4)
+                           col="blue", cex=0.75, xpd=TRUE, pos=4)
                   }
                   par(xpd=oxpd)
               } else {
@@ -681,30 +669,28 @@ setMethod(f="summary",
               else if (nyo > 1)
                   cat(sprintf("* Yo:      %d values, between %d and %d\n",
                               nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
-              if (!is.null(type) && type == "seaexplorer") {
-                  for (streamName in names(object@data)) {
-                      stream <- object@data[[streamName]]
-                      ## Make a list, so following code looks more like oce code.
-                      if (is.data.frame(stream))
-                          stream <- as.list(stream)
-                      ndata <- length(stream)
-                      threes <- matrix(nrow=ndata, ncol=4)
-                      for (i in 1:ndata)
-                          threes[i, ] <- oce::threenum(stream[[i]])
-                      if (!is.null(threes)) {
-                          rownames(threes) <- paste("    ", names(stream))
-                          OriginalName <- unlist(lapply(names(stream), function(n)
-                                                        if (n %in% names(object@metadata$dataNamesOriginal[[streamName]]))
-                                                            object@metadata$dataNamesOriginal[[streamName]][[n]] else "-"))
-                          threes <- cbind(threes, OriginalName)
-                          colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                          cat("* Data within the \"", streamName, "\" stream:\n", sep="")
-                          owidth <- options('width')
-                          options(width=150) # make wide to avoid line breaks
-                          print(threes, quote=FALSE)
-                          options(width=owidth$width)
-                          cat("\n")
-                      }
+              for (streamName in names(object@data)) {
+                  stream <- object@data[[streamName]]
+                  ## Make a list, so following code looks more like oce code.
+                  if (is.data.frame(stream))
+                      stream <- as.list(stream)
+                  ndata <- length(stream)
+                  threes <- matrix(nrow=ndata, ncol=4)
+                  for (i in 1:ndata)
+                      threes[i, ] <- oce::threenum(stream[[i]])
+                  if (!is.null(threes)) {
+                      rownames(threes) <- paste("    ", names(stream))
+                      OriginalName <- unlist(lapply(names(stream), function(n)
+                                                    if (n %in% names(object@metadata$dataNamesOriginal[[streamName]]))
+                                                        object@metadata$dataNamesOriginal[[streamName]][[n]] else "-"))
+                      threes <- cbind(threes, OriginalName)
+                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                      cat("* Data within the \"", streamName, "\" stream:\n", sep="")
+                      owidth <- options('width')
+                      options(width=150) # make wide to avoid line breaks
+                      print(threes, quote=FALSE)
+                      options(width=owidth$width)
+                      cat("\n")
                   }
               }
               processingLogShow(object)
@@ -967,14 +953,25 @@ urlExists <- function(url, quiet=FALSE)
 ####     destfiles
 #### }
 
+# a helper function to simplify code in read.glider.netcdf()
+getAtt <- function(f, varid=0, attname=NULL, default=NULL)
+{
+    if (is.null(attname))
+        stop("must give attname")
+    ##message(attname)
+    t <- try(ncatt_get(f, varid=varid, attname=attname), silent=TRUE)
+    if (inherits(t, "try-error")) {
+        NULL
+    } else {
+        if (t$hasatt) t$value else default
+    }
+}
+
+
 #' Read a glider file in netcdf format
 #'
-#' \strong{This is a provisional function, written to handle a particular level-1 file
-#' provided to the author by DFO colleagues in mid January, 2019.} This only works
-#' for files with global attribute \code{instrument} set to \code{Glider},
-#' \code{instrument_manufacturer} set to \code{Alseamar}, and
-#' \code{instrument_model} set to \code{SeaExplorer}, although this restriction
-#' will likely be lifted as data from other instruments becomes available.
+#' \strong{This is a provisional function, written to handle some
+#' particular files available to the author.}
 #'
 #' The data are copied directly from the file, except that \code{time}
 #' is converted from an integer to a POSIX time. Variable names containing
@@ -997,19 +994,30 @@ urlExists <- function(url, quiet=FALSE)
 #' @examples
 #'\dontrun{
 #' library(oceanglider)
-#' g <- read.glider.netcdf("GLI2018_SEA019_054DM_L1.nc")
-#' ## Remove spurious times (cannot be year 2009)
+#'
+#' # NOTE: these files are of order 100Meg, so they are
+#' # not provided with the package as samples. In both
+#' # examples, we plot a map and then an incidence-TS plot.
+#'
+#' # Seaexplorer data, from DFO (January 2019)
+#' g <- read.glider.netcdf("~/Dropbox/glider_dfo.nc")
+#' # Remove spurious times, from a year before deployment
 #' g <- subset(g, time > as.POSIXct("2018-01-01"))
-#' ## Remove bad data
+#' # Remove any observation with bad salinity
 #' g <- subset(g, is.finite(g[["salinity"]]))
-#' ## Focus on ascent phase (profileDirection==-1)
-#' g <- subset(g, profileDirection==-1)
-#' # CTD-style plot of whole dataset
+#' plot(g, which="map")
 #' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
 #'               longitude=g[["longitude"]], latitude=g[["latitude"]])
-#' plot(ctd, type=rep("p", 4)) # 'type' gives dots
-#' # CTD-style plot of a particular profile
-#' plot(as.ctd(subset(g, profileIndex==200)))
+#' plotTS(ctd, useSmoothScatter=TRUE)
+#'
+#' # Slocum data,from Dalhousie CEOTR rdapp (April 2019)
+#' g <- read.glider.netcdf("~/Dropbox/glider_erdapp.nc")
+#' # Remove any observation with bad salinity
+#' g <- subset(g, is.finite(g[["salinity"]]))
+#' plot(g, which="map")
+#' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
+#'               latitude=g[["latitude"]], longitude=g[["longitude"]])
+#' plotTS(ctd, useSmoothScatter=TRUE)
 #'}
 #'
 #' @family functions to read glider data
@@ -1026,37 +1034,43 @@ read.glider.netcdf <- function(file, debug)
         stop("file must have length 1")
     f <- nc_open(file)
     res <- new("glider")
+
     ## Next demonstrates how to detect this filetype.
-    instrument <- ncatt_get(f, varid=0, attname="instrument")
-    if (is.null(instrument) || "Glider" != instrument$value)
-        stop("glider files must have a global attribute 'instrument' equal to 'Glider'")
-    instrumentManufacturer <- ncatt_get(f, varid=0, attname="instrument_manufacturer")
-    if (is.null(instrumentManufacturer) || "Alseamar" != instrumentManufacturer$value)
-        stop("global attribute 'instrument_manufacturer' must be 'Alseamar' but it is '",
-             instrumentManufacturer$value, "'")
-    instrumentModel <- ncatt_get(f, varid=0, attname="instrument_model")
-    if (is.null(instrumentModel) || "SeaExplorer" != instrumentModel$value)
-        stop("global attribute 'instrument_model' must be 'SeaExplorer' but it is '", instrumentModel$value, "'")
-    res@metadata$type <- "seaexplorer"
+    instrument <- getAtt(f, attname="instrument", default="?")
+    instrumentManufacturer <- getAtt(f, attname="instrument_manufacturer", default="?")
+    instrumentModel <- getAtt(f, attname="instrument_model", default="?")
+    type <- getAtt(f, attname="platform_type", default="?")
+    if (type == "Slocum Glider")
+        type <- "slocum"
+    res@metadata$type <- type
     data <- list()
     ## FIXME get units
     ## FIXME change some variable names from snake-case to camel-case
     dataNames <- names(f$var)
     data$time <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
     dataNamesOriginal <- list()
-    dataNamesOriginal$time <- "-"
+    ##? if (!"time" %in% dataNames)
+    ##?     dataNamesOriginal$time <- "-"
     ## Get all variables, except time, which is not listed in f$var
+    gliderDebug(debug, "reading and renaming data\n")
     for (i in seq_along(dataNames))  {
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
-        data[[newName]] <- as.vector(ncvar_get(f, dataNames[i]))
-        gliderDebug(debug, "data name \"", dataNames[i], "\" converted to \"", newName, "\"", sep="")
-        dataNames[i] <- newName
+        if (dataNames[i] == "time") {
+            data[["time"]] <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
+            gliderDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
+        } else {
+            data[[newName]] <- as.vector(ncvar_get(f, dataNames[i]))
+            gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
+            dataNames[i] <- newName
+        }
     }
-    names(data) <- c("time", dataNames) # names now in CamelCase, not snake_case.
-    res@data <- data
+    ##gliderDebug(debug, "dataNames:", paste(dataNames, collapse=";"), "\n")
+    ##names(data) <- if ("time" %in% dataNames) dataNames else c("time", dataNames)
+    res@data$payload1 <- as.data.frame(data)
+    ##head(res@data$payload1$time)
     res@metadata$filename <- file
-    res@metadata$dataNamesOriginal <- dataNamesOriginal
+    res@metadata$dataNamesOriginal <- list(payload1=dataNamesOriginal)
     gliderDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
     res
 }
