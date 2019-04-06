@@ -106,11 +106,6 @@
 #'     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
 #'          col=cm$zcol, cex=1/2, pch=20)
 #'     mtext(paste("Temperature, from", t[1]), cex=3/4)
-#'
-#'     # 3. Plot first two yos in CTD format, with yos isolated crudely.
-#'     yos <- ctdFindProfiles(as.ctd(g))
-#'     plot(yos[[1]])
-#'     plot(yos[[2]])
 #'}
 #' @family functions for slocum gliders
 #' @family functions to read glider data
@@ -166,7 +161,7 @@ read.glider.slocum <- function(file, debug,
                                  conductivityUnit="S/m", eos="unesco"))
     data$salinity <- salinity
     data$time <- oce::numberAsPOSIXct(data$unix_timestamp, "unix")
-    rval@data <- data
+    rval@data$payload1 <- as.data.frame(data)
     rval@metadata$filename <- filename
     ## FIXME add to dataNamesOriginal as for CTD data type
     rval
