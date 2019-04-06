@@ -612,10 +612,14 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
             res@metadata$units[[stream]]$pitch <- list(unit=expression(degree), scale="")
         if ("roll" %in% dataNames)
             res@metadata$units[[stream]]$roll <- list(unit=expression(degree), scale="")
+        ## set up flags to value 2, which means not-checked
+        len <- length(res@data[[stream]][[1]]) # all have same length
+        for (name in dataNames) {
+            res@metadata$flags[[stream]][[name]] <- rep(2, len)
+        }
     }
-    ## TODO set up flags
-    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
     ## BOOKMARK END
+    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
     res@processingLog <- processingLogAppend(res@processingLog,
                                              paste("read.glider.seaexplorer.realtime(directory=\"", directory, "\",",
                                                    "yo=c(", paste(yo, collapse=","), "),",
@@ -913,8 +917,12 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
             res@metadata$units[[stream]]$pitch <- list(unit=expression(degree), scale="")
         if ("roll" %in% dataNames)
             res@metadata$units[[stream]]$roll <- list(unit=expression(degree), scale="")
+        ## set up flags to value 2, which means not-checked
+        len <- length(res@data[[stream]][[1]]) # all have same length
+        for (name in dataNames) {
+            res@metadata$flags[[stream]][[name]] <- rep(2, len)
+        }
     }
-    ## TODO set up flags
     ## BOOKMARK END
     res@processingLog <- processingLogAppend(res@processingLog,
                                              paste("read.glider.seaexplorer.delayed(directory=\"", directory, "\", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))

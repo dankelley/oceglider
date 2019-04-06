@@ -230,12 +230,20 @@ setMethod(f="subset",
                   ## subset is a character string
                   if (subset == "ascending") {
                       res <- x
-                      res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
-                      res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 117)
+                      keep <- res@data$glider$navState == 117
+                      res@data$glider <- subset(res@data$glider, keep)
+                      res@data$payload1 <- subset(res@data$payload1, keep)
+                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                      }
                   } else if (subset == "descending") {
                       res <- x
-                      res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
-                      res@data$payload1 <- subset(res@data$payload1, res@data$payload1$navState == 100)
+                      keep <- res@data$glider$navState == 100
+                      res@data$glider <- subset(res@data$glider, keep)
+                      res@data$payload1 <- subset(res@data$payload1, keep)
+                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                      }
                   }
               } else {
                   gliderDebug(debug, "subset is a logical expression\n")
@@ -255,6 +263,9 @@ setMethod(f="subset",
                       ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
                       res@data$glider <- x@data$glider[keepData, ]
                       res@data$payload1 <- x@data$payload1[keepData, ]
+                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keepData]
+                      }
                   } else {
                       warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
                       keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
@@ -262,8 +273,8 @@ setMethod(f="subset",
                       gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
                       res <- x
                       res@data[["payload1"]] <- x@data[["payload1"]][keep,]
-                      for (i in seq_along(x@metadata$flags)) {
-                          res@metadata$flags[[i]] <- res@metadata$flag[[i]][keep]
+                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
                       }
                   }
               }
@@ -669,6 +680,9 @@ setMethod(f="summary",
                               nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               for (streamName in names(object@data)) {
                   stream <- object@data[[streamName]]
+                  ## order names alphabetically (easier with long lists of unfamiliar names)
+                  o <- sort(names(stream))
+                  stream <- stream[, o]
                   ## Make a list, so following code looks more like oce code.
                   if (is.data.frame(stream))
                       stream <- as.list(stream)
@@ -728,6 +742,35 @@ setMethod(f="summary",
                       options(width=owidth$width)
                       cat("\n")
                   }
+              }
+              ## Get flags specifically from metadata; using [["flags"]] could extract
+              ## it from data, if present there and not in metadata (as e.g. with
+              ## the data("ctd") that is provided with oce).
+              flags <- object@metadata$flags[["payload1"]]
+              if (length(flags)) {
+                  if (!is.null(object@metadata$flagScheme)) {
+                      cat("* Data-quality Flag Scheme\n\n")
+                      cat("    name    \"", object@metadata$flagScheme$name, "\"\n", sep="")
+                      cat("    mapping ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$mapping,
+                                                                                   width.cutoff=400))), "\n\n", sep="")
+                  }
+                  cat("* Data-quality Flags\n\n")
+                  width <- 1 + max(nchar(names(flags)))
+                  for (name in sort(names(flags))) {
+                      padding <- rep(" ", width - nchar(name))
+                      if (!all(is.na(flags[[name]]))) {
+                          cat("    ", name, ":", padding, sep="")
+                          flagTable <- table(flags[[name]])
+                          flagTableLength <- length(flagTable)
+                          if (flagTableLength) {
+                              for (i in seq_len(flagTableLength)) {
+                                  cat("\"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
+                                  if (i != flagTableLength) cat(", ") else cat("\n")
+                              }
+                          }
+                      }
+                  }
+                  cat("\n")
               }
               processingLogShow(object)
           })
