@@ -681,7 +681,7 @@ setMethod(f="summary",
               for (streamName in names(object@data)) {
                   stream <- object@data[[streamName]]
                   ## order names alphabetically (easier with long lists of unfamiliar names)
-                  o <- sort(names(stream))
+                  o <- names(stream)
                   stream <- stream[, o]
                   ## Make a list, so following code looks more like oce code.
                   if (is.data.frame(stream))
@@ -756,7 +756,7 @@ setMethod(f="summary",
                   }
                   cat("* Data-quality Flags\n\n")
                   width <- 1 + max(nchar(names(flags)))
-                  for (name in sort(names(flags))) {
+                  for (name in names(flags)) {
                       padding <- rep(" ", width - nchar(name))
                       if (!all(is.na(flags[[name]]))) {
                           cat("    ", name, ":", padding, sep="")
