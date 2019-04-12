@@ -48,6 +48,7 @@ If \code{j} is not specified, then
 thermometer within the payload will be preferred to one attached to
 the body of the glider. This selection
 process can be controlled by setting \code{j} to either \code{"glider"}
+<<<<<<< HEAD
 or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
 \code{x[["temperature","payload1"]]} retrieve values from
 the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
@@ -99,6 +100,12 @@ stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 yo.
 
 }
+=======
+or \code{"payload"}.  For example, both \code{x[["temperature"]]} and
+\code{x[["temperature","payload"]]} retrieves values from
+the payload thermistor, while \code{x[["temperature","glider"]]} retrieve
+values from the glider thermistor.
+>>>>>>> master
 }
 \author{
 Dan Kelley
