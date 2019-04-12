@@ -165,7 +165,7 @@ setMethod(f="subset",
 #' or \code{"payload"}.  For example, both \code{x[["temperature"]]} and
 #' \code{x[["temperature","payload"]]} retrieves values from
 #' the payload thermistor, while \code{x[["temperature","glider"]]} retrieve
-#' values from the glider thermister.
+#' values from the glider thermistor.
 #'
 #' @param x A glider object, i.e. one inheriting from \code{\link{glider-class}}.
 #'
