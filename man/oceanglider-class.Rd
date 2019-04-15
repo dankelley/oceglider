@@ -12,13 +12,3 @@ chance that the functions provided here (a) will fail on
 other types and (b) function names and arguments will change
 as more datasets are examined by the author.
 }
-\details{
-The downloading functions require a base URL, and the default argument is to
-use values stored as options.  For the author, this is done by putting the following
-in the top-level \code{.Rprofile} file:
-
-\preformatted{
-options(slocumURL="")
-options(seaexplorerURL="")
-}
-}

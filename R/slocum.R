@@ -1,59 +1,5 @@
 ## vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
 
-# http://gliders.oceantrack.org/data/slocum/m80_2017-12-16_view_sci_water.csv
-
-#### #' Download and Cache a Slocum Glider File
-#### #'
-#### #' If the file is already present in \code{destdir}, then it is not
-#### #' downloaded again. The default \code{destdir} is the present directory,
-#### #' but it probably makes more sense to use something like \code{"~/data/glider"}
-#### #' to make it easy for scripts in other directories to use the cached data.
-#### #' The file is downloaded with \code{\link{download.file}}.
-#### #'
-#### #' @param mission Character value indicating the mission name.
-#### #' @param year Numeric value indicating the year of the mission start.
-#### #' @param month Numeric value indicating the month of the mission start.
-#### #' @param day Numeric value indicating the day of the mission start.
-#### #' @param item Character value indicating the type of data sought.
-#### #' @param server String specifying the online server.
-#### #' @template filenames
-#### #' @template debug
-#### #'
-#### #' @return A character value indicating the filename of the result; if
-#### #' there is a problem, the result will be the empty string.
-#### #'
-#### #' @examples
-#### #'\dontrun{
-#### #' ## The download takes several seconds.
-#### #' library(oceanglider)
-#### #' gfile <- download.glider.slocum(destddir="~/data/glider")
-#### #'}
-#### #'
-#### #' @family functions for slocum gliders
-#### #' @family functions to download data
-#### #'
-#### #' @importFrom utils download.file
-#### #'
-#### #' @export
-#### download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
-####                                    item="view_sci_water.csv",
-####                                    server="http://gliders.oceantrack.org/data/slocum",
-####                                    destdir=".", destfile, force=FALSE, dryrun=FALSE,
-####                                    debug=getOption("gliderDebug", 0))
-#### {
-####     destfile <- sprintf("%s_%04d-%02d-%02d_%s", mission, year, month, day, item)
-####     destpath <- paste(destdir, destfile, sep="/")
-####     if (0 == length(list.files(path=destdir, pattern=paste("^", destfile, "$", sep="")))) {
-####         source <- sprintf("%s/%s", server, destfile)
-####         bad <- utils::download.file(source, destfile)
-####         if (!bad && destdir != ".")
-####             system(paste("mv", destfile, destpath))
-####     } else {
-####         message("Not downloading ", destfile, " because it is already present in ", destdir)
-####     }
-####     if (destdir == ".") destfile else destpath
-#### }
-
 #' Read a Slocum Glider file
 #'
 #' These files do not use standard names for variables, but
