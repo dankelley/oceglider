@@ -223,7 +223,7 @@ download.glider.seaexplorer <- function(url="ftp://ftp.dfo-mpo.gc.ca/glider",
 #' @family functions to read glider data
 #' @importFrom utils read.delim
 #' @importFrom methods new
-#' @importFrom oce swSCTp processingLogAppend
+#' @importFrom oce swSCTp processingLogAppend initializeFlagScheme
 #' @export
 read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 {
@@ -322,6 +322,8 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
     res@processingLog <- processingLogAppend(res@processingLog,
                                              paste("read.glider.seaexplorer.realtime(c(\"", files[1], "\", \"",
                                                    files[2], "\"), missingValue=", missingValue, ")", sep=""))
+    res <- initializeFlagScheme(res, "argo") # FIXME(CE): Create flag scheme for Q values
+
     res
 }
 
@@ -370,9 +372,9 @@ read.glider.seaexplorer.realtime <- function(files, debug, missingValue=9999)
 #'
 #' \item Calculate Practical salinity from conductivity, temperature
 #' and pressure using \code{swSCTp()}.
-#' 
+#'
 #' }
-#' 
+#'
 #' @param dir The directory in which the raw SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
@@ -413,18 +415,18 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         stop("Level must be either 0 or 1")
     navfiles <- dir(dir, pattern='*gli*', full.names=TRUE)
     pldfiles <- dir(dir, pattern='*pld*', full.names=TRUE)
-    
+
     yoNumber <- as.numeric(unlist(lapply(strsplit(pldfiles, '.', fixed=TRUE), tail, 1)))
     o <- order(yoNumber)
     yoNumber <- yoNumber[o]
     pldfiles <- pldfiles[o]
-    
+
     if (missing(yo))
         yo <- yoNumber
-    
+
     y <- yoNumber %in% yo
     files <- pldfiles[y]
-    
+
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
     res@metadata$filename <- files
@@ -511,7 +513,7 @@ read.glider.seaexplorer.raw <- function(dir, yo, level=1, debug, progressBar=TRU
         cat('\n')
         flush.console()
     }
-    
+
     ## First remove all duplicated lon/lat
     df$longitude[which(duplicated(df$longitude))] <- NA
     df$latitude[which(duplicated(df$latitude))] <- NA

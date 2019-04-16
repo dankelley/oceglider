@@ -45,6 +45,9 @@ represent the full data collected by the glider sensors.
 While the data format is similar to the "raw" SeaExplorer file
 format, there are some differences and
 \code{read.glider.explorer.raw()} should be used for the latter.
+
+FIXME: write paragraph on the flag scheme here; include reference,
+page number etc. at this point.
 }
 \examples{
 library(oceanglider)
