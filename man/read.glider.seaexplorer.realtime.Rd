@@ -45,6 +45,21 @@ represent the full data collected by the glider sensors.
 this, to read delayed-mode data, as downloaded from the glider
 after recovery.)
 }
+\section{Flag Scheme}{
+
+A flag scheme is set up according to the IOOS classification system (see
+Table 2 of [1]), as follows.
+
+\tabular{llll}{
+\strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
+\code{pass}           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
+\code{not_evaluated}  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
+\code{suspect}        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
+\code{fail}           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
+\code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+}
+}
+
 \section{Renaming of data in seaexplorer files}{
 
 
@@ -126,6 +141,10 @@ plot(g, which="navState")
 plot(g, which="S")
 plot(g, which="T")
 
+}
+\references{
+1. IOOS. “Manual for Real-Time Oceanographic Data Quality Control Flags,” May 2017.
+https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.1.pdf.
 }
 \seealso{
 Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.delayed}}

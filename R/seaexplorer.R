@@ -86,6 +86,23 @@ navStateCodes <- function(g)
 #' this, to read delayed-mode data, as downloaded from the glider
 #' after recovery.)
 #'
+#' @section Flag Scheme:
+#' A flag scheme is set up according to the IOOS classification system (see
+#' Table 2 of [1]), as follows.
+#'
+#' \tabular{llll}{
+#' \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
+#' \code{pass}           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
+#' \code{not_evaluated}  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
+#' \code{suspect}        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
+#' \code{fail}           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
+#' \code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+#' }
+#'
+#' @references
+#' 1. IOOS. “Manual for Real-Time Oceanographic Data Quality Control Flags,” May 2017.
+#' https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.1.pdf.
+#'
 #' @param directory The directory in which the realtime SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
@@ -129,7 +146,7 @@ navStateCodes <- function(g)
 #' @family functions to read glider data
 #' @importFrom utils read.delim
 #' @importFrom methods new
-#' @importFrom oce swSCTp processingLogAppend
+#' @importFrom oce swSCTp processingLogAppend initializeFlagScheme
 #' @export
 read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive(), missingValue=9999, debug)
 {
@@ -251,6 +268,8 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
     res@metadata$subtype <- "realtime"
+    res <- initializeFlagScheme(res, name="IOOS",
+                                mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$filename <- c(glifiles, pld1files)
     res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
