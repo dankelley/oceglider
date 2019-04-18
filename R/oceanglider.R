@@ -8,7 +8,7 @@
 #'
 #' @importFrom methods new
 #' @import knitr
-#' @importFrom oce subset summary
+#' @importFrom oce handleFlags setFlags subset summary
 #' @docType package
 #' @name oceanglider-class
 NULL
@@ -33,105 +33,329 @@ setMethod(f="initialize",
               return(.Object)
           })
 
-##OLD #' Trim a glider Object
-##OLD #'
-##OLD #' Return a trimmed version of a glider object.
-##OLD #'
-##OLD #' At the moment, this only works for SeaExplorer data (i.e. cases in which
-##OLD #' \code{x[["type"]]=="seaexplorer"}).
-##OLD #'
-##OLD #' The permitted values of \code{method} are:
-##OLD #'\itemize{
-##OLD #'
-##OLD #' \item \code{"ascending"}, which retains only \code{glider}
-##OLD #' data entries for which the \code{navState} equals 117, and
-##OLD #' only \code{payload} data entries for which
-##OLD #' \code{NAV_RESOURCE} is 117.
-##OLD #'
-##OLD #' \item \code{"descending"}, which retains only \code{glider}
-##OLD #' data entries for which the \code{navState} equals 100, and
-##OLD #' only \code{payload} data entries for which
-##OLD #' \code{NAV_RESOURCE} is 100.
-##OLD #'
-##OLD ## \item \code{"length"}, which requires also that
-##OLD ## \code{parameters} be specified. This retains only \code{glider}
-##OLD ## yos with more than \code{parameters$minlength} depth levels.
-##OLD #'
-##OLD #'}
-##OLD #'
-##OLD #' @param x A \code{glider} object, i.e. one inheriting from
-##OLD #' \code{\link{glider-class}}.
-##OLD #'
-##OLD #' @param method An expression indicating how to subset \code{x}. See
-##OLD #' \dQuote{Details}.
-##OLD #'
-##OLD ## @param parameters A list containing extra parameters. At present,
-##OLD ## this is only used if \code{method="length"}, and must contain
-##OLD ## an element named \code{minimum}, an integer specifying how many
-##OLD ## levels a yo must havee to avoid being discarding.
-##OLD #'
-##OLD #' @return A \code{\link{glider-class}} object that
-##OLD #' has been trimmed to contain only the data specified by
-##OLD #' \code{subset}.
-##OLD #'
-##OLD #' @author Dan Kelley
-##OLD #'
-##OLD #' @examples
-##OLD #' files <- system.file("extdata/seaexplorer/sub",
-##OLD #'                      c("sea024.32.gli.sub.200.gz",
-##OLD #'                        "sea024.32.pld1.sub.200.gz"), package="oceanglider")
-##OLD #' d <- read.glider.seaexplorer.sub(files)
-##OLD #' summary(gliderTrim(d, "ascending"))
-##OLD #' summary(gliderTrim(d, "descending"))
-##OLD #'
-##OLD #' @section Caution:
-##OLD #' This function may be subsumed into \code{\link{subset,glider-method}}, because it
-##OLD #' does similar things, and users are more likely to guess the name of the latter.
-##OLD #'
-##OLD #' @export
-##OLD gliderTrim <- function(x, method)#, parameters)
-##OLD {
-##OLD     if (!inherits(x, "glider"))
-##OLD         stop("function is only for objects of class 'glider'")
-##OLD     if (missing(method))
-##OLD         stop("give method")
-##OLD     res <- x
-##OLD     if (method == "ascending") {
-##OLD         res@data$glider <- subset(res@data$glider, res@data$glider$navState == 117)
-##OLD         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 117)
-##OLD     } else if (method == "descending") {
-##OLD         res@data$glider <- subset(res@data$glider, res@data$glider$navState == 100)
-##OLD         res@data$payload <- subset(res@data$payload, res@data$payload$NAV_RESOURCE == 100)
-##OLD     ## } else if (method == "length") {
-##OLD     ##     if (missing(parameters))
-##OLD     ##         stop("must give parameters, if method=\"length\"")
-##OLD     ##     if (!is.list(parameters))
-##OLD     ##         stop("parameters must be a list")
-##OLD     ##     minimum <- parameters$minimum
-##OLD     ##     if (is.null(minimum))
-##OLD     ##         stop("parameters must contain an item named \"minimum\"")
-##OLD     ##     if (x@metadata$type != "seaexplorer")
-##OLD     ##         stop("method only works for seaexplorer data; contact the package authors, if you need this for other types")
-##OLD     ##     if (!"payload" %in% names(x@data))
-##OLD     ##         stop("only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data")
-##OLD     ##     gs <- split(x@data$payload, x[["yoNumber"]])
-##OLD     ##     keepYo <- unlist(lapply(gs, function(yo) {
-##OLD     ##                             n <- length(yo[["pressure"]])
-##OLD     ##                             n >= parameters$minimum } ) )
-##OLD     ##     ##. message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
-##OLD     ##     keepLevel <- unlist(lapply(gs, function(yo) {
-##OLD     ##                                n <- length(yo[["pressure"]])
-##OLD     ##                                rep(n >= parameters$minimum, n) } ) )
-##OLD     ##     ## gsk <- gs[keep]
-##OLD     ##     ## ## FIXME: do.call() seems slow; try expanding 'keep' and then index x@data$payload.
-##OLD     ##     ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keep, ])
-##OLD     ##     res@metadata$yo <- x@metadata$yo[keepYo]
-##OLD     ##     res@data$payload <- x@data$payload[keepLevel, ]
-##OLD     } else {
-##OLD         stop("method \"", method, "\" is not permitted; see ?gliderTrim for choices")
-##OLD     }
-##OLD     res
-##OLD }
+#' Signal erroneous application to non-oce objects
+#' @param object A vector, which cannot be the case for \code{oce} objects.
+#' @param flags Ignored.
+#' @param actions Ignored.
+#' @param debug Ignored.
+setMethod("handleFlags",
+          signature=c(object="vector", flags="ANY", actions="ANY", debug="ANY"),
+          definition=function(object, flags=list(), actions=list(), debug=getOption("gliderDebug", 0)) {
+              stop("handleFlags() can only be applied to objects inheriting from \"glider\"")
+          })
+
+#' Handle Flags in glider Objects
+#'
+#' This function may be used to set suspicious data to \code{NA},
+#' or some other value, based on the values of corresponding data-quality
+#' flags.
+#'
+#' The flags are stored within the object as a \code{\link{list}}
+#' named \code{payload1}, which is stored within a list named \code{flags}
+#' that is stored in the object's \code{metadata} slot. Both
+#' \code{flags} and \code{flags$payload1} are set up when the object is
+#' created, but values are inserted into \code{flags$payload1} are
+#' inserted later, when the data are read by one of the \code{read.glider*}
+#' functions.
+#'
+#' For example, \code{\link{read.glider.seaexplorer.delayed}}
+#' sets \code{flags$payload1$salinity} to be a vector of length
+#' matching the data stored in \code{data$payload1$salinity}, and 
+#' does the same for temperature and some other things that are typically
+#' assessed as part of quality-assessment procdures.  When these
+#' things are set up, they are also assigned numerical values, one for
+#' each element in the data set.  The initial value is set to 
+#' value 2, which means \code{not_evaluated}
+#' in the IOOS 2017 quality-control scheme (see [1] table 2).
+#'
+#' These numerical values provide a way to edit a dataset in an
+#' convenient and traceable way, through the appropriate setting
+#' of the \code{flags} and \code{actions} arguments. Flag values
+#' may be altered with \code{\link{setFlags,glider-method}}, as
+#' illustrated in the \dQuote{Examples} section.
+#'
+#' @param object A \code{glider} object, i.e. an object that inherits
+#' from \code{\link{glider-class}}.
+#'
+#' @param flags A \code{\link{list}} specifying flag values upon which
+#' actions will be taken. This can take two forms. In the first, the
+#' list has named elements each containing a vector of integers. For example,
+#' salinities flagged with values of 1 or 3 through 9 would be specified
+#' by \code{flags=list(salinity=c(2,3,4,9))}. Several data items can be specified,
+#' e.g. \code{flags=list(salinity=c(2,3,4,9),temperature=c(2,3,4,9))} indicates
+#' that the actions are to take place for both salinity and temperature.
+#' In the second form, \code{flags} is a list with unnamed vectors, and
+#' this means to apply the actions to all the data entries; thus,
+#' \code{flags=list(c(2,3,4,9))} means to apply not just to salinity and temperature,
+#' but also to everything else for which flags have been set up. If \code{flags}
+#' is not provided, then \code{\link{defaultFlags}} is called on
+#' \code{object}, to try to determine a conservative default.
+#'
+#' @param actions An optional \code{\link{list}} that contains items with
+#' names that match those in the \code{flags} argument.  If \code{actions}
+#' is not supplied, the default will be to set all values identified by
+#' \code{flags} to \code{NA}; this can also be specified by
+#' specifying \code{actions=list("NA")}. It is also possible to specify
+#' functions that calculate replacement values. These are provided
+#' with \code{object} as the single argument, and must return a
+#' replacement for the data item in question.
+#'
+#' @param debug An optional integer specifying the degree of debugging, with
+#' value 0 meaning to skip debugging and 1 or higher meaning to print some
+#' information about the arguments and the data. It is usually a good idea to set
+#' this to 1 for initial work with a dataset, to see which flags are being
+#' handled for each data item. If not supplied, this defaults to the value of
+#' \code{\link{getOption}("gliderDebug", 0)}.
+#'
+#' @examples
+#' library(oceanglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' g <- read.glider.seaexplorer.delayed(directory)
+#'
+#' # The histogram motivates a crude limit for anomalously low salinity.
+#' par(mfrow=c(1, 2), mar=c(3, 3, 1, 1), mgp=c(2, 0.75, 0))
+#' hist(g[["salinity"]], breaks=100, xlab="Original Salinity", main="")
+#' abline(v=31, col=2)
+#'
+#' # Flag value 3 means 'suspect' in the IOOS scheme [1, table]; other
+#' # flags are pass=1, not_evaluated=2 (the default as read), fail=4, and missing=9.
+#' g2 <- setFlags(g, "salinity", g[["salinity"]]<31, 3)
+#' g3 <- handleFlags(g2, c(3, 4, 9)) # use default action, which is "NA"
+#' hist(g3[["salinity"]], breaks=100, xlab="Trimmed Salinity", main="")
+#'
+#' @references
+#'\enumerate{
+#' \item U.S. Integrated Ocean Observing System.
+#' "Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1,"
+#' 2017. \url{https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.1.pdf}.
+#'}
+#'
+#' @author Dan Kelley
+#'
+#' @family functions relating to data-quality flags
+#' @export
+setMethod("handleFlags",
+          signature=c(object="glider", flags="ANY", actions="ANY", debug="ANY"),
+          definition=function(object, flags=NULL, actions=NULL, debug=getOption("gliderDebug", 0)) {
+              ## DEVELOPER 1: alter the next comment to explain your setup
+              if (is.null(flags)) {
+                  flags <- c(3, 4, 9)
+                  if (is.null(flags))
+                      stop("must supply 'flags', or use initializeFlagScheme() on the glider object first")
+              }
+              if (is.null(actions)) {
+                  actions <- list("NA") # DEVELOPER 3: alter this line to suit a new data class
+                  names(actions) <- names(flags)
+              }
+              if (any(names(actions)!=names(flags)))
+                  stop("names of flags and actions must match")
+              handleFlagsInternalOceanglider(object, flags, actions, debug)
+          })
+
+#' Low-level function to handle flags (temporary code)
+#'
+#' **Important note.** This function is provided only because the CRAN version
+#' of the oce package does not export \code{handleFlagsInternal}. Once a
+#' the CRAN oce is updated, this function will be removed.
+#'
+#' @param object An \code{oceanglider} object, i.e. an object inheriting
+#' from \code{\link{oceanglider-class}}.
+#'
+#' @param flags A \code{\link{list}} that associates integer values
+#" with names, e.g. \code{list(good=1, bad=2)}.
+#'
+#' @param actions A character vector, which is lengthened to match
+#' the length of \code{flags}. The most common value is \code{"NA"},
+#' which means to set flaggd values to the missing-value cod, \code{NA}.
+#'
+#' @param debug An integer specifying the debugging level, with value
+#' \code{0} meaning to act silently, and higher values meaning to print
+#' some debugginf information.
+#'
+#' @author Dan Kelley
+#'
+#' @export
+handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
+    gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
+    if (missing(flags)) {
+        warning("no flags supplied (internal error; report to developer)")
+        return(object)
+    }
+    ## Permit e.g. flags=c(1,3)
+    if (!is.list(flags))
+        flags <- list(flags)
+    if (missing(actions)) {
+        warning("no actions supplied (internal error; report to developer)")
+        return(object)
+    }
+    if (missing(debug))
+        debug <- 0
+    if (any(names(flags) != names(actions)))
+        stop("names of flags must match those of actions")
+    ##> schemeMappingNames <- names(object@metadata$flagScheme$mapping)
+    ##> if (is.character(flags[[1]])) {
+    ##>     for (f in flags[[1]]) {
+    ##>         if (!(f %in% schemeMappingNames))
+    ##>             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
+    ##>                  paste(schemeMappingNames, collapse="\", \""), "\"")
+    ##>     }
+    ##>     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
+    ##>     browser()
+    ##> }
+    gliderDebug(debug, "flags=", paste(as.vector(flags), collapse=","), "\n")
+    if (length(object@metadata$flags)) {
+        all <- is.null(names(flags[1])) # "ALL" %in% names(flags)
+        gliderDebug(debug, "all=", all, "\n")
+        ## if (all && length(flags) > 1)
+        ##    stop("if first flag is unnamed, no other flags can be specified")
+        if (all && (length(actions) > 1 || !is.null(names(actions)))) {
+            stop("if flags is a list of a single unnamed item, actions must be similar")
+        }
+        where <- "payload1"
+        for (name in names(object@data[[where]])) {
+            flagsObject <- object@metadata$flags[[where]]
+            gliderDebug(debug, "unique(flagsObject) for ", name, ":\n")
+            if (debug > 0)
+                print(table(flagsObject))
+            if (!is.null(flagsObject)) {
+                dataItemLength <- length(object@data[[where]][[name]])
+                ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
+                flagsThis <- if (all) flags[[1]] else flags[[name]]
+                ##> message("flagsThis:");print(flagsThis)
+                gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n")
+                actionsThis <- if (all) actions[[1]] else actions[[name]]
+                if (name %in% names(object@metadata$flags[[where]])) {
+                    gliderDebug(debug, "name: \"", name, "\"\n", sep="")
+                    actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
+                    ##> if (name == "salinity") browser()
+                    ##gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
+                    if (any(actionNeeded)) {
+                        gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
+                                    sum(actionNeeded), " are flagged\n", sep="")
+                        if (debug > 1) {
+                            message("\nactionsThis follows...")
+                            print(actionsThis)
+                        }
+                        if (is.function(actionsThis)) {
+                            object@data[[where]][[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
+                        } else if (is.character(actionsThis)) {
+                            if (actionsThis == "NA") {
+                                object@data[[where]][[name]][actionNeeded] <- NA
+                            } else {
+                                stop("the only permitted character action is 'NA'")
+                            }
+                        } else {
+                            stop("action must be a character string or a function")
+                        }
+                    } else {
+                        gliderDebug(debug, "  no action needed, since no \"", name, "\" data are flagged as stated\n", sep="")
+                    }
+                }
+            } else {
+                gliderDebug(debug, "\"", name, "\" is not the subject of flags\n", sep="")
+            }
+        }
+    }
+    object@processingLog <- processingLogAppend(object@processingLog,
+                                                paste("handleFlags(flags=",
+                                                      substitute(flags, parent.frame()),
+                                                      ", actions=",
+                                                      substitute(actions, parent.frame()),
+                                                      ")", collapse=" ", sep=""))
+    gliderDebug(debug, "} # handleFlagsInternalOceanglider()\n", sep="", unindent=1)
+    object
+}
+
+
+#' Set data-quality flags within a glider object
+#'
+#' This function changes specified entries in the data-quality
+#' flags of \code{glider} objects. Those flags are stored within
+#' a list named \code{flags$payload1} that resides in the \code{metadata}
+#' slot.
+#'
+#' @param object A glider object, i.e. an object inheriting from \code{\link{glider-class}}.
+#'
+#' @param name Character string indicating the name of the variable to be flagged. If
+#' this variable is not contained in the object's \code{data} slot, an error is reported.
+#'
+#' @param i There are three choices for \code{i}. First, if
+#' \code{i=="all"}, then any existing flags for the named item are discarded, and
+#' replaced with the new \code{value}.  Second, if \code{i} is a vector of
+#' integers, then flags are set to \code{value} at indices given by \code{i}.
+#' Third, if it is a logical vector of the same length as the data, then just
+#' those indices that match \code{TRUE} values in \code{i} are set to \code{value}.
+#'
+#' @param value The value to be inserted in the flag.
+#'
+#' @param debug Integer set to 0 for quiet action or to 1 for some debugging.
+#'
+#' @return An object with flags set as indicated.
+#'
+#' @family functions relating to data-quality flags
+#'
+#' @seealso See \code{\link{handleFlags,glider-method}} for an example of use.
+#'
+#' @author Dan Kelley
+#' @export
+setMethod("setFlags",
+          c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
+          function(object, name=NULL, i=NULL, value=NULL, debug=0) {
+              res <- setFlagsInternalOceanglider(object, name, i, value, debug-1)
+              res
+          })
+
+
+setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
+{
+    gliderDebug(debug, "setFlagsInternalOceanglider(object, name='", name, "', value=", value,
+                ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
+                unindent=1)
+    res <- object
+    ## Ensure proper argument setup.
+    if (is.null(name))
+        stop("must supply a name")
+    if (is.null(i))
+        stop("must supply 'i'")
+    setAll <- length(i) == 1 && i == "all"
+    if (is.null(value))
+        stop("must supply 'value'")
+    if (length(name) > 1)
+        stop("must specify one 'name' at a time")
+    where <- "payload1"
+    if ("flags" %in% names(object@metadata) && where %in% names(object@metadata$flags)) {
+        if (!(name %in% names(object@metadata$flags[[where]])))
+            stop("object has no flag for \"", name, "\"; try one of: \"", paste(names(object@metadata$flags[[where]]), collapse=" "), "\"")
+        if (is.logical(i) && length(i) != length(res@metadata$flags[[where]][[1]]))
+            stop("length of 'i' (", length(i), ") does not match length of object@data$payload1[[1]] (",
+                 length(res@metadata$flags[[where]][[1]]))
+        if (setAll)
+            i <- seq_along(object@data[[where]][[1]])
+        ## Permit 'value' to be a character string, if a scheme already
+        ## exists and 'value' is one of the stated flag names.
+        valueOrig <- value
+        if (is.character(value)) {
+            if (is.null(res@metadata$flagScheme)) {
+                stop("cannot have character 'value' because initializeFlagScheme() has not been called on object")
+            } else {
+                if (value %in% names(res@metadata$flagScheme$mapping))
+                    value <- res@metadata$flagScheme$mapping[[value]]
+                else
+                    stop("value=\"", value, "\" is not defined in the object's flagScheme; try one of: \"",
+                         paste(names(res@metadata$flagScheme$mapping), "\", \""), "\"", sep="")
+            }
+        }
+        ## Finally, apply the value
+        res@metadata$flags[[where]][[name]][i] <- value
+    }
+    res@processingLog <- processingLogAppend(res@processingLog,
+                                             paste("setFlags(object, name=\"", name, "\",",
+                                                   "i=c(", paste(head(i, collapse=",")), "...),",
+                                                   "value=", valueOrig, ")", collapse="", sep=""))
+    gliderDebug(debug, "} # setFlagsInternalOceanglider\n", sep="", unindent=1)
+    res
+}
+
 
 #' Subset a glider Object
 #'
@@ -394,6 +618,12 @@ setMethod(f="[[",
               type <- x@metadata$type
               if (is.null(type))
                   stop("'type' is NULL")
+              if (length(grep("Flag$", i))) {
+                  ## returns a list
+                  where <- "payload1"
+                  return(if ("flags" %in% names(x@metadata)) x@metadata$flags[[where]][[gsub("Flag$", "", i)]] else NULL)
+              }
+              ## FIXME (DK) recognize "Unit$" as done in oce.
               if (i == "type")
                   return(type)
               if (i == "sigmaTheta")
@@ -736,7 +966,7 @@ setMethod(f="summary",
               }
               ## Get flags specifically from metadata; using [["flags"]] could extract
               ## it from data, if present there and not in metadata (as e.g. with
-              ## the data("ctd") that is provided with oce).
+              ## the data("glider") that is provided with oce).
               flags <- object@metadata$flags[["payload1"]]
               if (length(flags)) {
                   if (!is.null(object@metadata$flagScheme)) {
@@ -1071,7 +1301,7 @@ read.glider <- function(file, debug, ...)
 #' the \code{payload1} item in the \code{data} slot of the returned value,
 #' \emph{without} name translation. For most functions in this package to work,
 #' \code{data} ought to have items named \code{longitude},
-#' \code{latitude}, \code{salinity}, \code{temperature} and 
+#' \code{latitude}, \code{salinity}, \code{temperature} and
 #' \code{pressure}.
 #'
 #' @param units A list holding units, with names corresponding to the
