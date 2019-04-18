@@ -33,6 +33,167 @@ setMethod(f="initialize",
               return(.Object)
           })
 
+## DEVELOPERS: please pattern functions and documentation on this, for uniformity.
+## DEVELOPERS: You will need to change the docs, and the 3 spots in the code
+## DEVELOPERS: marked '# DEVELOPER 1:', etc.
+#' @title Handle Flags in glider Objects
+#' @param object A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#' @template handleFlagsTemplate
+#' @references
+#' 1.
+#' @export
+setMethod("handleFlags",
+          c(object="glider", flags="ANY", actions="ANY", debug="ANY"),
+          function(object, flags=NULL, actions=NULL, debug=getOption("gliderDebug", 0)) {
+              ## DEVELOPER 1: alter the next comment to explain your setup
+              if (is.null(flags)) {
+                  flags <- c(3, 4, 9)
+                  if (is.null(flags))
+                      stop("must supply 'flags', or use initializeFlagScheme() on the glider object first")
+              }
+              if (is.null(actions)) {
+                  actions <- list("NA") # DEVELOPER 3: alter this line to suit a new data class
+                  names(actions) <- names(flags)
+              }
+              if (any(names(actions)!=names(flags)))
+                  stop("names of flags and actions must match")
+              handleFlagsInternal(object, flags, actions, debug)
+          })
+
+#' @export
+handleFlagsInternal <- function(object, flags, actions, debug) {
+    oceDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
+    if (missing(flags)) {
+        warning("no flags supplied (internal error; report to developer)")
+        return(object)
+    }
+    ## Permit e.g. flags=c(1,3)
+    if (!is.list(flags))
+        flags <- list(flags)
+    if (missing(actions)) {
+        warning("no actions supplied (internal error; report to developer)")
+        return(object)
+    }
+    if (missing(debug))
+        debug <- 0
+    if (any(names(flags) != names(actions)))
+        stop("names of flags must match those of actions")
+    ##> schemeMappingNames <- names(object@metadata$flagScheme$mapping)
+    ##> if (is.character(flags[[1]])) {
+    ##>     for (f in flags[[1]]) {
+    ##>         if (!(f %in% schemeMappingNames))
+    ##>             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
+    ##>                  paste(schemeMappingNames, collapse="\", \""), "\"")
+    ##>     }
+    ##>     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
+    ##>     browser()
+    ##> }
+    oceDebug(debug, "flags=", paste(as.vector(flags), collapse=","), "\n")
+    if (length(object@metadata$flags)) {
+        all <- is.null(names(flags[1])) # "ALL" %in% names(flags)
+        oceDebug(debug, "all=", all, "\n")
+        ## if (all && length(flags) > 1)
+        ##    stop("if first flag is unnamed, no other flags can be specified")
+        if (all && (length(actions) > 1 || !is.null(names(actions)))) {
+            stop("if flags is a list of a single unnamed item, actions must be similar")
+        }
+        for (name in names(object@data)) {
+            flagsObject <- object@metadata$flags[[name]]
+            oceDebug(debug, "unique(flagsObject) for ", name, ":\n")
+            if (debug > 0)
+                print(table(flagsObject))
+            if (!is.null(flagsObject)) {
+                dataItemLength <- length(object@data[[name]])
+                ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
+                flagsThis <- if (all) flags[[1]] else flags[[name]]
+                oceDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n")
+                ##. ## Convert flags to numerical values
+                ##. if (is.character(flagsThis)) {
+                ##.     oceDebug(debug, "flags are character strings\n")
+                ##.     sign <- rep(1, length(flagsThis))
+                ##.     for (iflag in seq_along(flagsThis)) {
+                ##.         f <- flagsThis[iflag]
+                ##.         oceDebug(debug, "f=\"", f, "\"\n", sep="")
+                ##.         if ("-" == substr(f, 1, 1)) {
+                ##.             sign[iflag] <- -1
+                ##.             flagsThis[iflag] <- substr(f, 2, nchar(f))
+                ##.         }
+                ##.         if (!(flagsThis[iflag] %in% schemeMappingNames))
+                ##.             stop("flag \"", flagsThis[iflag], "\" is not part of the flagScheme mapping; try one of: \"",
+                ##.                  paste(schemeMappingNames, collapse="\", \""), "\"")
+                ##.     }
+                ##.     oceDebug(debug, "flagsThis before sign adjustment: ", paste(flagsThis, collapse=" "), "\n")
+                ##.     flagsThis <- sign * as.numeric(object@metadata$flagScheme$mapping[flagsThis])
+                ##.     oceDebug(debug, "sign: ", paste(sign, collapse=" "), "\n")
+                ##.     oceDebug(debug, "flagsThis after sign adjustment: ", paste(flagsThis, collapse=" "), "\n")
+                ##. }
+                ##. if (debug > 1) {
+                ##.     message("before any() for neg, flagsThis:")
+                ##.     print(flagsThis)
+                ##. }
+                ##.
+                ##. ## Handle negative flags (only works if flagScheme exists)
+                ##. if (any(flagsThis < 0)) {
+                ##.     if (!all(flagsThis < 0))
+                ##.         stop("cannot mix positive and negative flag values")
+                ##.     if (is.null(object@metadata$flagScheme))
+                ##.         stop("must use initializeFlagScheme() before using negative flags")
+                ##.     flagsOrig <- flags
+                ##.     knownFlags <- as.numeric(object@metadata$flagScheme$mapping)
+                ##.     which((-knownFlags) %in% knownFlags)
+                ##.     flagsThis <- knownFlags[-intersect(-flagsThis, knownFlags)]
+                ##.     if (debug > 1) {
+                ##.         message("flags:     ", paste(flagsThis, collapse=" "))
+                ##.         message("flagsOrig: ", paste(flagsOrig, collapse=" "))
+                ##.     }
+                ##. }
+                ##. oceDebug(debug, "after converting to numbers, flagsThis= ", paste(flagsThis, collapse=","), "\n")
+                actionsThis <- if (all) actions[[1]] else actions[[name]]
+                ##> message("flagsThis:");print(flagsThis)
+                if (name %in% names(object@metadata$flags)) {
+                    oceDebug(debug, "name: \"", name, "\"\n", sep="")
+                    actionNeeded <- object@metadata$flags[[name]] %in% flagsThis
+                    ##> if (name == "salinity") browser()
+                    ##oceDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
+                    if (any(actionNeeded)) {
+                        oceDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
+                                 sum(actionNeeded), " are flagged\n", sep="")
+                        if (debug > 1) {
+                            message("\nactionsThis follows...")
+                            print(actionsThis)
+                        }
+                        if (is.function(actionsThis)) {
+                            object@data[[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
+                        } else if (is.character(actionsThis)) {
+                            if (actionsThis == "NA") {
+                                object@data[[name]][actionNeeded] <- NA
+                            } else {
+                                stop("the only permitted character action is 'NA'")
+                            }
+                        } else {
+                            stop("action must be a character string or a function")
+                        }
+                    } else {
+                        oceDebug(debug, "  no action needed, since no \"", name, "\" data are flagged as stated\n", sep="")
+                    }
+                }
+            } else {
+                oceDebug(debug, "\"", name, "\" is not the subject of flags\n", sep="")
+            }
+        }
+    }
+    object@processingLog <- processingLogAppend(object@processingLog,
+                                                paste("handleFlags(flags=",
+                                                      substitute(flags, parent.frame()),
+                                                      ", actions=",
+                                                      substitute(actions, parent.frame()),
+                                                      ")", collapse=" ", sep=""))
+    oceDebug(debug, "} # handleFlagsInternal()\n", sep="", unindent=1)
+    object
+}
+
+
+
 ##OLD #' Trim a glider Object
 ##OLD #'
 ##OLD #' Return a trimmed version of a glider object.
@@ -736,7 +897,7 @@ setMethod(f="summary",
               }
               ## Get flags specifically from metadata; using [["flags"]] could extract
               ## it from data, if present there and not in metadata (as e.g. with
-              ## the data("ctd") that is provided with oce).
+              ## the data("glider") that is provided with oce).
               flags <- object@metadata$flags[["payload1"]]
               if (length(flags)) {
                   if (!is.null(object@metadata$flagScheme)) {
@@ -1071,7 +1232,7 @@ read.glider <- function(file, debug, ...)
 #' the \code{payload1} item in the \code{data} slot of the returned value,
 #' \emph{without} name translation. For most functions in this package to work,
 #' \code{data} ought to have items named \code{longitude},
-#' \code{latitude}, \code{salinity}, \code{temperature} and 
+#' \code{latitude}, \code{salinity}, \code{temperature} and
 #' \code{pressure}.
 #'
 #' @param units A list holding units, with names corresponding to the

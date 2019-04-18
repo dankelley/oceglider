@@ -14,7 +14,7 @@ be either \code{seaexplorer} or \code{slocum}.}
 the \code{payload1} item in the \code{data} slot of the returned value,
 \emph{without} name translation. For most functions in this package to work,
 \code{data} ought to have items named \code{longitude},
-\code{latitude}, \code{salinity}, \code{temperature} and 
+\code{latitude}, \code{salinity}, \code{temperature} and
 \code{pressure}.}
 
 \item{units}{A list holding units, with names corresponding to the
