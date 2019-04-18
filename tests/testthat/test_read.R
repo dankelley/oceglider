@@ -32,8 +32,8 @@ test_that("read.glider.seaexplorer.realtime", {
 })
 
 
-test_that("read.glider.seaexplorer.delayed flags", {
-        directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+test_that("read.glider.seaexplorer.realtime flags", {
+        directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
         expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=101, progressBar=FALSE))
         expect_equal(g@metadata$flagScheme,
         structure(list(name="IOOS",
@@ -42,6 +42,15 @@ test_that("read.glider.seaexplorer.delayed flags", {
             .Names=c("name", "mapping")))
 })
 
+test_that("read.glider.seaexplorer.delayed flags", {
+  directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+  expect_silent(g <- read.glider.seaexplorer.delayed(directory=directory, yo=101, progressBar=FALSE))
+  expect_equal(g@metadata$flagScheme,
+               structure(list(name="IOOS",
+                              mapping=structure(list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9),
+                                                .Names=c("pass", "not_evaluated", "suspect", "fail", "missing"))),
+                         .Names=c("name", "mapping")))
+})
 
 test_that("read.glider.seaexplorer.delayed", {
           directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
