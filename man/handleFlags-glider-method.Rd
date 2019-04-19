@@ -9,21 +9,22 @@
   debug = getOption("gliderDebug", 0))
 }
 \arguments{
-\item{object}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
+\item{object}{A \code{glider} object, i.e. an object that inherits
+from \code{\link{glider-class}}.}
 
 \item{flags}{A \code{\link{list}} specifying flag values upon which
 actions will be taken. This can take two forms. In the first, the
 list has named elements each containing a vector of integers. For example,
 salinities flagged with values of 1 or 3 through 9 would be specified
-by \code{flags=list(salinity=c(1,3:9))}. Several data items can be specified,
-e.g. \code{flags=list(salinity=c(1,3:9), temperature=c(1,3:9))} indicates
+by \code{flags=list(salinity=c(2,3,4,9))}. Several data items can be specified,
+e.g. \code{flags=list(salinity=c(2,3,4,9),temperature=c(2,3,4,9))} indicates
 that the actions are to take place for both salinity and temperature.
 In the second form, \code{flags} is a list with unnamed vectors, and
 this means to apply the actions to all the data entries; thus,
-\code{flags=list(c(1,3:9))} means to apply not just to salinity and temperature,
-but also to everything else that is in the \code{data} slot. If \code{flags}
-is not provided, then \code{\link{defaultFlags}} is called, to try to
-determine a conservative default.}
+\code{flags=list(c(2,3,4,9))} means to apply not just to salinity and temperature,
+but also to everything else for which flags have been set up. If \code{flags}
+is not provided, then \code{\link{defaultFlags}} is called on
+\code{object}, to try to determine a conservative default.}
 
 \item{actions}{An optional \code{\link{list}} that contains items with
 names that match those in the \code{flags} argument.  If \code{actions}
@@ -32,34 +33,73 @@ is not supplied, the default will be to set all values identified by
 specifying \code{actions=list("NA")}. It is also possible to specify
 functions that calculate replacement values. These are provided
 with \code{object} as the single argument, and must return a
-replacement for the data item in question.
-See \dQuote{Details} for the default that is used if \code{actions} is not supplied.}
+replacement for the data item in question.}
 
 \item{debug}{An optional integer specifying the degree of debugging, with
 value 0 meaning to skip debugging and 1 or higher meaning to print some
 information about the arguments and the data. It is usually a good idea to set
 this to 1 for initial work with a dataset, to see which flags are being
 handled for each data item. If not supplied, this defaults to the value of
-\code{\link{getOption}("oceDebug")}.}
+\code{\link{getOption}("gliderDebug", 0)}.}
 }
 \description{
-Data-quality flags are stored in the \code{metadata}
-slot of \code{\link{oce-class}} objects in a
-\code{\link{list}} named \code{flags}.
-The present function (a generic that has specialized versions
-for various data classes) provides a way to
-manipulate the core data based on
-the data-quality flags. For example, a common operation is to replace suspicious
-or erroneous data with \code{NA}.
+This function may be used to set suspicious data to \code{NA},
+or some other value, based on the values of corresponding data-quality
+flags.
+}
+\details{
+The flags are stored within the object as a \code{\link{list}}
+named \code{payload1}, which is stored within a list named \code{flags}
+that is stored in the object's \code{metadata} slot. Both
+\code{flags} and \code{flags$payload1} are set up when the object is
+created, but values are inserted into \code{flags$payload1} are
+inserted later, when the data are read by one of the \code{read.glider*}
+functions.
 
-If \code{metadata$flags} in the object supplied as the first argument
-is empty, then that object is returned, unaltered.
-Otherwise, \code{handleFlags} analyses the data-quality flags within
-the object, in relation to the \code{flags} argument, and interprets
-the \code{action} argument to select an action to be applied to matched
-data.
+For example, \code{\link{read.glider.seaexplorer.delayed}}
+sets \code{flags$payload1$salinity} to be a vector of length
+matching the data stored in \code{data$payload1$salinity}, and 
+does the same for temperature and some other things that are typically
+assessed as part of quality-assessment procdures.  When these
+things are set up, they are also assigned numerical values, one for
+each element in the data set.  The initial value is set to 
+value 2, which means \code{not_evaluated}
+in the IOOS 2017 quality-control scheme (see [1] table 2).
+
+These numerical values provide a way to edit a dataset in an
+convenient and traceable way, through the appropriate setting
+of the \code{flags} and \code{actions} arguments. Flag values
+may be altered with \code{\link{setFlags,glider-method}}, as
+illustrated in the \dQuote{Examples} section.
+}
+\examples{
+library(oceanglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g <- read.glider.seaexplorer.delayed(directory)
+
+# The histogram motivates a crude limit for anomalously low salinity.
+par(mfrow=c(1, 2), mar=c(3, 3, 1, 1), mgp=c(2, 0.75, 0))
+hist(g[["salinity"]], breaks=100, xlab="Original Salinity", main="")
+abline(v=31, col=2)
+
+# Flag value 3 means 'suspect' in the IOOS scheme [1, table]; other
+# flags are pass=1, not_evaluated=2 (the default as read), fail=4, and missing=9.
+g2 <- setFlags(g, "salinity", g[["salinity"]]<31, 3)
+g3 <- handleFlags(g2, c(3, 4, 9)) # use default action, which is "NA"
+hist(g3[["salinity"]], breaks=100, xlab="Trimmed Salinity", main="")
+
 }
 \references{
-1.
+\enumerate{
+\item U.S. Integrated Ocean Observing System.
+"Manual for the Use of Real-Time Oceanographic Data Quality Control Flags, Version 1.1,"
+2017. \url{https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.1.pdf}.
+}
+}
+\seealso{
+Other functions relating to data-quality flags: \code{\link{setFlags,glider-method}}
+}
+\author{
+Dan Kelley
 }
 \concept{functions relating to data-quality flags}
