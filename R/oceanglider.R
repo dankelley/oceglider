@@ -482,7 +482,7 @@ setMethod(f="subset",
                           res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keepData]
                       }
                   } else {
-                      warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
+                      ##warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
                       keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
                       keep[is.na(keep)] <- FALSE
                       gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
