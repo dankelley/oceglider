@@ -1,3 +1,5 @@
+issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceanglider/issues/40)
+
 #' Possible navState values of a glider object
 #'
 #' This function provides names for the numerical \code{navState} codes
@@ -285,7 +287,11 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     ## spot in the .delayed() function. When both are added, adjust
     ## ../man-roxygen/seaexplorer_names.R accordingly.
     if ("Timestamp" %in% names(gliData)) {
-        gliData$Timestamp <- as.POSIXct(gliData$Timestamp, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+        ## FIXME(DK): reading fractional seconds changes some hard-wired numbers in test_flags.R
+        if (issue40)
+            gliData$Timestamp <- as.POSIXct(gliData$Timestamp, format="%d/%m/%Y %H:%M:%OS", tz="UTC")
+        else
+            gliData$Timestamp <- as.POSIXct(gliData$Timestamp, format="%d/%m/%Y %H:%M:%S", tz="UTC")
         names(gliData) <- gsub("Timestamp", "time", names(gliData))
         res@metadata$dataNamesOriginal$glider$time <- "Timestamp"
     }
@@ -371,7 +377,11 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     ## Rename items in payload1 data.
     gliderDebug(debug, "about to rename items read from the 'pld1' file\n")
     if ("PLD_REALTIMECLOCK" %in% names(pld1Data)) {
-        pld1Data$PLD_REALTIMECLOCK <- as.POSIXct(pld1Data$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+        ## FIXME(DK): reading fractional seconds changes some hard-wired numbers in test_flags.R
+        if (issue40)
+            pld1Data$PLD_REALTIMECLOCK <- as.POSIXct(pld1Data$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%OS", tz="UTC")
+        else
+            pld1Data$PLD_REALTIMECLOCK <- as.POSIXct(pld1Data$PLD_REALTIMECLOCK, format="%d/%m/%Y %H:%M:%S", tz="UTC")
         names(pld1Data) <- gsub("PLD_REALTIMECLOCK", "time", names(pld1Data))
         res@metadata$dataNamesOriginal$payload1$time <- "PLD_REALTIMECLOCK"
     }
@@ -681,7 +691,11 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         }
         if ("PLD_REALTIMECLOCK" %in% names(d)) {
             names(d) <- gsub("PLD_REALTIMECLOCK", "time", names(d))
-            d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%S", tz="UTC")
+            ## FIXME(DK): reading fractional seconds changes some hard-wired numbers in test_flags.R
+            if (issue40)
+                d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%OS", tz="UTC")
+            else
+                d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%S", tz="UTC")
             res@metadata$dataNamesOriginal$payload1$time <- "-"
         }
         pld1[[i]] <- d
