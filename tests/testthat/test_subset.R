@@ -1,8 +1,7 @@
 ## vim:textwidth=80:expandtab:shiftwidth=2:softtabstop=2
 library(oceanglider)
 
-context("subset")
-
+context("subsetting (seaexplorer)")
 
 test_that("subset seaexplorer by 'ascending' and descending", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")

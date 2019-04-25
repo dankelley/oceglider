@@ -1,7 +1,7 @@
 ## vim:textwidth=80:expandtab:shiftwidth=2:softtabstop=2
 library(oceanglider)
 
-context("read seaexplorer")
+context("reading data files (seaexplorer)")
 
 test_that("read.glider.seaexplorer.realtime", {
           directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
