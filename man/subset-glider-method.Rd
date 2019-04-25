@@ -33,9 +33,11 @@ to the \code{payload1} item in the \code{data} slot of the object
 (see Example 1).
 
 Scheme 2: if \code{subset} is a logical expression containing
-the word \code{"levels"}, then the expression is used as a filter
-to select yos (see Example 2). Typically, this might be used to avoid
-short yos.
+the word \code{"yolength"}, then the expression is used as a filter
+to select yos based on the number of samples they
+contain (see Example 2). Typically, this might be used to avoid
+very short yos that might have been inferred erroneously
+by the glider instrumentation.
 
 Scheme 3: If \code{subset} is the string \code{"ascending"}, then
 only ascending segments of yos are retained. This is done
@@ -66,7 +68,7 @@ hist(g[["salinity"]], main="S original")
 hist(gg[["salinity"]], main="S cleaned")
 
 # Example 2. remove short yos
-gg <- subset(g, levels > 4)
+gg <- subset(g, yolength > 4)
 
 # Example 3. retain only ascending portions of yos
 gascending <- subset(g, "ascending")

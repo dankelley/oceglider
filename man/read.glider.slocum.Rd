@@ -69,19 +69,12 @@ if (file.exists("~/slocum.csv")) {
     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
          col=cm$zcol, cex=1/2, pch=20)
     mtext(paste("Temperature, from", t[1]), cex=3/4)
-
-    # 3. Plot first two yos in CTD format, with yos isolated crudely.
-    yos <- ctdFindProfiles(as.ctd(g))
-    plot(yos[[1]])
-    plot(yos[[2]])
 }
 }
 \seealso{
-Other functions for slocum gliders: \code{\link{download.glider.slocum}}
-
 Other functions to read glider data: \code{\link{read.glider.netcdf}},
-  \code{\link{read.glider.seaexplorer.raw}},
-  \code{\link{read.glider.seaexplorer.sub}}
+  \code{\link{read.glider.seaexplorer.delayed}},
+  \code{\link{read.glider.seaexplorer.realtime}}
 }
 \author{
 Dan Kelley

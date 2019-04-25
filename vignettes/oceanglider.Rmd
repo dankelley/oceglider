@@ -29,16 +29,22 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 
 **Abstract.** This vignette explains the basics of using the oceanglider
 package on Seaexplorer and Slocum data. It is \emph{very much} a work in
-progress, because the functions provided by this package are still much under
+progress, because the functions provided by this package are under active
 development.
 
 # Introduction
 
-FIXME: write a couple of paragraphs here about what this package is designed
-for, its state of completion, etc.
+This package is intended to make it easier for analysts to work with data
+acquired by ocean gliders. There is a wide variety of glider types and of file
+formats, and the purpose of this vignette is to acquaint the reader with a
+particular type (the seaexplorer from Alseamar) and particular approach (using
+data files produced by the glider itself).
 
+Rather than simply state what might be best practices, I will present a sort of
+illustrated diary, showing how I worked my way through a small sample dataset
+that is provided with the package.
 
-# Data Sources
+# Data Sources and file organization
 
 The first step in working with glider data is often to download them from a
 server. The lack of URL conventions for such servers can make this a somewhat
@@ -69,144 +75,199 @@ This should make it easier for readers to learn how to use this package.
 
 # SeaExplorer Gliders
 
-## Reading files
-
 This package comes with some sample data files that can be used for practice and
 illustration.  For example,
 ```{r}
 library(oceanglider)
-files <- system.file("extdata/seaexplorer/sub",
-                     c("sea021.49.gli.sub.100.gz",
-                       "sea021.49.pld1.sub.100.gz"),
-                     package="oceanglider")
+directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 ```
-finds the names of two "sub" files (these are files transmitted by the glider
-when it is underway; think of the "sub" as an abbreviation for subset).
-Reading these files is done with the
-[`read.glider.seaexplorer.sub`](../help/read.glider.seaexplorer.sub) function,
+finds the names of a few selected `"sub"` files (these are files transmitted by
+the glider when it is underway; think of the "sub" as an abbreviation for
+subset).  Reading these files is done with the
+[`read.glider.seaexplorer.realtime`](../help/read.glider.seaexplorer.realtime) function,
 e.g.
 ```{r}
-g <- read.glider.seaexplorer.sub(files)
+g <- read.glider.seaexplorer.realtime(directory)
 ```
+(when called interactively, this function will print a progress-bar, unless
+instructed otherwise by setting the argument \code{progressBar} to
+\code{FALSE}.)
 
-Note that the files in the above example have been compressed using gzip, hence
-the `".gz"` in the filenames. This is not always the case.  The presence of
-`"sub"` in the filenames indicates that these are subset files (i.e. files
-transmitted whilst the glider was sampling). Files with `"raw"` in the filename
-hold the fuller datasets that are downloaded from the glider after recover, and
-such files are read with `read.glider.seaexplorer.raw()`.
-
-## Summarizing data
-
-The generic `summary()` function has a specialization for glider data, so a
-good way to learn about a dataset is with e.g.
+The package also comes with a few `"raw"` files, which are larger datasets
+downloaded from the glider after recovery.  In the oceanographic convention,
+these are called delayed-mode data, so the function to read them is called
+[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
 ```{r}
-summary(g)
+directory2 <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g2 <- read.glider.seaexplorer.delayed(directory2, level=1)
 ```
 
-The output of this function is in a form that will be familiar to users of the
-`oce` package, with a summary of metadata being given first, then a summary of
-the data, and then a listing of some steps in the processing.
+Here is how to plot a time-series of pressure from this dataset:
+```{r}
+plot(g2, which="p")
+```
 
-Note in particular how variable names have been changed from those in the
-original files.
+Here is how to see locations in space:
+```{r}
+plot(g2, which="map")
+```
 
-## Examining data
+The points are on a line because
+[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
+interpolates longitude and latitude between surfacings, and this small subset
+of glider data was selected to have a position record at the first and last of
+the sequenc.
 
-The data are stored in two streams: one, called `glider`, holds data acquired
-with sensors on the glider itself, and the other, called `payload1`, holds data
-acquired with the first instrumental payload.
+It is also noteworthy that some of the spots seem to have only a few data. This
+can be checked with
+```{r}
+table(g2[["yoNumber"]])
+```
 
-The first two lines of the glider stream are given by
+the result of which show that some `yoNumber` values contain too few data to be
+considered profiles. There are several ways to explore this further, but for
+the present purpose, let's make a new object that contains only those yos that
+have more than, say, 5 points:
+```{r}
+g3 <- subset(g2, yolength >= 5)
+```
+As a check on that idea, note that
+```{r}
+unique(g3[["yoNumber"]])
+```
+verifies that we got the desired yos.
+
+Quite often, it will be desirable to work with individual yos. With only 3, as in this
+small test case, we might as well plot them (say as temperature profiles). For that, it
+is helpful to split by yo number, and then cycle though the subsets, converting to CTD
+objects and plotting with functions from the \CRANpkg{oce} package.
+
+The individual yos can be examined by splitting the `payload` portion:
+```{r}
+payload <- g3[["payload"]] # or [["payload1"]]
+s <- split(payload, payload$yoNumber)
+par(mfrow=c(2, 3)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
+}
+```
+
+(Here, the UNESCO equation of state is used, because the newer TEOS10/GSW version requires
+longitude and latitude information to be valid, which is not the case in the
+present version of the package at the end of a dataset, owing to how
+[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed) is
+works.)
+
+Note how there is a line connecting near-surface and deep data. To learn more
+about that, let's use an \CRANpkg{oce} function to create a ``scan'' plot, say
+with the last of these `ctd` objects just created.
+```{r}
+plotScan(ctd, type="p")
+```
+
+This makes it clear that the yo contains near-surface data, then skips to
+depth, and then returns to the surface. A more careful examination with
+```{r}
+par(mfrow=c(1, 2))
+plot(s[[1]][["time"]], s[[1]][["pressure"]], xlab="Time", ylab="Pressure")
+plot(s[[1]][["time"]], s[[1]][["navState"]], xlab="Time", ylab="navState")
+```
+
+reveals that if the desire was to obtain a simple upcast, we might consider
+subsetting by the value of the `navState` variable.
+
+Noting that the `navState` values are as follows:
+* 105 means the glider is not navigating yet;
+* 115 means the glider is surfacing in preparation for communication;
+* 116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
+* 110 means the glider is inflecting downward;
+* 100 means the glider has ballast set to be descending;
+* 118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
+* 117 means the glider has ballast set to be ascending.
+it may be sensible to select for 117, if the desire is to focus on the ascent
+portion of the yo. So, retracing our steps, we have
+
 
 ```{r}
-head(g[["glider"]], 3)
+g4 <- subset(g3, navState==117)
+payload <- g4[["payload"]] # or [["payload1"]]
+s <- split(payload, payload$yoNumber)
+par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
+}
 ```
 
-The first two lines in the payload are given by
+These results are not much better! Selecting by `navState` is clearly not
+sufficient. However, `oce` provides the `ctdTrim()` function for
+isolating the ascent (called `"upcast"` in the CTD context), e.g.
 ```{r}
-head(g[["payload1"]], 3)
+par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
+for (ss in s) {
+   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                      temperature=ss[["temperature"]],
+                      pressure=ss[["pressure"]],
+                      longitude=ss[["longitude"]],
+                      latitude=ss[["latitude"]])
+   ctd <- oce::ctdTrim(ctd, "upcast")
+   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
+}
 ```
 
-Actually, in this particular case, the second call could have been
-written as
+This looks reasonable now. Let's try a waterfall temperature plot, with black
+for the first yo, red for the second, green for the third, and blue for the
+fourth, as explained in the legend.
 ```{r}
-head(g[["payload"]], 3)
-```
-because this glider only had a single payload, However, the first form is
-preferable, in terms of code clarity.
+par(mfrow=c(1, 1))
+for (i in seq_along(s)) {
+    ss <- s[[i]]
+    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+                       temperature=ss[["temperature"]],
+                       pressure=ss[["pressure"]],
+                       longitude=ss[["longitude"]],
+                       latitude=ss[["latitude"]])
+    ctd <- oce::ctdTrim(ctd, "upcast")
+    if (i == 1) {
+       oce::plotProfile(ctd, xtype="temperature", eos="unesco")
+    } else {
+       lines(ctd[["temperature"]], ctd[["pressure"]], col=i)
+    }
+}
+legend("bottomright", lwd=1, col=seq_along(s),
+    legend=paste("yo",
+        as.character(lapply(s,function(ss) ss$yoNumber[1]))))
+````
 
-It should be noted that the `"salinity"` item is not actually stored in the
-data file, but is instead computed (as Practical Salinity) during the reading
-process.
-
-## Data extraction
-
-The `[[` notation from the `oce` package is overloaded here. For example,
-the pressures in the glider object may be extracted with
-```{r}
-g[["pressure"]]
-```
-The `NA` values result from the setup of the glider to record only in
-particular states of its vertical trajectory. Those states may be found with
-```{r}
-g[["navState"]]
-```
-(It is not entirely clear why data were recorded at the first instance of
-`navState` equaling 100, but not at the following instances.)
-
-**Aside:** the `navState` values are as follows:
-105 means the glider is not navigating yet;
-115 means the glider is surfacing in preparation for communication;
-116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
-110 means the glider is inflecting downward;
-100 means the glider has ballast set to be descending;
-118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
-117 means the glider has ballast set to be ascending.
-
-A common operation is to create a `"ctd"` object, with the `as.ctd` from the
-`oce` package, as follows.
-
-```{r}
-library(oce)
-ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
-              longitude=g[["longitude"]], latitude=g[["latitude"]])
-```
-
-The `oce` package has a `summary()` function that provides output that is similar
-to that of the present package, e.g.
-```{r}
-summary(ctd)
-```
-
-The `oce` package also provides a way to get a simple summary plot, as follows.
-
-```{r fig.cap="**Figure 1.** CTD plot of a glider yo."}
-oce::plot(ctd)
-```
-
-In Figure 1, the top left panel shows profiles of salinity and temperature, the
-top right panel shows potential density anomaly and the square of buoyancy
-frequency, the lower left panel is a temperature-salinity diagram, and the
-bottom right panel is a map showing the sampling location (southeast of
-Halifax, Nova Scotia).
-
-Note the retracing in some of the panels of Figure 1. To see why, we may use
-the `plotScan` function provided by the `oce` package.
-```{r fig.cap="**Figure 2.** Time history of pressure and scan-number for a glider yo. (The scan is a sequence number in the CTD object.)"}
-plotScan(ctd, type="o")
-```
-
-Figure 2 indicates that there are two points near the surface, then a lack of
-points during what a descent phase, and then a series of points during the
-ascent phase.
-
-The `oce` package offers a way to isolate the data, using `ctdTrim`; thus, we
-can get a standard CTD plot as follows.
-
-```{r fig.cap="**Figure 3.** Trimmed CTD plot, showing just data measured during the upcast."}
-oce::plot(ctdTrim(ctd, "upcast"))
-```
-
+At this stage, readers will likely have some ideas for doing more with this
+sample dataset, and ought to be aware that many of the steps here might not
+be appropriate for other datasets, e.g. those in which data were acquired on
+both ascent and descent, or only on descent.
 
 # Slocum gliders
+
+**FIXME:** write a few pages here \cdots but this cannot be done until the data
+formats are better known, and code is updated.
+
+
+# References
+
+* Integrated Ocean Observing System (U.S.). “Manual for Quality Control of
+Temperature and Salinity Data Observations from Gliders. Version 1.0.” Report.
+U.S. Department of Commerce, National Oceanic and Atmospheric Administration,
+National Ocean Service, Integrated Ocean Observing System, U.S. Integrated
+Ocean Observing System, Glider Data Assembly Center, 2016.
+https://www.oceanbestpractices.net/handle/11329/289.
+
+* Integrated Ocean Observing System (U.S.). “NGDAC NetCDF File Format Version
+2,” March 27, 2019.
+https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2.

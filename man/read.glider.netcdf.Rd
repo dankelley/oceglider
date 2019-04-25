@@ -26,12 +26,8 @@ A glider object, i.e. one inheriting from \code{\link{glider-class}}.
 \code{oce} package.)
 }
 \description{
-\strong{This is a provisional function, written to handle a particular level-1 file
-provided to the author by DFO colleagues in mid January, 2019.} This only works
-for files with global attribute \code{instrument} set to \code{Glider},
-\code{instrument_manufacturer} set to \code{Alseamar}, and
-\code{instrument_model} set to \code{SeaExplorer}, although this restriction
-will likely be lifted as data from other instruments becomes available.
+\strong{This is a provisional function, written to handle some
+particular files available to the author.}
 }
 \details{
 The data are copied directly from the file, except that \code{time}
@@ -45,25 +41,36 @@ mechanism works with either name, e.g. if \code{g} is a glider object, then
 \examples{
 \dontrun{
 library(oceanglider)
-g <- read.glider.netcdf("GLI2018_SEA019_054DM_L1.nc")
-## Remove spurious times (cannot be year 2009)
+
+# NOTE: these files are of order 100Meg, so they are
+# not provided with the package as samples. In both
+# examples, we plot a map and then an incidence-TS plot.
+
+# Seaexplorer data, from DFO (January 2019)
+g <- read.glider.netcdf("~/Dropbox/glider_dfo.nc")
+# Remove spurious times, from a year before deployment
 g <- subset(g, time > as.POSIXct("2018-01-01"))
-## Remove bad data
+# Remove any observation with bad salinity
 g <- subset(g, is.finite(g[["salinity"]]))
-## Focus on ascent phase (profileDirection==-1)
-g <- subset(g, profileDirection==-1)
-# CTD-style plot of whole dataset
+plot(g, which="map")
 ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
               longitude=g[["longitude"]], latitude=g[["latitude"]])
-plot(ctd, type=rep("p", 4)) # 'type' gives dots
-# CTD-style plot of a particular profile
-plot(as.ctd(subset(g, profileIndex==200)))
+plotTS(ctd, useSmoothScatter=TRUE)
+
+# Slocum data,from Dalhousie CEOTR rdapp (April 2019)
+g <- read.glider.netcdf("~/Dropbox/glider_erdapp.nc")
+# Remove any observation with bad salinity
+g <- subset(g, is.finite(g[["salinity"]]))
+plot(g, which="map")
+ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
+              latitude=g[["latitude"]], longitude=g[["longitude"]])
+plotTS(ctd, useSmoothScatter=TRUE)
 }
 
 }
 \seealso{
-Other functions to read glider data: \code{\link{read.glider.seaexplorer.raw}},
-  \code{\link{read.glider.seaexplorer.sub}},
+Other functions to read glider data: \code{\link{read.glider.seaexplorer.delayed}},
+  \code{\link{read.glider.seaexplorer.realtime}},
   \code{\link{read.glider.slocum}}
 }
 \author{

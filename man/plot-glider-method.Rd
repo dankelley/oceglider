@@ -5,13 +5,18 @@
 \alias{plot,glider-method}
 \title{Plot a glider Object}
 \usage{
-\S4method{plot}{glider}(x, which, debug, ...)
+\S4method{plot}{glider}(x, which, type = "o", debug, ...)
 }
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
 
 \item{which}{Integer or character value specifying which style is
 to be used; see \dQuote{Details}.}
+
+\item{type}{Type of plot, as defined in \code{\link{par}}, e.g. \code{"p"} (the
+default) for points, \code{"l"} for connected line segments, or \code{"o"}
+for an overlay of points and lines, etc. The default is \code{"o"}, which is
+perhaps the best for short sequences.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
@@ -60,60 +65,66 @@ details.
 \item \code{which=5} or \code{which="navState"}: time-series of the
 navigation state, stored as the \code{navState} item within
 the \code{payload1} element of the \code{data} slot. The meanings
-of the states are:
-\code{navState=105} means the glider is not navigating yet;
-\code{navState=115} means the glider is surfacing
-in preparation for communication;
-\code{navState=116} means the glider is at the surface,
-acquiring a GPS signal, and is communicating;
-\code{navState=110} means the glider is inflecting downward;
-\code{navState=100} means the glider has ballast set to be descending;
-\code{navState=118} means the glider has ballast adjusted to reduce density,
-so will be inflecting  upward; and
-\code{navState=117} means the glider has ballast set to be ascending.
-Lines and notes in the plot border indicate these states and meanings.
+of the \code{navState} values for \code{seaexplorer} data
+are:
+
+\itemize{
+
+\item \code{105}: glider is not navigating yet
+
+\item \code{115}: glider is surfacing, with ballast and
+centre of gravity being adjusted to put antenna out
+of the water
+
+\item \code{116}: glider is at the surface,
+acquiring a GPS signal, and communicating
+
+\item \code{110}: ballast and centre of mass are
+adjusted to cause glider to inflect downward
+
+\item \code{100}: ballast is in diving position; adjustments
+may be made to adjust pitch and heading
+
+\item \code{118}: target depth or altitude has been achieved,
+so ballast and centre of mass are adjusted to inflect glider
+upwards
+
+\item \code{117}: glider is ascending, with controls being
+adjusted for desired pitch and heading
+
+}
+
+Lines and notes in the plot border indicate these states, both
+numerically and with phrases, as inferred by
+\code{\link{navStateCodes}}.
 
 }
 }
 \examples{
 library(oceanglider)
-files <- system.file("extdata/seaexplorer/sub",
-                     c("sea021.49.gli.sub.100.gz",
-                       "sea021.49.pld1.sub.100.gz"), package="oceanglider")
-g <- read.glider.seaexplorer.sub(files)
 
-# Example 1. A single yo of (low-resolution) "sub" data
+## Examples 1: a single yo of low-resolution real-time data
+dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
 plot(g, which="p")
 plot(g, which="S")
 plot(g, which="T")
-plot(g, which="TS")
+plot(g, which="TS") # note odd connections between points
 plot(g, which="map")
 plot(g, which="navState")
 
-# FIXME: replace the remnants given below with interesting examples using
-# FIXME: raw data, when we get read.glider.seaexplorer.raw() working.
+# Example 2: navState and pressure history of some delayed-mode yos,
+# from a deployment in which sampling was supposed to be
+# suppressed during the descending phases of motion.
+dirRaw <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g <- read.glider.seaexplorer.delayed(dirRaw)
+plot(g, which="navState")
 
-\dontrun{
-# These files are much too large to provide, so no sample
-# file is provided.
-g <- read.glider(filename)
-
-
-# Example 2. Pressure-time plot, with dots (which slows things down!)
-plot(g, which="p", type="p", cex=0.5)
-
-# Example 3. Pressure-time plot, colour-coded for temperature
-# (using an oce function to define the color map) and arranged
-# with high pressure at the bottom, to make a time-pressure
-# section plot of temperature. Several arguments
-# are passed to oce.plot.ts(), and users may find it
-# agreeable to simply call that function directly.
+# Note: colormap and drawPalette are oce functions.
 cm <- colormap(g[["temperature"]])
-ylim <- rev(range(g[["pressure"]], na.rm=TRUE))
+# Note the setting of mar, here and in th plot.
 par(mar=c(2, 3.5, 2, 4))
 drawPalette(colormap=cm)
-plot(g, which="p", type="p", cex=1/3, col=cm$zcol, ylim=ylim,
-     mar=c(2, 3.5, 2, 4))
-}
+plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
 
 }
