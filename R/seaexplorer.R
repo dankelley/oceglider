@@ -116,8 +116,9 @@ navStateCodes <- function(g)
 #'     \code{\link{read.glider.seaexplorer.delayed}}.
 #'
 #' @param progressBar A logical indicating whether to show progress
-#'     bars while reading the data. Can be useful when reading full
-#'     datasets.
+#'     bars while reading the data, which can be useful when reading full
+#'     datasets on slow machines. The default is to show the progress bar
+#'     only in interactive mode.
 #'
 #' @param missingValue A value that indicates missing data; all
 #'     values that match this are set to \code{NA}.
