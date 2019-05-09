@@ -592,8 +592,8 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
     navfiles <- dir(directory, pattern='*gli*', full.names=TRUE) # FIXME: not used
-    pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
-    pld2files <- dir(directory, pattern='*.pld2.*', full.names=TRUE)
+    pld1files <- dir(directory, pattern='*.pld1.raw.*', full.names=TRUE)
+    pld2files <- dir(directory, pattern='*.pld2.raw.*', full.names=TRUE)
     if (length(pld2files))
         warning("pld2 files are ignored by this function; contact developers if you need to read them")
 
