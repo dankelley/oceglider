@@ -157,7 +157,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
         debug <- getOption("gliderDebug", default=0)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
-    gliderDebug(debug, "read.glider.seaexplorer.realtime() {\n", unindent=1)
+    gliderDebug(debug, "read.glider.seaexplorer.realtime(\"", directory, "\", ...) {\n", sep="", unindent=1)
     yoGiven <- !missing(yo)
     glifiles <- dir(directory, pattern='*gli*', full.names=TRUE)
     pld1files <- dir(directory, pattern='*.pld1.*', full.names=TRUE)
@@ -588,7 +588,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         debug <- getOption("gliderDebug", default=0)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
-    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", unindent=1)
+    gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", sep="", unindent=1)
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
     navfiles <- dir(directory, pattern='*gli*', full.names=TRUE) # FIXME: not used
@@ -611,6 +611,9 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
 
     y <- yoNumber %in% yo
     files <- pld1files[y]
+    if (length(files) == 0) {
+        stop("no .pld1. files in directory '", directory, "'", sep="")
+    }
 
     res <- new("glider")
     res@metadata$type <- "seaexplorer"
@@ -618,7 +621,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     res <- initializeFlagScheme(res, name="IOOS",
                                 mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$level <- level
-    res@metadata$filename <- files
+    res@metadata$filename <- directory
     res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
 
