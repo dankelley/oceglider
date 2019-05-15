@@ -616,6 +616,14 @@ setMethod(f="[[",
                   return(x@data)
               else if (i == "metadata")
                   return(x@metadata)
+              else if (i == "yoNumber" && !missing(j)) {
+                  lines <- which(x@data$payload1$yoNumber == j)
+                  x@data$payload1 <- x@data$payload1[lines, ]
+                  for (f in names(x@metadata$flags$payload1)) {
+                      x@metadata$flags$payload1[[f]] <- x@metadata$flags$payload1[[f]][lines]
+                  }
+                  return(x)
+              }
               type <- x@metadata$type
               if (is.null(type))
                   stop("'type' is NULL")
