@@ -581,8 +581,8 @@ setMethod(f="subset",
 #' \code{\link[gsw]{gsw_spiciness0}}, based on the water properties
 #' stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 #'
-#' \item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
-#' yo.
+#' \item glider object containing just the data for a particular yo,
+#' e.g. \code{x[["yo",1]]} yields the first yo.
 #'
 #'}
 #'
@@ -616,7 +616,7 @@ setMethod(f="[[",
                   return(x@data)
               else if (i == "metadata")
                   return(x@metadata)
-              else if (i == "yoNumber" && !missing(j)) {
+              else if (i == "yo" && !missing(j)) { # NOTE: not 'yoNumber'
                   lines <- which(x@data$payload1$yoNumber == j)
                   x@data$payload1 <- x@data$payload1[lines, ]
                   for (f in names(x@metadata$flags$payload1)) {
@@ -673,8 +673,6 @@ setMethod(f="[[",
                   return(x@data$glider)
               if (i == "payload")
                   return(x@data$payload)
-              if (i == "yo")
-                  return(x@metadata$yo)
               if (missing(j)) {
                   ##. message("j is missing")
                   if (i %in% names(x@metadata)) {
