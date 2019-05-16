@@ -691,15 +691,17 @@ setMethod(f="[[",
                   }
               }
               ##. message("j is not missing. j='", j, "'")
-              if (j == "glider")
-                  return(x@data$glider)
-              if (j == "payload")
-                  return(x@data$payload1)
-              if (j == "payload1")
-                  return(x@data$payload1)
-              if (j == "payload2")
-                  return(x@data$payload2)
-              stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+              ## if (j == "glider")
+              ##     return(x@data$glider)
+              ## if (j == "payload")
+              ##     return(x@data$payload1)
+              ## if (j == "payload1")
+              ##     return(x@data$payload1)
+              ## if (j == "payload2")
+              ##     return(x@data$payload2)
+              ## stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+              warning("[[", i, ",", j, "]] not understood, so returning NULL", sep="")
+              return(NULL)
           })
 
 #' Plot a glider Object
