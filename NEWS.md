@@ -1,7 +1,7 @@
 0.1.2
+* add navStateCodes()
 * add read.glider.netcdf()
-* add download.seaexplorer() and read.saexplorer()
-* rename download.glider() to download.slocum()
+* add read.saexplorer.*()
 * rename read.glider() to read.slocum()
 
 0.1.0

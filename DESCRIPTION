@@ -5,8 +5,9 @@ Version: 0.1.2
 Authors@R: c(person(given="Dan", family="Kelley", email="dan.kelley@dal.ca", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0001-7808-5911")),
         person(given="Clark", family="Richards", email="clark.richards@gmail.com", role=c("aut"), comment=c(ORCID="https://orcid.org/0000-0002-7833-206X")))
 Maintainer: Dan Kelley <dan.kelley@dal.ca>
-Depends: R (>= 2.15), utils, knitr, oce
-Imports: methods, RCurl, testthat, ncdf4
+Depends: R (>= 2.15), utils, knitr, oce, gsw
+Suggests: testthat
+Imports: methods, RCurl, ncdf4
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)
 Encoding: UTF-8

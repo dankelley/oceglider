@@ -1,56 +1,5 @@
 ## vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
 
-# http://gliders.oceantrack.org/data/slocum/m80_2017-12-16_view_sci_water.csv
-
-#' Download and Cache a Slocum Glider File
-#'
-#' If the file is already present in \code{destdir}, then it is not
-#' downloaded again. The default \code{destdir} is the present directory,
-#' but it probably makes more sense to use something like \code{"~/data/glider"}
-#' to make it easy for scripts in other directories to use the cached data.
-#' The file is downloaded with \code{\link{download.file}}.
-#'
-#' @param mission Character value indicating the mission name.
-#' @param year Numeric value indicating the year of the mission start.
-#' @param month Numeric value indicating the month of the mission start.
-#' @param day Numeric value indicating the day of the mission start.
-#' @param item Character value indicating the type of data sought.
-#' @param server String specifying the online server.
-#' @template filenames
-#' @template debug
-#'
-#' @return A character value indicating the filename of the result; if
-#' there is a problem, the result will be the empty string.
-#'
-#' @examples
-#'\dontrun{
-#' ## The download takes several seconds.
-#' library(oceanglider)
-#' gfile <- download.glider.slocum(destddir="~/data/glider")
-#'}
-#' @family functions for slocum gliders
-#' @family functions to download data
-#' @importFrom utils download.file
-#' @export
-download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
-                                   item="view_sci_water.csv",
-                                   server="http://gliders.oceantrack.org/data/slocum",
-                                   destdir=".", destfile, force=FALSE, dryrun=FALSE,
-                                   debug=getOption("gliderDebug", 0))
-{
-    destfile <- sprintf("%s_%04d-%02d-%02d_%s", mission, year, month, day, item)
-    destpath <- paste(destdir, destfile, sep="/")
-    if (0 == length(list.files(path=destdir, pattern=paste("^", destfile, "$", sep="")))) {
-        source <- sprintf("%s/%s", server, destfile)
-        bad <- utils::download.file(source, destfile)
-        if (!bad && destdir != ".")
-            system(paste("mv", destfile, destpath))
-    } else {
-        message("Not downloading ", destfile, " because it is already present in ", destdir)
-    }
-    if (destdir == ".") destfile else destpath
-}
-
 #' Read a Slocum Glider file
 #'
 #' These files do not use standard names for variables, but
@@ -79,6 +28,7 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #' @author Dan Kelley
 #'
 #' @examples
+#' library(oceanglider)
 #' if (file.exists("~/slocum.csv")) {
 #'     g <- read.glider.slocum("~/slocum.csv")
 #'     summary(g)
@@ -102,11 +52,6 @@ download.glider.slocum <- function(mission="m80", year=2017, month=12, day=16,
 #'     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
 #'          col=cm$zcol, cex=1/2, pch=20)
 #'     mtext(paste("Temperature, from", t[1]), cex=3/4)
-#'
-#'     # 3. Plot first two yos in CTD format, with yos isolated crudely.
-#'     yos <- ctdFindProfiles(as.ctd(g))
-#'     plot(yos[[1]])
-#'     plot(yos[[2]])
 #'}
 #' @family functions for slocum gliders
 #' @family functions to read glider data
@@ -162,7 +107,7 @@ read.glider.slocum <- function(file, debug,
                                  conductivityUnit="S/m", eos="unesco"))
     data$salinity <- salinity
     data$time <- oce::numberAsPOSIXct(data$unix_timestamp, "unix")
-    rval@data <- data
+    rval@data$payload1 <- as.data.frame(data)
     rval@metadata$filename <- filename
     ## FIXME add to dataNamesOriginal as for CTD data type
     rval

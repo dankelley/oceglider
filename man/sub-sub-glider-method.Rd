@@ -17,26 +17,88 @@
 \item{...}{Optional additional information (ignored).}
 }
 \description{
+Retrieve something contained in a glider object, or something that can
+be computed from what is contained there.
+}
+\details{
 First, a check is done to see if the object's metadata contains an item
 with name given by \code{i}. If this is true, then that value is returned.
-Otherwise, the item is sought in the \code{data} slot. This is straightforward
-for objects read by \code{\link{read.glider.slocum}}, which has no
-repeated data items, but trickier for objects read by
+
+Otherwise, the item is sought somewhere within the \code{data} slot.
+The procedure is somewhat subtle, and depends on the data type.
+
+For objects read by \code{\link{read.glider.slocum}} ...
+\emph{FIXME: write more here, but only when we handle the slocum data
+in the form it has as of 2019; the code is 2 years old and the data file
+format used in local laboratories seems to have changed, possibly twice,
+in the meantime.}
+
+For objects of type \code{seaexplorer}, i.e. as read by
 \code{\link{read.glider.seaexplorer.realtime}} and
-\code{\link{read.glider.seaexplorer.raw}}, since SeaExplorer systems
-store data from the instrumentation that is integral to the glider
-in separate files than those used for the data from instrumentation
-carried in the glider's payload; these two streams are stored within
-the \code{data} slot in list items called \code{glider} and
-\code{payload}, respectively. If \code{j} is not specified, then
-\code{i} is sought first in the \code{payload} component, with
-\code{glider} being checked thereafter. (For example, this means that the
-payload thermometer is preferred to the glider thermometer.) This selection
+\code{\link{read.glider.seaexplorer.delayed}}. the \code{data} slot
+may contain multiple items.  In some cases, there will be an item
+named \code{glider} and another named \code{payload1}. In others,
+the first of these may be missing.  (Also, it seems likely that
+the package will be updated to include multiple payloads, when
+users start deploying such gliders.)
+
+If \code{j} is not specified, then
+\code{i} is sought first in \code{payload1}, with
+\code{glider} being checked thereafter. For example, this means that a
+thermometer within the payload will be preferred to one attached to
+the body of the glider. This selection
 process can be controlled by setting \code{j} to either \code{"glider"}
-or \code{"payload"}.  For example, both \code{x[["temperature"]]} and
-\code{x[["temperature","payload"]]} retrieves values from
-the payload thermistor, while \code{x[["temperature","glider"]]} retrieve
-values from the glider thermistor.
+or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
+\code{x[["temperature","payload1"]]} retrieve values from
+the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
+values from the glider thermister. For clarity of code, it might make
+sense to always specify \code{j}.
+
+In addition to retrieving data stored in the object, \code{\[\[} can also
+return the following.
+
+\itemize{
+
+\item the full \code{data} slot, with e.g. \code{x[["data"]]}
+
+\item the \code{glider} item in \code{data} slot, with e.g. \code{x[["glider"]]}
+
+\item the \code{payload1} item in \code{data} slot, with e.g. \code{x[["payload1"]]}
+
+\item the Absolute Salinity is returned with e.g.
+\code{x[["SA"]]}. This is computed with
+\code{\link[gsw]{gsw_SA_from_SP}}, based on the water properties
+stoed in the object. (See also the item for Conservative Temperature)
+
+\item the sigma-theta density anomaly calculated using
+\code{\link[oce]{swSigmaTheta}} on the water properties stored in the object,
+with e.g. \code{x[["sigmaTheta"]]}. This obeys the setting of the
+equation of state, set up \code{\link{options}(oceEOS="gsw")} for the
+TEOS-10/GSW variant or \code{\link{options}(oceEOS="unesco")} for the
+older UNESCO variant.
+
+\item the Conservative Temperatuer is returned with e.g.
+\code{x[["CT"]]}. This is computed with
+\code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
+stoed in the object. (See also the item for Absolute Salinity.)
+
+\item the sigma0 density anomaly is returned with e.g.
+\code{x[["sigma0"]]}. This is computed with
+\code{\link[oce]{swSigma0}}  based on the water properties
+stored in the object.
+Note that the computation depends on the setting of the equation of state,
+set up \code{\link{options}(oceEOS="gsw")} for the TEOS-10/GSW variant
+or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
+
+\item the spiciness0 water property is returned with e.g.
+\code{x[["spiciness0"]]}. This is computed with
+\code{\link[gsw]{gsw_spiciness0}}, based on the water properties
+stoed in the object. (Note that this is the TEOS-10/GSW variant.)
+
+\item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
+yo.
+
+}
 }
 \author{
 Dan Kelley

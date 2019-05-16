@@ -9,4 +9,5 @@ sea*gz
 .Rapp.history
 .DS_Store
 vignettes/*_files
-
+*.out
+Rplot.png
