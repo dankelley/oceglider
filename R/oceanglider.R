@@ -473,7 +473,8 @@ setMethod(f="subset",
                       keepYo <- eval(substitute(subset), list(yolength=thisYolength))
                       ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
                       res <- x
-                      res@metadata$yo <- x@metadata$yo[keepYo]
+                      ##44 https://github.com/dankelley/oceanglider/issues/44
+                      ##44 res@metadata$yo <- x@metadata$yo[keepYo]
                       keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
                       ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
                       ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
@@ -902,12 +903,13 @@ setMethod(f="summary",
               cat("* Type:    ", type, "\n", sep="")
               if ("subtype" %in% metadataNames)
                   cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
-              nyo <- length(object@metadata$yo)
-              if (nyo == 1)
-                  cat(sprintf("* Yo:      %d\n", object@metadata$yo))
-              else if (nyo > 1)
-                  cat(sprintf("* Yo:      %d values, between %d and %d\n",
-                              nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
+              ##44 https://github.com/dankelley/oceanglider/issues/44
+              ##44 nyo <- length(object@metadata$yo)
+              ##44 if (nyo == 1)
+              ##44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))
+              ##44 else if (nyo > 1)
+              ##44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
+              ##44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               for (streamName in names(object@data)) {
                   stream <- object@data[[streamName]]
                   ## order names alphabetically (easier with long lists of unfamiliar names)

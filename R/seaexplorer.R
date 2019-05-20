@@ -274,7 +274,8 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     res <- initializeFlagScheme(res, name="IOOS",
                                 mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$filename <- c(glifiles, pld1files)
-    res@metadata$yo <- yo
+    ##44 https://github.com/dankelley/oceanglider/issues/44
+    ##44 res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
     for (name in names(gliData))
         res@metadata$dataNamesOriginal$glider[[name]] <- name
@@ -622,7 +623,8 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
                                 mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$level <- level
     res@metadata$filename <- directory
-    res@metadata$yo <- yo
+    ##44 https://github.com/dankelley/oceanglider/issues/44
+    ##44 res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
 
     pld1 <- list()
