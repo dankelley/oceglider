@@ -171,8 +171,7 @@ server <- function(input, output) {
 
   output$deleteYo <- renderUI({
     if (!is.null(state$yoSelected)) {
-      actionButton(inputId="deleteYo", label="Delete yo")
-      ## FIXME: remove this yo from 'g<<'
+      actionButton(inputId="deleteYo", label=paste("Delete yo #", state$yoSelected, sep=""))
     }
   })
 
@@ -243,6 +242,9 @@ server <- function(input, output) {
 
   observeEvent(input$deleteYo, {
                cat(file=stderr(), "  DELETE yo=", state$yoSelected, "\n")
+               yo <- g[["yoNumber"]]
+               state$flag[yo == state$yoSelected] <<- 3
+               state$yoSelected <<- NULL
   })
 
   observeEvent(input$click1, {
@@ -255,7 +257,6 @@ server <- function(input, output) {
                  dist <- 100/1.4 * sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
-                 ## FIXME: maybe hide if dist[disti] exceeds some number
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
                                 dist[disti], x, y, d$yoNumber, d$time, d$pressure)
                  state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
@@ -264,7 +265,6 @@ server <- function(input, output) {
                  dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
-                 ## FIXME: maybe hide if dist[disti] exceeds some number
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
                                 dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
                  state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
