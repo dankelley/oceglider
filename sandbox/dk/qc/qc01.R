@@ -47,7 +47,8 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                                           label="Flagged action (broken)",
                                           choices=c("omit", "highlight"),
                                           selected=c("omit"),
-                                          inline=TRUE)),
+                                          inline=TRUE),
+                             uiOutput(outputId="deleteYo")),
                 mainPanel(uiOutput(outputId="navState"),
                           uiOutput(outputId="status"),
                           plotOutput("plot",
@@ -168,6 +169,13 @@ server <- function(input, output) {
                 selected="latitude")
   })
 
+  output$deleteYo <- renderUI({
+    if (!is.null(state$yoSelected)) {
+      actionButton(inputId="deleteYo", label="Delete yo")
+      ## FIXME: remove this yo from 'g<<'
+    }
+  })
+
   output$redraw <- renderUI({
     actionButton(inputId="resetPlot", h5("Reset plot scales"))
   })
@@ -188,24 +196,30 @@ server <- function(input, output) {
     y <- input$hover1$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "-"
+    distThreshold <- 5
+    usr <- par("usr")
     if (!is.null(x) && plotExists) {
       ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
       if (input$plotChoice == "pt") {
-        ## FIXME: do dist wrt par('usr')
-        dist <- abs(x - t)/86400 + abs(y - p)/100 # scale equates 1 day with 100dbar
+        dist <- 100/1.4 * sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f yo=%d %s p=%.1f\n",
-                       dist[disti], d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure)
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f\n",
+                       dist[disti],
+                       if (dist[disti] < distThreshold) " (click to select) " else {
+                         if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure)
       } else if (input$plotChoice == "TS") {
-        ## FIXME: do dist wrt par('usr')
-        dist <- abs(x - SA) + (2/10)*abs(y - CT) # scale equates 10deg with 2psu
+        dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f yo=%d %s p=%.1f S=%.4f T=%.4f\n",
-                       dist[disti], d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure, d$salinity, d$temperature)
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f\n",
+                       dist[disti],
+                       if (dist[disti] < distThreshold) " (click to select) " else {
+                         if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure, d$salinity, d$temperature)
       }
     }
     res
@@ -227,29 +241,33 @@ server <- function(input, output) {
                cat(file=stderr(), "  state$plim=", paste(state$plim, collapse=","), "\n")
   })
 
+  observeEvent(input$deleteYo, {
+               cat(file=stderr(), "  DELETE yo=", state$yoSelected, "\n")
+  })
+
   observeEvent(input$click1, {
                cat(file=stderr(), "click1\n", sep="")
+               distThreshold <- 5
+               usr <- par("usr")
                x <- input$click1$x
                y <- input$click1$y
                if (input$plotChoice == "pt") {
-                 ## FIXME: do dist wrt par('usr')
-                 dist <- abs(x - t)/86400 + abs(y - p)/100 # scale equates 1 day with 100dbar
+                 dist <- 100/1.4 * sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  ## FIXME: maybe hide if dist[disti] exceeds some number
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
                                 dist[disti], x, y, d$yoNumber, d$time, d$pressure)
-                 state$yoSelected <- d$yoNumber
+                 state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
                  cat(file=stderr(), res)
                } else if (input$plotChoice == "TS") {
-                 ## FIXME: do dist wrt par('usr')
-                 dist <- abs(x - SA) + (2/10)*abs(y - CT) # scale equates 10deg with 2psu
+                 dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  ## FIXME: maybe hide if dist[disti] exceeds some number
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
                                 dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
-                 state$yoSelected <- d$yoNumber
+                 state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
                  cat(file=stderr(), res)
                }
   })
