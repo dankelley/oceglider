@@ -98,7 +98,7 @@ server <- function(input, output) {
   }
 
   rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%d_%H:%M"), ".rda", sep=""))
+    tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%dT%H:%M:%S"), ".rda", sep=""))
   }
 
   dataStatus <- function() {
@@ -208,7 +208,7 @@ server <- function(input, output) {
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure)
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure)
       } else if (input$plotChoice == "TS") {
         dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
         disti <- which.min(dist)
@@ -218,7 +218,7 @@ server <- function(input, output) {
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M"), d$pressure, d$salinity, d$temperature)
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature)
       }
     }
     res
@@ -397,7 +397,7 @@ server <- function(input, output) {
                cat(file=stderr(), "saveRda...\n")
                rda <- rdaName()
                cat(file=stderr(), "  save to '", rda, "' ...\n", sep="")
-               g@metadata$flags$payload1$pressure <- state$flag
+               g@metadata$flags$payload1$pressure <<- ifelse(g[["navState"]] %in% input$navState, state$flag, 3)
                save(g, file=rda)
                cat(file=stderr(), "  ... done\n", sep="")
   })
@@ -470,7 +470,8 @@ server <- function(input, output) {
         if (!is.null(state$yoSelected)) {
           yo <- g[["yo", state$yoSelected]]
           visible <- yo[["navState"]] %in% input$navState
-          lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3) # FIXME: handle visible
+          lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3)
+          points(yo[["SA"]][visible], yo[["CT"]][visible], pch=20, cex=1.4)
           mtext(paste("line is yo ", state$yoSelected))
         }
         plotExists <<- TRUE
