@@ -7,6 +7,7 @@ library(shiny)
 library(shinythemes)
 library(oce)
 library(oceanglider)
+library(shinycssloaders)
 
 options(oceEOS="gsw")
 
@@ -51,18 +52,18 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                              uiOutput(outputId="deleteYo")),
                 mainPanel(uiOutput(outputId="navState"),
                           uiOutput(outputId="status"),
-                          plotOutput("plot",
-                                     hover="hover1",
-                                     click="click1",
-                                     width="100%",
-                                     height="650px",
-                                     brush=brushOpts(id="brush1", resetOnNew=TRUE))))
+                          withSpinner(plotOutput("plot",
+                                                 hover="hover",
+                                                 click="click",
+                                                 width="100%",
+                                                 height="650px",
+                                                 brush=brushOpts(id="brush", resetOnNew=TRUE)))))
 
 
 server <- function(input, output) {
 
   plotExists <- FALSE
-  state <- reactiveValues(glider="", mission="", rda="", flag=NULL, yoSelected=NULL)
+  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -191,16 +192,16 @@ server <- function(input, output) {
   })
 
   output$status <- renderText({
-    x <- input$hover1$x
-    y <- input$hover1$y
+    x <- input$hover$x
+    y <- input$hover$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "-"
-    distThreshold <- 5
+    distThreshold <- 0.05
     usr <- par("usr")
     if (!is.null(x) && plotExists) {
       ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
       if (input$plotChoice == "pt") {
-        dist <- 100/1.4 * sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
+        dist <- sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
@@ -210,7 +211,7 @@ server <- function(input, output) {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
                        d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure)
       } else if (input$plotChoice == "TS") {
-        dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
+        dist <- sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
@@ -243,18 +244,18 @@ server <- function(input, output) {
   observeEvent(input$deleteYo, {
                cat(file=stderr(), "  DELETE yo=", state$yoSelected, "\n")
                yo <- g[["yoNumber"]]
-               state$flag[yo == state$yoSelected] <<- 3
+               state$flag[yo == state$yoSelected] <- 3
                state$yoSelected <<- NULL
   })
 
-  observeEvent(input$click1, {
-               cat(file=stderr(), "click1\n", sep="")
-               distThreshold <- 5
+  observeEvent(input$click, {
+               cat(file=stderr(), "click\n", sep="")
+               distThreshold <- 0.05
                usr <- par("usr")
-               x <- input$click1$x
-               y <- input$click1$y
+               x <- input$click$x
+               y <- input$click$y
                if (input$plotChoice == "pt") {
-                 dist <- 100/1.4 * sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
+                 dist <- sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
@@ -262,7 +263,7 @@ server <- function(input, output) {
                  state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
                  cat(file=stderr(), res)
                } else if (input$plotChoice == "TS") {
-                 dist <- 100/1.4 * sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
+                 dist <- sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
@@ -272,9 +273,9 @@ server <- function(input, output) {
                }
   })
 
-  ##?? observeEvent(input$hover1, {
-  ##??              x <- input$hover1$x
-  ##??              y <- input$hover1$y
+  ##?? observeEvent(input$hover, {
+  ##??              x <- input$hover$x
+  ##??              y <- input$hover$y
   ##??              cat(file=stderr(), "x=", x, ", y=", y, "\n")
   ##??              if (input$plotChoice == "pt") {
   ##??                i <- which.min(abs(x - t)/3600 + abs(y - p))
@@ -291,14 +292,14 @@ server <- function(input, output) {
   ##??              }
   ##?? })
 
-  observeEvent(input$brush1, {
-               xmin <- input$brush1$xmin
-               xmax <- input$brush1$xmax
-               ymin <- input$brush1$ymin
-               ymax <- input$brush1$ymax
+  observeEvent(input$brush, {
+               xmin <- input$brush$xmin
+               xmax <- input$brush$xmax
+               ymin <- input$brush$ymin
+               ymax <- input$brush$ymax
                bad <- NULL
                if (debug > 0) {
-                 cat(file=stderr(), "brush1\n", sep="")
+                 cat(file=stderr(), "brush\n", sep="")
                  cat(file=stderr(), "  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
                  cat(file=stderr(), "  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
                  cat(file=stderr(), "  count of flag==3: ", sum(state$flag==3), " (before)\n", sep="")
@@ -311,7 +312,7 @@ server <- function(input, output) {
                  p <- g[["pressure"]]
                  bad <- xmin <= tnumeric & tnumeric <= xmax & ymin <= p & p <= ymax
                  bad[is.na(bad)] <- TRUE
-                 state$flag[bad] <<- 3
+                 state$flag[bad] <- 3
                } else if (input$plotChoice == "TS") {
                  cat(file=stderr(), "  TS\n", sep="")
                  SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
@@ -338,7 +339,7 @@ server <- function(input, output) {
                if (length(bad)) {
                  bad <- which(bad)
                  cat(file=stderr(), "  total number of bad points: ", length(bad), "\n", sep="")
-                 state$flag[bad] <<- 3
+                 state$flag[bad] <- 3 # HERE HERE HERE
                  cat(file=stderr(), "  set state ok\n", sep="")
                  nedits <<- nedits + 1
                  edits[[nedits]] <<- bad
@@ -361,7 +362,7 @@ server <- function(input, output) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                } else {
                  g <<- t
-                 state$flag <<- rep(1, length(g[["pressure"]]))
+                 state$flag <- rep(1, length(g[["pressure"]]))
                }
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
@@ -388,7 +389,7 @@ server <- function(input, output) {
                ##> state$Slim <- range(SA, na.rm=TRUE) # FIXME: seems to make infinite loop since reactive
                ##> state$Tlim <- range(CT, na.rm=TRUE)
                ##> state$plim <- range(p, na.rm=TRUE)
-               state$flag <<- g[["pressureFlag"]]
+               state$flag <- g[["pressureFlag"]]
                cat(file=stderr(), ". done\n", sep="")
                state$rda <- filename
   })
@@ -410,11 +411,11 @@ server <- function(input, output) {
     cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
 
-    if (!is.null(g))  {
+    if (!is.null(g) && !is.null(state$flag))  {
       n <- length(g[["pressure"]])
       cat(file=stderr(), "  n=", n, "\n", sep="")
       ## if (is.null(state$flag)) {
-      ##   state$flag <<- rep(1, n)
+      ##   state$flag <- rep(1, n)
       ##   cat(file=stderr(), "  setting flag\n", sep="")
       ## }
       cat(file=stderr(), "  state$flag[1:5]=", paste(state$flag[1:5],collapse=","), "\n", sep="")
