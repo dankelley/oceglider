@@ -33,22 +33,23 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                              strong("1. Select glider & mission"),
                              uiOutput(outputId="glider"),
                              uiOutput(outputId="mission"),
-                             hr(),
-                             tags$b("2a. Read raw data..."),
+                             ##OLD hr(),
                              uiOutput(outputId="read"),
                              uiOutput(outputId="listRda"),
                              uiOutput(outputId="loadRda"),
-                             hr(),
-                             tags$b("3. Save analysis"),
+                             ##OLD hr(),
+                             ##OLD tags$b("3. Save analysis"),
                              uiOutput(outputId="saveRda"),
-                             hr(),
+                             ##OLD hr(),
                              uiOutput(outputId="plotChoice"),
                              uiOutput(outputId="colorBy"),
-                             radioButtons(inputId="flagAction",
-                                          label="Flagged action (broken)",
-                                          choices=c("omit", "highlight"),
-                                          selected=c("omit"),
-                                          inline=TRUE),
+                             ##uiOutput(outputId="flagAction"),
+                             ##OLD if (!is.null(g))
+                             ##OLD radioButtons(inputId="flagAction",
+                             ##OLD              label="Flagged action (broken)",
+                             ##OLD              choices=c("omit", "highlight"),
+                             ##OLD              selected=c("omit"),
+                             ##OLD              inline=TRUE),
                              uiOutput(outputId="deleteYo")),
                 mainPanel(uiOutput(outputId="navState"),
                           uiOutput(outputId="status"),
@@ -99,7 +100,7 @@ server <- function(input, output) {
   }
 
   rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%dT%H:%M:%S"), ".rda", sep=""))
+    tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
   }
 
   dataStatus <- function() {
@@ -123,7 +124,7 @@ server <- function(input, output) {
   })
 
   output$read <- renderUI({
-    actionButton(inputId="readData", label="Read")
+    actionButton(inputId="readData", label="Read original data")
   })
 
   output$listRda <- renderUI({
@@ -136,7 +137,7 @@ server <- function(input, output) {
     if (length(files)) {
       filedates <- gsub("([a-z0-9]*)_([a-z0-9]*)_(.*).rda", "\\3", files)
       cat(file=stderr(), "  filedates='", paste(filedates, collapse="','"), "'\n", sep="")
-      selectInput(inputId="rdaInputFile", label="2b. ... or resume previous analysis", choices=filedates, selected=filedates[1])
+      selectInput(inputId="rdaInputFile", label="...OR resume saved analysis", choices=filedates, selected=filedates[1])
     }
   })
 
@@ -170,14 +171,19 @@ server <- function(input, output) {
                 selected="latitude")
   })
 
+  ##OLD output$flagAction <- renderUI({
+  ##OLD   if (!is.null(g))
+  ##OLD     radioButtons(inputId="flagAction",
+  ##OLD                  label="Flagged action (broken)",
+  ##OLD                  choices=c("omit", "highlight"),
+  ##OLD                  selected=c("omit"),
+  ##OLD                  inline=TRUE)
+  ##OLD  })
+
   output$deleteYo <- renderUI({
     if (!is.null(state$yoSelected)) {
       actionButton(inputId="deleteYo", label=paste("Delete yo #", state$yoSelected, sep=""))
     }
-  })
-
-  output$redraw <- renderUI({
-    actionButton(inputId="resetPlot", h5("Reset plot scales"))
   })
 
   output$navState <- renderUI({
@@ -355,7 +361,7 @@ server <- function(input, output) {
   observeEvent(input$readData, {
                cat(file=stderr(), "readData...\n")
                dir <- dataName()
-               cat(file=stderr(), "  about to read '", dir, "'\n", sep="")
+               cat(file=stderr(), "  about to read '", dir, "' .", sep="")
                t <- try(read.glider.seaexplorer.delayed(dir))
                if (inherits(t, "try-error")) {
                  cat(file=stderr(), " no data FIXME: put up a dialog box\n")
@@ -368,15 +374,43 @@ server <- function(input, output) {
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-               ##> state$Slim <- range(SA, na.rm=TRUE) # FIXME: seems to make infinite loop since reactive
-               ##> state$Tlim <- range(CT, na.rm=TRUE)
-               ##> state$plim <- range(p, na.rm=TRUE)
-               cat(file=stderr(), "   ... done\n", sep="")
+               cat(file=stderr(), ".. done\n", sep="")
   })
 
-  doPlot <- function()
-  {
-    cat(file=stderr(), "doPlot:\n", sep="")
+  observeEvent(input$loadRdaAction, {
+               cat(file=stderr(), "loadRda...\n")
+               filename <- paste(tolower(input$glider), "_", tolower(input$mission),
+                                 "_", input$rdaInputFile, ".rda", sep="")
+               ##cat(file=stderr(), "  input$glider '", input$glider, "' ...\n", sep="")
+               ##cat(file=stderr(), "  input$mission '", input$mission, "' ...\n", sep="")
+               cat(file=stderr(), "  load from '", filename, "' ..", sep="")
+               load(filename)
+               g <<- g
+               SA <<- g[["SA"]]
+               CT <<- g[["CT"]]
+               p <<- g[["pressure"]]
+               t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+               state$flag <- g[["pressureFlag"]]
+               cat(file=stderr(), ". done\n", sep="")
+               state$rda <- filename
+  })
+
+  observeEvent(input$saveRda, {
+               cat(file=stderr(), "saveRda...\n")
+               rda <- rdaName()
+               cat(file=stderr(), "  save to '", rda, "' ...\n", sep="")
+               g@metadata$flags$payload1$pressure <<- ifelse(g[["navState"]] %in% input$navState, state$flag, 3)
+               save(g, file=rda)
+               cat(file=stderr(), "  ... done\n", sep="")
+  })
+
+
+  output$plot <- renderPlot({
+    cat(file=stderr(), "plot:\n", sep="")
+    cat(file=stderr(), "  input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
+    cat(file=stderr(), "  nedits=", nedits, "\n", sep="")
+    cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
+    cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
     if (!is.null(g))  {
       cat(file=stderr(), "  have 'g' so can plot\n", sep="")
       n <- length(g[["pressure"]])
@@ -394,17 +428,17 @@ server <- function(input, output) {
         cat(file=stderr(), "  pt\n")
         t <- g[["time"]]
         p <- g[["pressure"]]
-        if (input$flagAction == "highlight") {
-          cat(file=stderr(), "  highlight\n")
-          oce.plot.ts(t[visible], p[visible], type="p", ylab="Pressure [dbar]", pch=".",
-                      cex=3, col=ifelse(flagged, 1, 2))
-          points(t[visible & flagged], p[visible & flagged], pch=1, cex=1.4)
-        } else if (input$flagAction == "omit") {
+        ##OLD if (input$flagAction == "highlight") {
+        ##OLD   cat(file=stderr(), "  highlight\n")
+        ##OLD   oce.plot.ts(t[visible], p[visible], type="p", ylab="Pressure [dbar]", pch=".",
+        ##OLD               cex=3, col=ifelse(flagged, 1, 2))
+        ##OLD   points(t[visible & flagged], p[visible & flagged], pch=1, cex=1.4)
+        ##OLD } else if (input$flagAction == "omit") {
           cat(file=stderr(), "  omit\n")
           oce.plot.ts(t[!flagged & visible], p[!flagged & visible], type="p", ylab="Pressure [dbar]", pch=".", cex=3)
-        } else {
-          stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-        }
+        ##OLD} else {
+        ##OLD  ##stop("unhandled flagAction='", input$flagAction, "' detected by plot")
+        ##OLD}
         if (!is.null(state$yoSelected)) {
           yo <- g[["yoNumber"]]
           show <- yo == state$yoSelected & visible
@@ -416,25 +450,25 @@ server <- function(input, output) {
         cat(file=stderr(), "  TS\n", sep="")
         visible <- g[["navState"]] %in% input$navState
         gg <- g
-        if (input$flagAction == "omit") {
-          gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
-          if (input$colorBy != "(none)") {
-            cm <- colormap(gg[[input$colorBy]])
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            plotTS(gg, pch=1, cex=0.3, col=cm$zcol, mar=c(3, 3, 2, 5.5))
-          } else {
-            plotTS(gg, pch=1, cex=0.3)
-          }
+        ##OLD if (input$flagAction == "omit") {
+        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
+        if (input$colorBy != "(none)") {
+          cm <- colormap(gg[[input$colorBy]])
+          drawPalette(colormap=cm, zlab=input$colorBy)
+          plotTS(gg, pch=1, cex=0.3, col=cm$zcol, mar=c(3, 3, 2, 5.5))
         } else {
-          gg@data$payload1 <- g@data$payload1[visible,] # FIXME: use subset() instead?
-          if (input$colorBy != "(none)") {
-            cm <- colormap(gg[[input$colorBy]])
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3), col=cm$zcol, mar=c(3, 3, 2, 5.5))
-          } else {
-            plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3))
-          }
+          plotTS(gg, pch=1, cex=0.3)
         }
+        ##OLD } else {
+        ##OLD   gg@data$payload1 <- g@data$payload1[visible,] # FIXME: use subset() instead?
+        ##OLD   if (input$colorBy != "(none)") {
+        ##OLD     cm <- colormap(gg[[input$colorBy]])
+        ##OLD     drawPalette(colormap=cm, zlab=input$colorBy)
+        ##OLD     plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3), col=cm$zcol, mar=c(3, 3, 2, 5.5))
+        ##OLD   } else {
+        ##OLD     plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3))
+        ##OLD   }
+        ##OLD }
         if (!is.null(state$yoSelected)) {
           yo <- g[["yo", state$yoSelected]]
           visible <- yo[["navState"]] %in% input$navState
@@ -446,164 +480,29 @@ server <- function(input, output) {
       } else if (input$plotChoice == "hist(p)") {
         cat(file=stderr(), "  hist(p)\n", sep="")
         p <- g[["pressure"]]
-        if (input$flagAction == "colourize") {
-          hist(p[visible], breaks=100, main="p")
-        } else if (input$flagAction == "omit") {
+        ##OLD if (input$flagAction == "colourize") {
+        ##OLD   hist(p[visible], breaks=100, main="p")
+        ##OLD } else if (input$flagAction == "omit") {
           hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
-        } else {
-          stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-        }
+        ##OLD } else {
+        ##OLD   stop("unhandled flagAction='", input$flagAction, "' detected by plot")
+        ##OLD }
       } else if (input$plotChoice == "hist(S)") {
         cat(file=stderr(), "  hist(S)\n", sep="")
         SA <- g[["SA"]]
-        if (input$flagAction == "colourize") {
-          hist(SA[visible], breaks=100, main="NOTE: colorization not sensible here")
-        } else if (input$flagAction == "omit") {
+        ##OLD if (input$flagAction == "colourize") {
+        ##OLD   hist(SA[visible], breaks=100, main="NOTE: colorization not sensible here")
+        ##OLD } else if (input$flagAction == "omit") {
           hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
-        } else {
-          stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-        }
+        ##OLD } else {
+        ##OLD   stop("unhandled flagAction='", input$flagAction, "' detected by plot")
+        ##OLD }
         cat(file=stderr(), "summary(SA):", summary(SA), "\n")
         cat(file=stderr(), "summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
       }
       plotExists <<- TRUE
     }
-    cat(file=stderr(), " end of doPlot. NOTE: input$plotChoice=", input$plotChoice,
-        ", is.null(g)=", is.null(g), "\n")
-  }
-
-  observeEvent(input$loadRdaAction, {
-               cat(file=stderr(), "loadRda...\n")
-               filename <- paste(tolower(input$glider), "_", tolower(input$mission), "_", input$rdaInputFile, ".rda", sep="")
-               cat(file=stderr(), "  input$glider '", input$glider, "' ...\n", sep="")
-               cat(file=stderr(), "  input$mission '", input$mission, "' ...\n", sep="")
-               cat(file=stderr(), "  load from '", filename, "' ..", sep="")
-               load(filename)
-               g <<- g
-               SA <<- g[["SA"]]
-               CT <<- g[["CT"]]
-               p <<- g[["pressure"]]
-               t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-               ##> state$Slim <- range(SA, na.rm=TRUE) # FIXME: seems to make infinite loop since reactive
-               ##> state$Tlim <- range(CT, na.rm=TRUE)
-               ##> state$plim <- range(p, na.rm=TRUE)
-               state$flag <- g[["pressureFlag"]]
-               cat(file=stderr(), ". done\n", sep="")
-               state$rda <- filename
-               doPlot()
-  })
-
-  observeEvent(input$saveRda, {
-               cat(file=stderr(), "saveRda...\n")
-               rda <- rdaName()
-               cat(file=stderr(), "  save to '", rda, "' ...\n", sep="")
-               g@metadata$flags$payload1$pressure <<- ifelse(g[["navState"]] %in% input$navState, state$flag, 3)
-               save(g, file=rda)
-               cat(file=stderr(), "  ... done\n", sep="")
-  })
-
-
-  output$plot <- renderPlot({
-    cat(file=stderr(), "plot:\n", sep="")
-    cat(file=stderr(), "  input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
-    cat(file=stderr(), "  nedits=", nedits, "\n", sep="")
-    cat(file=stderr(), "  is.null(g)=", is.null(g), "\n", sep="")
-    cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
-    cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
-    doPlot()
-
-#####     if (!is.null(g))  {
-#####       dan()
-#####       n <- length(g[["pressure"]])
-#####       cat(file=stderr(), "  n=", n, "\n", sep="")
-#####       ## if (is.null(state$flag)) {
-#####       ##   state$flag <- rep(1, n)
-#####       ##   cat(file=stderr(), "  setting flag\n", sep="")
-#####       ## }
-#####       cat(file=stderr(), "  state$flag[1:5]=", paste(state$flag[1:5],collapse=","), "\n", sep="")
-#####       visible <- g[["navState"]] %in% input$navState
-#####       flagged <- state$flag == 3
-#####       cat(file=stderr(), "  flagged[1:5]: ", paste(flagged[1:5],collapse=","), "\n", sep="")
-#####       cat(file=stderr(), "  colorBy: \"", input$colorBy, "\"\n", sep="")
-#####       if (input$plotChoice == "pt") {
-#####         cat(file=stderr(), "  pt\n")
-#####         t <- g[["time"]]
-#####         p <- g[["pressure"]]
-#####         if (input$flagAction == "highlight") {
-#####           cat(file=stderr(), "  highlight\n")
-#####           oce.plot.ts(t[visible], p[visible], type="p", ylab="Pressure [dbar]", pch=".",
-#####                       cex=3, col=ifelse(flagged, 1, 2))
-#####           points(t[visible & flagged], p[visible & flagged], pch=1, cex=1.4)
-#####         } else if (input$flagAction == "omit") {
-#####           cat(file=stderr(), "  omit\n")
-#####           oce.plot.ts(t[!flagged & visible], p[!flagged & visible], type="p", ylab="Pressure [dbar]", pch=".", cex=3)
-#####         } else {
-#####           stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-#####         }
-#####         if (!is.null(state$yoSelected)) {
-#####           yo <- g[["yoNumber"]]
-#####           show <- yo == state$yoSelected & visible
-#####           lines(t[show], p[show], lwd=2, type="o")
-#####           mtext(paste("line is yo", state$yoSelected), adj=1)
-#####         }
-#####         plotExists <<- TRUE
-#####       } else if (input$plotChoice == "TS") {
-#####         cat(file=stderr(), "  TS\n", sep="")
-#####         visible <- g[["navState"]] %in% input$navState
-#####         gg <- g
-#####         if (input$flagAction == "omit") {
-#####           gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
-#####           if (input$colorBy != "(none)") {
-#####             cm <- colormap(gg[[input$colorBy]])
-#####             drawPalette(colormap=cm, zlab=input$colorBy)
-#####             plotTS(gg, pch=1, cex=0.3, col=cm$zcol, mar=c(3, 3, 2, 5.5))
-#####           } else {
-#####             plotTS(gg, pch=1, cex=0.3)
-#####           }
-#####         } else {
-#####           gg@data$payload1 <- g@data$payload1[visible,] # FIXME: use subset() instead?
-#####           if (input$colorBy != "(none)") {
-#####             cm <- colormap(gg[[input$colorBy]])
-#####             drawPalette(colormap=cm, zlab=input$colorBy)
-#####             plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3), col=cm$zcol, mar=c(3, 3, 2, 5.5))
-#####           } else {
-#####             plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3))
-#####           }
-#####         }
-#####         if (!is.null(state$yoSelected)) {
-#####           yo <- g[["yo", state$yoSelected]]
-#####           visible <- yo[["navState"]] %in% input$navState
-#####           lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3)
-#####           points(yo[["SA"]][visible], yo[["CT"]][visible], pch=20, cex=1.4)
-#####           mtext(paste("line is yo ", state$yoSelected))
-#####         }
-#####         plotExists <<- TRUE
-#####       } else if (input$plotChoice == "hist(p)") {
-#####         cat(file=stderr(), "  hist(p)\n", sep="")
-#####         p <- g[["pressure"]]
-#####         if (input$flagAction == "colourize") {
-#####           hist(p[visible], breaks=100, main="p")
-#####         } else if (input$flagAction == "omit") {
-#####           hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
-#####         } else {
-#####           stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-#####         }
-#####       } else if (input$plotChoice == "hist(S)") {
-#####         cat(file=stderr(), "  hist(S)\n", sep="")
-#####         SA <- g[["SA"]]
-#####         if (input$flagAction == "colourize") {
-#####           hist(SA[visible], breaks=100, main="NOTE: colorization not sensible here")
-#####         } else if (input$flagAction == "omit") {
-#####           hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
-#####         } else {
-#####           stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-#####         }
-#####         cat(file=stderr(), "summary(SA):", summary(SA), "\n")
-#####         cat(file=stderr(), "summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
-#####       }
-#####       plotExists <<- TRUE
-#####     }
-  }) # output$plot
+  }) # renderPlot
 
 } # server
 
