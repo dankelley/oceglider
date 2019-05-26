@@ -39,10 +39,13 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                              uiOutput(outputId="loadRda"),
                              ##OLD hr(),
                              ##OLD tags$b("3. Save analysis"),
-                             uiOutput(outputId="saveRda"),
+                             conditionalPanel(condition="output.gliderExists",
+                                              uiOutput(outputId="saveRda")),
                              ##OLD hr(),
-                             uiOutput(outputId="plotChoice"),
-                             uiOutput(outputId="colorBy"),
+                             conditionalPanel(condition="output.gliderExists",
+                                              uiOutput(outputId="plotChoice")),
+                             conditionalPanel(condition="output.gliderExists",
+                                              uiOutput(outputId="colorBy")),
                              ##uiOutput(outputId="flagAction"),
                              ##OLD if (!is.null(g))
                              ##OLD radioButtons(inputId="flagAction",
@@ -58,13 +61,13 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                                                  click="click",
                                                  width="100%",
                                                  height="650px",
-                                                 brush=brushOpts(id="brush", resetOnNew=TRUE)))))
+                                                 brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
 
 
 server <- function(input, output) {
 
   plotExists <- FALSE
-  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL)
+  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL, gliderExists=FALSE)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -103,13 +106,19 @@ server <- function(input, output) {
     tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
   }
 
-  dataStatus <- function() {
-    cat(file=stderr(), "dataStatus...\n")
-    cat(file=stderr(), "  names(var): ", paste(names(var), collapse=","), "\n")
-    "read" # "read" "load" ""
-  }
+  ##UNUSED dataStatus <- function() {
+  ##UNUSED   cat(file=stderr(), "dataStatus...\n")
+  ##UNUSED   cat(file=stderr(), "  names(var): ", paste(names(var), collapse=","), "\n")
+  ##UNUSED   "read" # "read" "load" ""
+  ##UNUSED }
+
+  output$gliderExists <- reactive({
+    cat(file=stderr(), "***gliderExists... (will return ", state$gliderExists, ")***\n")
+    state$gliderExists
+  })
 
   output$glider <- renderUI({
+    state$gliderExists <- FALSE
     selectInput(inputId="glider",
                 label="",
                 choices=gliders,
@@ -117,6 +126,7 @@ server <- function(input, output) {
   })
 
   output$mission <- renderUI({
+    state$gliderExists <- FALSE
     selectInput(inputId="mission",
                 label="",
                 choices=missions[input$glider],
@@ -130,21 +140,21 @@ server <- function(input, output) {
   output$listRda <- renderUI({
     cat(file=stderr(), "output$listRda\n", sep="")
     ## files <- Sys.glob(paste0(varName(), "*.rda"))
-    cat(file=stderr(), "  input$glider='", input$glider, "'\n", sep="")
-    cat(file=stderr(), "  input$mission='", input$mission, "'\n", sep="")
+    ## cat(file=stderr(), "  input$glider='", input$glider, "'\n", sep="")
+    ## cat(file=stderr(), "  input$mission='", input$mission, "'\n", sep="")
     files <- relevantRdaFiles(input$glider, input$mission)
-    cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
+    ## cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
     if (length(files)) {
       filedates <- gsub("([a-z0-9]*)_([a-z0-9]*)_(.*).rda", "\\3", files)
-      cat(file=stderr(), "  filedates='", paste(filedates, collapse="','"), "'\n", sep="")
+      ##cat(file=stderr(), "  filedates='", paste(filedates, collapse="','"), "'\n", sep="")
       selectInput(inputId="rdaInputFile", label="...OR resume saved analysis", choices=filedates, selected=filedates[1])
     }
   })
 
   output$loadRda <- renderUI({
-    cat(file=stderr(), "output$listRda\n", sep="")
+    cat(file=stderr(), "output$loadRda\n", sep="")
     files <- relevantRdaFiles(input$glider, input$mission)
-    cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
+    ## cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
     if (length(files)) {
       actionButton(inputId="loadRdaAction", label="Load .rda")#h5(paste0("Load ", rda)))
     }
@@ -157,11 +167,12 @@ server <- function(input, output) {
 
   output$plotChoice <- renderUI({
     cat(file=stderr(), "output$plotChoice\n", sep="")
-    cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
+    ##cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     selectInput(inputId="plotChoice",
                 label="Plot type",
-                choices=c("pt", "TS", "hist(S)", "hist(p)"),
-                selected=c("pt"))
+                ## FIXME: add yoNumber, time, badness
+                choices=c("none", "pt", "TS", "hist(S)", "hist(p)"),
+                selected=c("none"))
   })
 
   output$colorBy <- renderUI({
@@ -192,10 +203,10 @@ server <- function(input, output) {
                        choices=ns, selected=ns, inline=TRUE)
   })
 
-  observeEvent(input$navState, {
-               cat(file=stderr(), "input$navState observed...\n")
-               cat(file=stderr(), "  navState=c(", paste(input$navState, collapse=","), ")\n", sep="")
-  })
+  ##UNUSED observeEvent(input$navState, {
+  ##UNUSED              cat(file=stderr(), "input$navState observed...\n")
+  ##UNUSED              cat(file=stderr(), "  navState=c(", paste(input$navState, collapse=","), ")\n", sep="")
+  ##UNUSED })
 
   output$status <- renderText({
     x <- input$hover$x
@@ -374,6 +385,7 @@ server <- function(input, output) {
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+               state$gliderExists <- TRUE
                cat(file=stderr(), ".. done\n", sep="")
   })
 
@@ -393,6 +405,7 @@ server <- function(input, output) {
                state$flag <- g[["pressureFlag"]]
                cat(file=stderr(), ". done\n", sep="")
                state$rda <- filename
+               state$gliderExists <- TRUE
   })
 
   observeEvent(input$saveRda, {
@@ -410,20 +423,20 @@ server <- function(input, output) {
     cat(file=stderr(), "  input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
     cat(file=stderr(), "  nedits=", nedits, "\n", sep="")
     cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
-    cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
+    ##cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
     if (!is.null(g))  {
-      cat(file=stderr(), "  have 'g' so can plot\n", sep="")
+      ##cat(file=stderr(), "  have 'g' so can plot\n", sep="")
       n <- length(g[["pressure"]])
-      cat(file=stderr(), "  n=", n, "\n", sep="")
+      ##cat(file=stderr(), "  n=", n, "\n", sep="")
       ## if (is.null(state$flag)) {
       ##   state$flag <- rep(1, n)
       ##   cat(file=stderr(), "  setting flag\n", sep="")
       ## }
-      cat(file=stderr(), "  state$flag[1:5]=", paste(state$flag[1:5],collapse=","), "\n", sep="")
+      ##cat(file=stderr(), "  state$flag[1:5]=", paste(state$flag[1:5],collapse=","), "\n", sep="")
       visible <- g[["navState"]] %in% input$navState
       flagged <- state$flag == 3
-      cat(file=stderr(), "  flagged[1:5]: ", paste(flagged[1:5],collapse=","), "\n", sep="")
-      cat(file=stderr(), "  colorBy: \"", input$colorBy, "\"\n", sep="")
+      ##cat(file=stderr(), "  flagged[1:5]: ", paste(flagged[1:5],collapse=","), "\n", sep="")
+      ##cat(file=stderr(), "  colorBy: \"", input$colorBy, "\"\n", sep="")
       if (input$plotChoice == "pt") {
         cat(file=stderr(), "  pt\n")
         t <- g[["time"]]
@@ -503,7 +516,7 @@ server <- function(input, output) {
       plotExists <<- TRUE
     }
   }) # renderPlot
-
+  outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
 } # server
 
 shinyApp(ui=ui, server=server)

@@ -4,12 +4,13 @@ early stage of development, with more finalized features expected by autumn of
 
 **TO DO**
 
-* [ ] document
-* [ ] GUI type progress bar on reading
-* [ ] hide 'save' button if data not yet loaded
-* [x] upon saving, restrict to navState as presently highlighted
-* [ ] use second in rda name (ugly in menu -- make the 't' be 'T')
-* [ ] complete the undo scheme
+* [ ] document, perhaps by an instruction panel
+* [ ] make it plot when data read in
+* [ ] colour by inversion (special case: note in data)
+* [ ] colour by yoNumber
+* [ ] colour by time
+* [ ] hide 'save' button if data not yet loaded. (if fails; try conditionalPanel.
+* [ ] implement an undo scheme
 * [ ] consider whether to add plot zooming. Surprisingly, I'm finding that I
    don't feel any need for this, in my tests to date. I am presently using
 brushing to flag data, but I could add a two-value button to toggle the action
