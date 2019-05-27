@@ -226,24 +226,22 @@ server <- function(input, output) {
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f [usr: %.0f %.0f %.0f %.0f]\n",
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f\n",
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure,
-                       state$usr[1], state$usr[2], state$usr[3], state$usr[4])
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure)
       } else if (input$plotChoice == "TS") {
         dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
         dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f [usr: %.0f %.0f %.0f %.0f]\n",
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f\n",
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature,
-                       state$usr[1], state$usr[2], state$usr[3], state$usr[4])
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature)
       }
     }
     res
@@ -269,8 +267,15 @@ server <- function(input, output) {
                cat(file=stderr(), "  DELETE yo=", state$yoSelected, "\n")
                yo <- g[["yoNumber"]]
                bad <- yo == state$yoSelected
+               oldFlag <- state$flag
                state$flag[bad] <- 3
-               edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected), time=presentTime(), bad=bad)
+               newFlag <- state$flag
+               index <- which(newFlag != oldFlag)
+               old <- oldFlag[index]
+               new <- newFlag[index]
+               edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected),
+                                                 time=presentTime(),
+                                                 index=index, oldFlag=old, newFlag=new)
                cat(file=stderr(), "  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                state$yoSelected <<- NULL
   })
