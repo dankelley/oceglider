@@ -67,7 +67,7 @@ ui <- fluidPage(theme=shinytheme("simplex"),
 server <- function(input, output) {
 
   plotExists <- FALSE
-  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL, gliderExists=FALSE)
+  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL, gliderExists=FALSE, usr=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -77,7 +77,6 @@ server <- function(input, output) {
   # flag=1 if ok; =3 if bad
 
   edits <- list()
-  nedits <- length(edits)
 
   dataName <- function(basedir="/data/glider/delayedData") {
     if (nchar(input$glider) && nchar(input$mission)) {
@@ -214,29 +213,33 @@ server <- function(input, output) {
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "-"
     distThreshold <- 0.05
-    usr <- par("usr")
+    flagged <- state$flag == 3
     if (!is.null(x) && plotExists) {
       ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
       if (input$plotChoice == "pt") {
-        dist <- sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
+        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f\n",
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f [usr: %.0f %.0f %.0f %.0f]\n",
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure)
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure,
+                       state$usr[1], state$usr[2], state$usr[3], state$usr[4])
       } else if (input$plotChoice == "TS") {
-        dist <- sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
+        dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE)
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
-        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f\n",
+        res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f [usr: %.0f %.0f %.0f %.0f]\n",
                        dist[disti],
                        if (dist[disti] < distThreshold) " (click to select) " else {
                          if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature)
+                       d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature,
+                       state$usr[1], state$usr[2], state$usr[3], state$usr[4])
       }
     }
     res
@@ -358,14 +361,12 @@ server <- function(input, output) {
                  cat(file=stderr(), "  total number of bad points: ", length(bad), "\n", sep="")
                  state$flag[bad] <- 3 # HERE HERE HERE
                  cat(file=stderr(), "  set state ok\n", sep="")
-                 nedits <<- nedits + 1
-                 edits[[nedits]] <<- bad
-                 cat(file=stderr(), "  set edits ok\n", sep="")
-                 cat(file=stderr(), "  set nedits ok\n", sep="")
+                 edits <<- c(edits, bad)
+                 cat(file=stderr(), "  updated edits; new length is ", length(edits), "\n", sep="")
                }
                if (debug > 0) {
                  cat(file=stderr(), "  count of flag==3: ", sum(state$flag==3), " (after)\n", sep="")
-                 cat(file=stderr(), "  nedits=", nedits, "\n", sep="")
+                 cat(file=stderr(), "  length(edits)=", length(edits), "\n", sep="")
                }
   })
 
@@ -421,7 +422,7 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     cat(file=stderr(), "plot:\n", sep="")
     cat(file=stderr(), "  input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
-    cat(file=stderr(), "  nedits=", nedits, "\n", sep="")
+    cat(file=stderr(), "  length(edits)=", length(edits), "\n", sep="")
     cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     ##cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
     if (!is.null(g))  {
@@ -514,6 +515,9 @@ server <- function(input, output) {
         cat(file=stderr(), "summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
       }
       plotExists <<- TRUE
+      state$usr <<- par("usr")
+    } else {
+      state$usr <<- NULL
     }
   }) # renderPlot
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
