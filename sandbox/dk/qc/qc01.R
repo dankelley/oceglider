@@ -137,7 +137,8 @@ server <- function(input, output) {
   })
 
   output$listRda <- renderUI({
-    cat(file=stderr(), "output$listRda\n", sep="")
+    if (debug > 1)
+      cat(file=stderr(), "output$listRda\n", sep="")
     ## files <- Sys.glob(paste0(varName(), "*.rda"))
     ## cat(file=stderr(), "  input$glider='", input$glider, "'\n", sep="")
     ## cat(file=stderr(), "  input$mission='", input$mission, "'\n", sep="")
@@ -151,7 +152,8 @@ server <- function(input, output) {
   })
 
   output$loadRda <- renderUI({
-    cat(file=stderr(), "output$loadRda\n", sep="")
+    if (debug > 1)
+      cat(file=stderr(), "output$loadRda\n", sep="")
     files <- relevantRdaFiles(input$glider, input$mission)
     ## cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
     if (length(files)) {
@@ -160,12 +162,14 @@ server <- function(input, output) {
   })
 
   output$saveRda <- renderUI({
-    cat(file=stderr(), "output$saveRda\n", sep="")
+    if (debug > 1)
+      cat(file=stderr(), "output$saveRda\n", sep="")
     actionButton(inputId="saveRda", label="Save")
   })
 
   output$plotChoice <- renderUI({
-    cat(file=stderr(), "output$plotChoice\n", sep="")
+    if (debug > 1)
+      cat(file=stderr(), "output$plotChoice\n", sep="")
     ##cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     selectInput(inputId="plotChoice",
                 label="Plot type",
@@ -218,7 +222,7 @@ server <- function(input, output) {
       ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
       if (input$plotChoice == "pt") {
         dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
@@ -230,7 +234,7 @@ server <- function(input, output) {
                        state$usr[1], state$usr[2], state$usr[3], state$usr[4])
       } else if (input$plotChoice == "TS") {
         dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
         ## FIXME: maybe hide if dist[disti] exceeds some number
@@ -264,18 +268,22 @@ server <- function(input, output) {
   observeEvent(input$deleteYo, {
                cat(file=stderr(), "  DELETE yo=", state$yoSelected, "\n")
                yo <- g[["yoNumber"]]
-               state$flag[yo == state$yoSelected] <- 3
+               bad <- yo == state$yoSelected
+               state$flag[bad] <- 3
+               edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected), time=presentTime(), bad=bad)
+               cat(file=stderr(), "  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                state$yoSelected <<- NULL
   })
 
   observeEvent(input$click, {
                cat(file=stderr(), "click\n", sep="")
                distThreshold <- 0.05
-               usr <- par("usr")
                x <- input$click$x
                y <- input$click$y
+               flagged <- state$flag == 3
                if (input$plotChoice == "pt") {
-                 dist <- sqrt(((x-t)/(usr[2]-usr[1]))^2 + ((y-p)/(usr[4]-usr[3]))^2)
+                 dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
+                 dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
@@ -283,7 +291,8 @@ server <- function(input, output) {
                  state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
                  cat(file=stderr(), res)
                } else if (input$plotChoice == "TS") {
-                 dist <- sqrt(((x-SA)/(usr[2]-usr[1]))^2 + ((y-CT)/(usr[4]-usr[3]))^2)
+                 dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+                 dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
                  disti <- which.min(dist)
                  d <- g[["payload1"]][disti,]
                  res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
@@ -292,25 +301,6 @@ server <- function(input, output) {
                  cat(file=stderr(), res)
                }
   })
-
-  ##?? observeEvent(input$hover, {
-  ##??              x <- input$hover$x
-  ##??              y <- input$hover$y
-  ##??              cat(file=stderr(), "x=", x, ", y=", y, "\n")
-  ##??              if (input$plotChoice == "pt") {
-  ##??                i <- which.min(abs(x - t)/3600 + abs(y - p))
-  ##??                d <- g[["payload1"]][i,]
-  ##??                ##print(d, file=stderr())
-  ##??                cat(file=stderr(), "i=", i, ", yo=", d$yo, " (pt)\n")
-  ##??              } else if (input$plotChoice == "TS") {
-  ##??                i <- which.min(abs(x - SA)/30 + abs(y - CT) / 10)
-  ##??                d <- g[["payload1"]][i,]
-  ##??                ## print(d, file=stderr())
-  ##??                cat(file=stderr(), "i=", i, ", yo=", d$yo, " (TS)\n")
-  ##??              } else if (input$plotChoice == "hist(S)") {
-  ##??              } else {
-  ##??              }
-  ##?? })
 
   observeEvent(input$brush, {
                xmin <- input$brush$xmin
@@ -333,6 +323,8 @@ server <- function(input, output) {
                  bad <- xmin <= tnumeric & tnumeric <= xmax & ymin <= p & p <= ymax
                  bad[is.na(bad)] <- TRUE
                  state$flag[bad] <- 3
+                 edits[[1+length(edits)]] <<- list(category="brush pt", time=presentTime(), bad=bad)
+                 cat(file=stderr(), "  updated edits for brushed pt; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "TS") {
                  cat(file=stderr(), "  TS\n", sep="")
                  SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
@@ -341,6 +333,8 @@ server <- function(input, output) {
                  bad[is.na(bad)] <- TRUE
                  cat(file=stderr(), " sum(bad)=", sum(bad), "\n")
                  ## bad[is.na(bad)] <- TRUE
+                 edits[[1+length(edits)]] <<- list(category="brush TS", time=presentTime(), bad=bad)
+                 cat(file=stderr(), "  updated edits for brushed TS; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "hist(p)") {
                  cat(file=stderr(), "  hist(p)\n", sep="")
                  p <- g[["pressure"]]
@@ -348,6 +342,8 @@ server <- function(input, output) {
                  bad[is.na(bad)] <- TRUE
                  cat(file=stderr(), " sum(bad)=", sum(bad), "\n")
                  #if (any(is.na(bad))) browser()
+                 edits[[1+length(edits)]] <<- list(category="brush hist(p)", time=presentTime(), bad=bad)
+                 cat(file=stderr(), "  updated edits for brushed hist(p); new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "hist(S)") {
                  cat(file=stderr(), "  hist(S)\n", sep="")
                  SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
@@ -355,18 +351,13 @@ server <- function(input, output) {
                  bad[is.na(bad)] <- TRUE
                  cat(file=stderr(), " sum(bad)=", sum(bad), "\n")
                  ## bad[is.na(bad)] <- TRUE
+                 edits[[1+length(edits)]] <<- list(category="brush hist(S)", time=presentTime(), bad=bad)
+                 cat(file=stderr(), "  updated edits for brushed hist(S; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                }
-               if (length(bad)) {
+               if (sum(bad)) {
                  bad <- which(bad)
                  cat(file=stderr(), "  total number of bad points: ", length(bad), "\n", sep="")
                  state$flag[bad] <- 3 # HERE HERE HERE
-                 cat(file=stderr(), "  set state ok\n", sep="")
-                 edits <<- c(edits, bad)
-                 cat(file=stderr(), "  updated edits; new length is ", length(edits), "\n", sep="")
-               }
-               if (debug > 0) {
-                 cat(file=stderr(), "  count of flag==3: ", sum(state$flag==3), " (after)\n", sep="")
-                 cat(file=stderr(), "  length(edits)=", length(edits), "\n", sep="")
                }
   })
 
@@ -412,9 +403,12 @@ server <- function(input, output) {
   observeEvent(input$saveRda, {
                cat(file=stderr(), "saveRda...\n")
                rda <- rdaName()
-               cat(file=stderr(), "  save to '", rda, "' ...\n", sep="")
-               g@metadata$flags$payload1$pressure <<- ifelse(g[["navState"]] %in% input$navState, state$flag, 3)
-               save(g, file=rda)
+               cat(file=stderr(), "  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
+               visible <- g[["navState"]] %in% input$navState
+               g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
+               edits[[1+length(edits)]] <<- list(category="navState", time=presentTime(), bad=!visible)
+               cat(file=stderr(), "  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
+               save(edits, g, file=rda)
                cat(file=stderr(), "  ... done\n", sep="")
   })
 
