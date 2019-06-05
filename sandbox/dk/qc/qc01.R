@@ -7,7 +7,7 @@ library(shiny)
 library(shinythemes)
 library(oce)
 library(oceanglider)
-library(shinycssloaders)
+##library(shinycssloaders)
 
 options(oceEOS="gsw")
 
@@ -30,7 +30,7 @@ t <- NULL
 ui <- fluidPage(theme=shinytheme("simplex"),
                 sidebarPanel(width=3,
                              h5(paste0("gliderQC", "_", version)),
-                             strong("1. Select glider & mission"),
+                             ##strong("1. Select glider & mission"),
                              uiOutput(outputId="glider"),
                              uiOutput(outputId="mission"),
                              ##OLD hr(),
@@ -39,9 +39,10 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                              uiOutput(outputId="loadRda"),
                              ##OLD hr(),
                              ##OLD tags$b("3. Save analysis"),
+                             hr(),
                              conditionalPanel(condition="output.gliderExists",
                                               uiOutput(outputId="saveRda")),
-                             ##OLD hr(),
+                             hr(),
                              conditionalPanel(condition="output.gliderExists",
                                               uiOutput(outputId="plotChoice")),
                              conditionalPanel(condition="output.gliderExists",
@@ -140,7 +141,7 @@ server <- function(input, output) {
   })
 
   output$read <- renderUI({
-    actionButton(inputId="readData", label="Read original data")
+    actionButton(inputId="readData", label="Read original pld1 data")
   })
 
   output$listRda <- renderUI({
@@ -164,13 +165,14 @@ server <- function(input, output) {
     files <- relevantRdaFiles(input$glider, input$mission)
     ## cat(file=stderr(), "  files=", paste(files, collapse=","), "\n")
     if (length(files)) {
-      actionButton(inputId="loadRdaAction", label="Load .rda")#h5(paste0("Load ", rda)))
+      actionButton(inputId="loadRdaAction", label="Load previous analysis")#h5(paste0("Load ", rda)))
     }
   })
 
   output$saveRda <- renderUI({
     if (debug > 1)
       cat(file=stderr(), "output$saveRda\n", sep="")
+    hr()
     actionButton(inputId="saveRda", label="Save")
   })
 
@@ -384,7 +386,7 @@ server <- function(input, output) {
                } else {
                  g <<- t
                  state$flag <- rep(1, length(g[["pressure"]]))
-                 showModal(modalDialog("", "Reading complete. Next, select a plot type", easyClose=TRUE))
+                 showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
                }
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
@@ -411,6 +413,8 @@ server <- function(input, output) {
                cat(file=stderr(), ". done\n", sep="")
                state$rda <- filename
                state$gliderExists <- TRUE
+               showModal(modalDialog("", "Loading of previous analysis is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
+
   })
 
   observeEvent(input$saveRda, {
