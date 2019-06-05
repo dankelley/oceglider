@@ -56,12 +56,19 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                              uiOutput(outputId="deleteYo")),
                 mainPanel(uiOutput(outputId="navState"),
                           uiOutput(outputId="status"),
-                          withSpinner(plotOutput("plot",
-                                                 hover="hover",
-                                                 click="click",
-                                                 width="100%",
-                                                 height="650px",
-                                                 brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
+                          plotOutput("plot",
+                                     hover="hover",
+                                     click="click",
+                                     width="100%",
+                                     height="650px",
+                                     brush=brushOpts(id="brush", resetOnNew=!TRUE))))
+
+                          ##withSpinner(plotOutput("plot",
+                          ##                       hover="hover",
+                          ##                       click="click",
+                          ##                       width="100%",
+                          ##                       height="650px",
+                          ##                       brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
 
 
 server <- function(input, output) {
@@ -377,6 +384,7 @@ server <- function(input, output) {
                } else {
                  g <<- t
                  state$flag <- rep(1, length(g[["pressure"]]))
+                 showModal(modalDialog("", "Reading complete. Next, select a plot type", easyClose=TRUE))
                }
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
