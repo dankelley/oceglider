@@ -88,7 +88,7 @@ server <- function(input, output) {
       if (tolower(glider) == "sea019") {
         if (tolower(mission) == "m28")
           return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/")) # no .pld1. files
-        if (tolower(mission) == "m29" | towlower(mission) == "m30")
+        if (tolower(mission) == "m29" | tolower(mission) == "m30")
           return(paste(basedir, glider, "Data", mission, "Payload/logs/logs", sep="/"))
         if (tolower(mission) == "m31" | tolower(mission) == "m43")
           return(paste(basedir, glider, "Data", mission, mission, "Payload/logs", sep="/"))
@@ -100,7 +100,9 @@ server <- function(input, output) {
           return(paste(basedir, glider, "Data", mission, mission, "PLD/logs", sep="/"))
         if (tolower(mission) == "m36")
           return(paste(basedir, glider, "Data", mission, mission, "Payload/logs/logs", sep="/"))
-        if (tolower(mission) == "m49" | tolower(mission) == "m54")
+        if (tolower(mission) == "m49")
+          return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
+        if (tolower(mission) == "m54")
           return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
       }
       if (tolower(glider) == "sea021") {
