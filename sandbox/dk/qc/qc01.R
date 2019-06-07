@@ -58,18 +58,11 @@ ui <- fluidPage(theme=shinytheme("simplex"),
                 mainPanel(uiOutput(outputId="navState"),
                           uiOutput(outputId="status"),
                           plotOutput("plot",
-                                     hover="hover",
-                                     click="click",
-                                     width="100%",
-                                     height="650px",
-                                     brush=brushOpts(id="brush", resetOnNew=!TRUE))))
-
-                          ##withSpinner(plotOutput("plot",
-                          ##                       hover="hover",
-                          ##                       click="click",
-                          ##                       width="100%",
-                          ##                       height="650px",
-                          ##                       brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
+                                                 hover="hover",
+                                                 click="click",
+                                                 width="100%",
+                                                 height="650px",
+                                                 brush=brushOpts(id="brush", resetOnNew=!TRUE))))
 
 
 server <- function(input, output) {
@@ -95,10 +88,75 @@ server <- function(input, output) {
       if (tolower(glider) == "sea019") {
         if (tolower(mission) == "m28")
           return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/")) # no .pld1. files
-        if (tolower(mission) == "m30")
+        if (tolower(mission) == "m29" | towlower(mission) == "m30")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs/logs", sep="/"))
+        if (tolower(mission) == "m31" | tolower(mission) == "m43")
+          return(paste(basedir, glider, "Data", mission, mission, "Payload/logs", sep="/"))
+        if (tolower(mission) == "m32")
+          return(paste(basedir, glider, "Data", mission, mission, "Pld/logs", sep="/"))
+        if (tolower(mission) == "m33")
+          return(paste(basedir, glider, "Data", mission, mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m34" | tolower(mission) == "m35")
+          return(paste(basedir, glider, "Data", mission, mission, "PLD/logs", sep="/"))
+        if (tolower(mission) == "m36")
           return(paste(basedir, glider, "Data", mission, mission, "Payload/logs/logs", sep="/"))
-        if (tolower(mission) == "m49")
+        if (tolower(mission) == "m49" | tolower(mission) == "m54")
           return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
+      }
+      if (tolower(glider) == "sea021") {
+        if (tolower(mission) == "m13")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/"))
+        if (tolower(mission) == "m14")
+          return(paste(basedir, glider, "Data", mission, "Pld/logs", sep="/"))
+        if (tolower(mission) == "m15")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m16")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m30")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m31")
+          return(paste(basedir, glider, "Data", mission, "PLD/logs", sep="/"))
+        if (tolower(mission) == "m33")
+          return(paste(basedir, glider, "Data", mission, "pld/logs/logs", sep="/"))
+        if (tolower(mission) == "m30")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+      }
+      if (tolower(glider) == "sea022") {
+        if (tolower(mission) == "m12")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/"))
+        if (tolower(mission) == "m13")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/"))
+        if (tolower(mission) == "m14")
+          return(paste(basedir, glider, "Data", mission, "Pld/logs", sep="/"))
+        if (tolower(mission) == "m15")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m16")
+          return(paste(basedir, glider, "Data", mission, "Pld/logs", sep="/"))
+        if (tolower(mission) == "m17")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m18")
+          return(paste(basedir, glider, "Data", mission, "PLD/logs", sep="/"))
+        if (tolower(mission) == "m19")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m32")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+      }
+      if (tolower(glider) == "sea024") {
+        if (tolower(mission) == "m11" | tolower(mission) == "m12" | tolower(mission) == "m13" |
+            tolower(mission) == "m15" | tolower(mission) == "m16" | tolower(mission) == "m17")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs", sep="/"))
+        if (tolower(mission) == "m14")
+          return(paste(basedir, glider, "Data", mission, "payload/logs", sep="/"))
+        if (tolower(mission) == "m18")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "M2017001")
+          return(paste(basedir, glider, "Data", mission, "Payload/logs/logs", sep="/"))
+      }
+      if (tolower(glider) == "sea032") {
+        if (tolower(mission) == "m22" | tolower(mission) == "m23")
+          return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
+        if (tolower(mission) == "m26" | tolower(mission) == "m30")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
       }
       return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
     }
@@ -548,4 +606,3 @@ server <- function(input, output) {
 } # server
 
 shinyApp(ui=ui, server=server)
-
