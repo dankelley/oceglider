@@ -637,6 +637,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         d <- utils::read.delim(files[i], sep=';', stringsAsFactors=FALSE, row.names=NULL)
         d$yoNumber <- rep(yo[i], dim(d)[1])
         ## Rename items in payload1 data.
+        gliderDebug(debug > 3, 'i=',i,' (position 1) \n')
         if ("NAV_RESOURCE" %in% names(d)) {
             names(d) <- gsub("NAV_RESOURCE", "navState", names(d))
             res@metadata$dataNamesOriginal$payload1$navState <- "NAV_RESOURCE"
@@ -655,6 +656,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
             d$latitude <- degreeMinute(d$latitude)
             res@metadata$dataNamesOriginal$payload1$latitude <- "NAV_LATITUDE"
         }
+        gliderDebug(debug > 3, 'i=',i,' (position 2) \n')
         if ("GPCTD_TEMPERATURE" %in% names(d)) {
             names(d) <- gsub("GPCTD_TEMPERATURE", "temperature", names(d))
             res@metadata$dataNamesOriginal$payload1$temperature <- "GPCTD_TEMPERATURE"
@@ -671,6 +673,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
             names(d) <- gsub("GPCTD_DOF", "oxygenFrequency", names(d))
             res@metadata$dataNamesOriginal$payload1$oxygenFrequency <- "GPCTD_DOF"
         }
+        gliderDebug(debug > 3, 'i=',i,' (position 3) \n')
         if ("FLBBCD_CHL_COUNT" %in% names(d)) {
             names(d) <- gsub("FLBBCD_CHL_COUNT", "chlorophyllCount", names(d))
             res@metadata$dataNamesOriginal$payload1$chlorophyllCount <- "FLBBCD_CHL_COUNT"
@@ -691,6 +694,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
             names(d) <- gsub("FLBBCD_CDOM_COUNT", "cdomCount", names(d))
             res@metadata$dataNamesOriginal$payload1$cdomCount <- "FLBBCD_CDOM_COUNT"
         }
+        gliderDebug(debug > 3, 'i=',i,' (position 4) \n')
         if ("FLBBCD_CDOM_SCALED" %in% names(d)) {
             names(d) <- gsub("FLBBCD_CDOM_SCALED", "cdom", names(d))
             res@metadata$dataNamesOriginal$payload1$cdom <- "FLBBCD_CDOM_SCALED"
@@ -704,14 +708,20 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
                 d$time <- as.POSIXct(d$time, format="%d/%m/%Y %H:%M:%S", tz="UTC")
             res@metadata$dataNamesOriginal$payload1$time <- "-"
         }
+        gliderDebug(debug > 3, 'i=',i,' (position 5) \n')
         pld1[[i]] <- d
+        gliderDebug(debug > 3, 'i=',i,' (position 6) \n')
     }
+    gliderDebug(debug > 3,  '(position 7) \n')
     df <- do.call(rbind.data.frame, pld1)
+    gliderDebug(debug, ' (position 8) \n')
     df[['X']] <- NULL # get rid of the weird last column
+    gliderDebug(debug > 3, ' (position 9) \n')
     if (progressBar) {
         cat('\n')
         flush.console()
     }
+    gliderDebug(debug, 'Finished reading data \n')
 
     ## First remove all duplicated lon/lat
     df$longitude[which(duplicated(df$longitude))] <- NA
