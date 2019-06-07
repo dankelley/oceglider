@@ -243,7 +243,7 @@ server <- function(input, output) {
     selectInput(inputId="plotChoice",
                 label="Plot type",
                 ## FIXME: add yoNumber, time, badness
-                choices=c("none", "pt", "TS", "hist(S)", "hist(p)"),
+                choices=if (is.null(state$yoSelected)) c("none", "pt", "TS", "hist(S)", "hist(p)") else c("none", "pt", "TS", "hist(S)", "hist(p)", "yo"),
                 selected=c("none"))
   })
 
@@ -409,15 +409,6 @@ server <- function(input, output) {
                  ## bad[is.na(bad)] <- TRUE
                  edits[[1+length(edits)]] <<- list(category="brush TS", time=presentTime(), bad=bad)
                  cat(file=stderr(), "  updated edits for brushed TS; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-               } else if (input$plotChoice == "hist(p)") {
-                 cat(file=stderr(), "  hist(p)\n", sep="")
-                 p <- g[["pressure"]]
-                 bad <- xmin <= p & p <= xmax
-                 bad[is.na(bad)] <- TRUE
-                 cat(file=stderr(), " sum(bad)=", sum(bad), "\n")
-                 #if (any(is.na(bad))) browser()
-                 edits[[1+length(edits)]] <<- list(category="brush hist(p)", time=presentTime(), bad=bad)
-                 cat(file=stderr(), "  updated edits for brushed hist(p); new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "hist(S)") {
                  cat(file=stderr(), "  hist(S)\n", sep="")
                  SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
@@ -427,6 +418,15 @@ server <- function(input, output) {
                  ## bad[is.na(bad)] <- TRUE
                  edits[[1+length(edits)]] <<- list(category="brush hist(S)", time=presentTime(), bad=bad)
                  cat(file=stderr(), "  updated edits for brushed hist(S; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "hist(p)") {
+                 cat(file=stderr(), "  hist(p)\n", sep="")
+                 p <- g[["pressure"]]
+                 bad <- xmin <= p & p <= xmax
+                 bad[is.na(bad)] <- TRUE
+                 cat(file=stderr(), " sum(bad)=", sum(bad), "\n")
+                 #if (any(is.na(bad))) browser()
+                 edits[[1+length(edits)]] <<- list(category="brush hist(p)", time=presentTime(), bad=bad)
+                 cat(file=stderr(), "  updated edits for brushed hist(p); new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                }
                if (sum(bad)) {
                  bad <- which(bad)
@@ -491,10 +491,9 @@ server <- function(input, output) {
 
 
   output$plot <- renderPlot({
-    cat(file=stderr(), "plot:\n", sep="")
-    cat(file=stderr(), "  input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
-    cat(file=stderr(), "  length(edits)=", length(edits), "\n", sep="")
-    cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
+    cat(file=stderr(), "plot with input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
+    ##cat(file=stderr(), "  length(edits)=", length(edits), "\n", sep="")
+    ##cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     ##cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
     if (!is.null(g))  {
       ##cat(file=stderr(), "  have 'g' so can plot\n", sep="")
@@ -584,6 +583,20 @@ server <- function(input, output) {
         ##OLD }
         cat(file=stderr(), "summary(SA):", summary(SA), "\n")
         cat(file=stderr(), "summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
+      } else if (input$plotChoice == "yo") {
+        cat(file=stderr(), "  yo=", state$yoSelected, "\n")
+        yo <- g[["yoNumber"]]
+        look <- yo == state$yoSelected
+        visible <- g[["navState"]] %in% input$navState
+        yoData <- g[["payload1"]][look & visible, ]
+        ctd <- with(yoData, as.ctd(salinity=salinity, temperature=temperature, pressure=pressure, longitude=longitude, latitude=latitude))
+        par(mfrow=c(2, 2))
+        plotProfile(ctd, xtype="salinity+temperature", type="o", pch=20, cex=3/4)
+        plotProfile(ctd, xtype="density", type="o", pch=20, cex=3/4)
+        plotTS(ctd, type="o", pch=20, cex=3/4)
+        ## plotProfile(ctd, xtype="index", type="o", pch=20, cex=3/4)
+        plotScan(ctd, type="o", pch=20, cex=3/4)
+        par(mfrow=c(1, 1)) # return to normal state
       }
       plotExists <<- TRUE
       state$usr <<- par("usr")
