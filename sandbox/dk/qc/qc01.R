@@ -104,6 +104,10 @@ server <- function(input, output) {
           return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
         if (tolower(mission) == "m54")
           return(paste(basedir, glider, "Data", mission, "PLD/logs/logs", sep="/"))
+        if (tolower(mission) == "m58")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
+        if (tolower(mission) == "m60")
+          return(paste(basedir, glider, "Data", mission, "pld/logs", sep="/"))
       }
       if (tolower(glider) == "sea021") {
         if (tolower(mission) == "m13")
