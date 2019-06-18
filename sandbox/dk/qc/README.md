@@ -1,3 +1,5 @@
+qc02.R try not using the sidebar. I liked a topbar better, in my whale-collision app
+
 qc01.R is a shiny app for doing QC of seaexplorer data. It is presently in an
 early stage of development, with more finalized features expected by autumn of
 2019, after use with real-world data during summer of 2019.
