@@ -542,8 +542,7 @@ server <- function(input, output) {
         ##OLD               cex=3, col=ifelse(flagged, 1, 2))
         ##OLD   points(t[visible & flagged], p[visible & flagged], pch=1, cex=1.4)
         ##OLD } else if (input$flagAction == "omit") {
-          cat(file=stderr(), "  omit\n")
-          oce.plot.ts(t[!flagged & visible], p[!flagged & visible], type="p", ylab="Pressure [dbar]", pch=".", cex=3, flipy=TRUE)
+        oce.plot.ts(t[!flagged & visible], p[!flagged & visible], type="p", ylab="Pressure [dbar]", pch=".", cex=3, flipy=TRUE)
         ##OLD} else {
         ##OLD  ##stop("unhandled flagAction='", input$flagAction, "' detected by plot")
         ##OLD}
