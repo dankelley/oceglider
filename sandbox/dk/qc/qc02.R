@@ -33,6 +33,8 @@ msg <- function(...)
   cat(file=stderr(), ...)
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex}")),
+                fluidRow(radioButtons("instructions", "Instructions", choices=c("Hide", "Show"), selected="Hide", inline=TRUE)),
+                conditionalPanel(condition="input.instructions=='Show'", fluidRow(includeMarkdown("qc02_help.md"))),
                 fluidRow(column(2,
                                 ##h5("Read original data"),
                                 uiOutput(outputId="glider"),
@@ -46,7 +48,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                  uiOutput(outputId="saveRda"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="domain")),
+                                                 uiOutput(outputId="focus")),
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="plotChoice")),
                                 conditionalPanel(condition="output.gliderExists",
@@ -239,11 +241,11 @@ server <- function(input, output) {
     actionButton(inputId="saveRda", label="Save")
   })
 
-  output$domain <- renderUI({
+  output$focus <- renderUI({
     if (debug > 1)
-      cat(file=stderr(), "output$domain\n", sep="")
-    selectInput(inputId="domain",
-                label="Domain",
+      cat(file=stderr(), "output$focus\n", sep="")
+    selectInput(inputId="focus",
+                label="Focus",
                 ## FIXME: add yoNumber, time, badness
                 choices=c("mission", "yo"),
                 selected=c("mission"))
@@ -286,10 +288,6 @@ server <- function(input, output) {
     ns <- navStateCodes("seaexplorer")
     checkboxGroupInput(inputId="navState", label="Show navState",
                        choices=ns, selected=ns, inline=TRUE)
-  })
-
-  output$despikePressure <- renderUI({
-    checkboxInput(inputId="despikePressure", label="Despike pressure")
   })
 
 
@@ -509,17 +507,27 @@ server <- function(input, output) {
 
 
   output$plot <- renderPlot({
-    msg("plot with input$domain='", input$domain, "', input$plotChoice='", paste(input$plotChoice, collapse=","), "', input$despikePressure=", input$despikePressure, sep="")
+    msg("plot with input$focus='", input$focus, "', input$plotChoice='", paste(input$plotChoice, collapse=","), "', input$despikePressure=", input$despikePressure, "\n", sep="")
     ##cat(file=stderr(), "  plotExists=", plotExists, "\n", sep="")
     ##cat(file=stderr(), "  colorBy=", input$colorBy, "\n", sep="")
     if (!is.null(g))  {
       ##cat(file=stderr(), "  have 'g' so can plot\n", sep="")
       n <- length(g[["pressure"]])
-      badPressure <- if (input$despikePressure) {
+      if (input$despikePressure) {
         p <- g[["pressure"]]
-        pressureThreshold < p - runmed(p, k=11)
+        msg("calculating badPressure with pressureThreshold=", pressureThreshold, "\n")
+        msg("  head(p)=", paste(head(p), collapse=" "), "\n")
+        badp <- is.na(p)
+        if (any(badp))
+          p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
+        pressureShift <- abs(p - runmed(p, k=11))
+        msg("  head(pressureShift)=", paste(head(pressureShift), collapse=" "), "\n")
+        badPressure <- pressureShift > pressureThreshold
+        if (any(badp))
+          badPressure[badp] <- TRUE
+        msg("  head(badPressure)=", paste(head(badPressure), collapse=" "), "\n")
       } else {
-        rep(FALSE, n)
+        badPressure <- rep(FALSE, n)
       }
 
       ## if (is.null(state$flag)) {
@@ -528,12 +536,10 @@ server <- function(input, output) {
       ## }
       ##cat(file=stderr(), "  state$flag[1:5]=", paste(state$flag[1:5],collapse=","), "\n", sep="")
       visible <- (g[["navState"]] %in% input$navState) & !badPressure
-      msg("sum(badPressure)=", sum(badPressure), "\n")
       flagged <- state$flag == 3
       ##cat(file=stderr(), "  flagged[1:5]: ", paste(flagged[1:5],collapse=","), "\n", sep="")
       ##cat(file=stderr(), "  colorBy: \"", input$colorBy, "\"\n", sep="")
       if (input$plotChoice == "pt") {
-        cat(file=stderr(), "  pt\n")
         t <- g[["time"]]
         p <- g[["pressure"]]
         ##OLD if (input$flagAction == "highlight") {
@@ -554,7 +560,6 @@ server <- function(input, output) {
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "TS") {
-        cat(file=stderr(), "  TS\n", sep="")
         visible <- g[["navState"]] %in% input$navState
         gg <- g
         ##OLD if (input$flagAction == "omit") {
@@ -585,7 +590,6 @@ server <- function(input, output) {
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "hist(p)") {
-        cat(file=stderr(), "  hist(p)\n", sep="")
         p <- g[["pressure"]]
         ##OLD if (input$flagAction == "colourize") {
         ##OLD   hist(p[visible], breaks=100, main="p")
@@ -595,7 +599,6 @@ server <- function(input, output) {
         ##OLD   stop("unhandled flagAction='", input$flagAction, "' detected by plot")
         ##OLD }
       } else if (input$plotChoice == "hist(S)") {
-        cat(file=stderr(), "  hist(S)\n", sep="")
         SA <- g[["SA"]]
         ##OLD if (input$flagAction == "colourize") {
         ##OLD   hist(SA[visible], breaks=100, main="NOTE: colorization not sensible here")
@@ -607,7 +610,6 @@ server <- function(input, output) {
         cat(file=stderr(), "summary(SA):", summary(SA), "\n")
         cat(file=stderr(), "summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
       } else if (input$plotChoice == "yo") {
-        cat(file=stderr(), "  yo=", state$yoSelected, "\n")
         yo <- g[["yoNumber"]]
         look <- yo == state$yoSelected
         visible <- g[["navState"]] %in% input$navState
@@ -628,6 +630,13 @@ server <- function(input, output) {
     }
   }) # renderPlot
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
+
+  ## PUT NEW PLUGINS HERE. 
+
+  output$despikePressure <- renderUI({
+    checkboxInput(inputId="despikePressure", label="Despike pressure")
+  })
+
 } # server
 
 shinyApp(ui=ui, server=server)
