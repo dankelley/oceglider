@@ -49,7 +49,9 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="plotChoice")),
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="colorBy"))),
+                                                 uiOutput(outputId="colorBy")),
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="plotType"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="focus")),
@@ -246,21 +248,23 @@ server <- function(input, output) {
     msg("output$focus\n")
     selectInput(inputId="focus",
                 label="Focus",
-                ## FIXME: add yoNumber, time, badness
                 choices=c("mission", "yo"),
                 selected=c("mission"))
   })
 
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
-                label="Plot type",
-                ## FIXME: add yoNumber, time, badness
+                label="Plot",
                 choices=if (is.null(state$yoSelected)) {
                   c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)")
                 } else {
-                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo") # FIXME: delete the "yo" option?
+                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo")
                 },
                 selected=c("pt"))
+  })
+
+  output$plotType <- renderUI({
+    selectInput(inputId="plotType", label="type", choices= c("l", "p", "o"), selected=c("o"))
   })
 
   output$colorBy <- renderUI({
@@ -509,8 +513,10 @@ server <- function(input, output) {
   })
 
   output$plot <- renderPlot({
-    msg("plot with input$focus='", input$focus, "', input$plotChoice='", paste(input$plotChoice, collapse=","), "', input$despikePressure=", input$despikePressure, "\n", sep="")
-    msg("input$selectYo='", input$selectYo, "'\n", sep="")
+    msg("plot with input$focus='", input$focus, "'\n", sep="")
+    msg("           input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
+    msg("           input$despikePressure=", input$despikePressure, "\n", sep="")
+    msg("           input$selectYo='", input$selectYo, "'\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
       if (input$despikePressure) {
@@ -531,20 +537,25 @@ server <- function(input, output) {
       }
 
       visible <- (g[["navState"]] %in% input$navState) & !badPressure
+      msg("  sum(visible)=", sum(visible), " before looking at input$focus\n", sep="")
+      if (input$focus == "yo")
+        visible <- visible & (g[["yoNumber"]] == as.numeric(input$selectYo))
+      msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
       flagged <- state$flag == 3
       if (input$plotChoice == "pt") {
         t <- g[["time"]]
         p <- g[["pressure"]]
-        oce.plot.ts(t[!flagged & visible], p[!flagged & visible], type="p", ylab="Pressure [dbar]", pch=".", cex=3, flipy=TRUE)
+        oce.plot.ts(t[!flagged & visible], p[!flagged & visible],
+                    type=input$plotType,
+                    ylab="Pressure [dbar]", pch=".", cex=3, flipy=TRUE)
         if (!is.null(state$yoSelected)) {
           yo <- g[["yoNumber"]]
           show <- yo == state$yoSelected & visible
-          lines(t[show], p[show], lwd=2, type="o")
+          lines(t[show], p[show], lwd=2, type=input$plotType)
           mtext(paste("line is yo", state$yoSelected), adj=1)
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "TS") {
-        visible <- g[["navState"]] %in% input$navState
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
@@ -563,7 +574,6 @@ server <- function(input, output) {
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "S profile") {
-        visible <- (g[["navState"]] %in% input$navState) & !badPressure
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
@@ -572,18 +582,17 @@ server <- function(input, output) {
           omar <- par("mar")
           par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
           plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3, col=cm$zcol,
+               type=input$plotType, pch=1, cex=0.3, col=cm$zcol,
                xlab=resizableLabel("absolute salinity"),
                ylab=resizableLabel("p"))
           par(mar=omar)
         } else {
           plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3,
+               type=input$plotType, pch=1, cex=0.3,
                xlab=resizableLabel("absolute salinity"),
                ylab=resizableLabel("p"))
         }
       } else if (input$plotChoice == "T profile") {
-        visible <- (g[["navState"]] %in% input$navState) & !badPressure
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
@@ -592,18 +601,17 @@ server <- function(input, output) {
           omar <- par("mar")
           par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
           plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3, col=cm$zcol,
+               type=input$plotType, pch=1, cex=0.3, col=cm$zcol,
                xlab=resizableLabel("conservative temperature"),
                ylab=resizableLabel("p"))
           par(mar=omar)
         } else {
           plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3,
+               type=input$plotType, pch=1, cex=0.3,
                xlab=resizableLabel("conservative temperature"),
                ylab=resizableLabel("p"))
         }
       } else if (input$plotChoice == "density profile") {
-        visible <- (g[["navState"]] %in% input$navState) & !badPressure
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
@@ -612,34 +620,22 @@ server <- function(input, output) {
           omar <- par("mar")
           par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
           plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3, col=cm$zcol,
+               type=input$plotType, pch=1, cex=0.3,
                xlab=resizableLabel("sigma0"),
                ylab=resizableLabel("p"))
           par(mar=omar)
         } else {
           plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               pch=1, cex=0.3,
+               type=input$plotType, pch=1, cex=0.3,
                xlab=resizableLabel("sigma0"),
                ylab=resizableLabel("p"))
         }
       } else if (input$plotChoice == "hist(p)") {
         p <- g[["pressure"]]
-        ##OLD if (input$flagAction == "colourize") {
-        ##OLD   hist(p[visible], breaks=100, main="p")
-        ##OLD } else if (input$flagAction == "omit") {
-          hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
-        ##OLD } else {
-        ##OLD   stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-        ##OLD }
+        hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
       } else if (input$plotChoice == "hist(S)") {
         SA <- g[["SA"]]
-        ##OLD if (input$flagAction == "colourize") {
-        ##OLD   hist(SA[visible], breaks=100, main="NOTE: colorization not sensible here")
-        ##OLD } else if (input$flagAction == "omit") {
-          hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
-        ##OLD } else {
-        ##OLD   stop("unhandled flagAction='", input$flagAction, "' detected by plot")
-        ##OLD }
+        hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
         msg("summary(SA):", summary(SA), "\n")
         msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
       } else if (input$plotChoice == "yo") {
@@ -649,11 +645,10 @@ server <- function(input, output) {
         yoData <- g[["payload1"]][look & visible, ]
         ctd <- with(yoData, as.ctd(salinity=salinity, temperature=temperature, pressure=pressure, longitude=longitude, latitude=latitude))
         par(mfrow=c(2, 2))
-        plotProfile(ctd, xtype="salinity+temperature", type="o", pch=20, cex=3/4)
-        plotProfile(ctd, xtype="density", type="o", pch=20, cex=3/4)
-        plotTS(ctd, type="o", pch=20, cex=3/4)
-        ## plotProfile(ctd, xtype="index", type="o", pch=20, cex=3/4)
-        plotScan(ctd, type="o", pch=20, cex=3/4)
+        plotProfile(ctd, xtype="salinity+temperature", type=input$plotType, pch=20, cex=3/4)
+        plotProfile(ctd, xtype="density", type=input$plotType, pch=20, cex=3/4)
+        plotTS(ctd, type=input$plotType, pch=20, cex=3/4)
+        plotScan(ctd, type=input$plotType, pch=20, cex=3/4)
         par(mfrow=c(1, 1)) # return to normal state
       }
       plotExists <<- TRUE
@@ -663,8 +658,6 @@ server <- function(input, output) {
     }
   }) # renderPlot
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
-
-  ## PUT NEW PLUGINS HERE. 
 
   output$despikePressure <- renderUI({
     checkboxInput(inputId="despikePressure", label="Despike pressure")
