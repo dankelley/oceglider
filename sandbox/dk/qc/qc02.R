@@ -23,7 +23,6 @@ for (glider in gliders) {
   missions[glider] <- list(list.files(paste(basedir, glider, "Data", sep="/")))
 }
 
-## navState colours
 navStateColors <- function(navState)
 {
   ## use str(navStateCodes("seaexplorer")) to see codes
@@ -291,7 +290,7 @@ server <- function(input, output) {
   })
 
   output$plotType <- renderUI({
-    selectInput(inputId="plotType", label="type", choices= c("l", "p", "o"), selected=c("o"))
+    selectInput(inputId="plotType", label="type", choices= c("l", "p", "o"), selected=c("p"))
   })
 
   output$colorBy <- renderUI({
@@ -604,10 +603,10 @@ server <- function(input, output) {
       ## flagged and visible yield 'look', which is used in many plot types
       flagged <- state$flag == 3
       visible <- (g[["navState"]] %in% input$navState) & !badPressure
-      msg("  sum(visible)=", sum(visible), " before looking at input$focus\n", sep="")
+      ##msg("  sum(visible)=", sum(visible), " before looking at input$focus\n", sep="")
       if (input$focus == "yo")
         visible <- visible & (g[["yoNumber"]] == as.numeric(state$focusYo))
-      msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
+      ##msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
       look <- !flagged & visible
 
       if (input$plotChoice == "pt") {
@@ -620,6 +619,9 @@ server <- function(input, output) {
                         type=input$plotType,
                         col=navStateColors(navState),
                         ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+            nsc <- navStateCodes(g)
+            legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
+                   col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
           } else {
             cm <- colormap(g[[input$colorBy]][look])
             drawPalette(colormap=cm, zlab=input$colorBy)
@@ -645,6 +647,9 @@ server <- function(input, output) {
             navState <- g[["navState"]][look]
             plotTS(gg, pch=pch, cex=cex, col=navStateColors(navState),
                    mar=c(3, 3, 2, 5.5), type=input$plotType)
+            nsc <- navStateCodes(g)
+            legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
+                   col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
           } else {
             cm <- colormap(gg[[input$colorBy]])
             drawPalette(colormap=cm, zlab=input$colorBy)
