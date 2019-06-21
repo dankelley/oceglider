@@ -28,6 +28,7 @@ SA <- NULL
 CT <- NULL
 p <- NULL
 t <- NULL
+maxYo <- 0
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
                 fluidRow(column(2, radioButtons("debug", "Debug", choices=c("Yes", "No"), selected="Yes", inline=TRUE)),
@@ -56,19 +57,20 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="focus")),
                                 conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="selectYo")),
-                                uiOutput(outputId="deleteYo"))),
-                hr(),
+                                                 uiOutput(outputId="focusYo")),
+                                conditionalPanel(condition="input.focus == 'yo'",
+                                                 uiOutput(outputId="previousYo")),
+                                conditionalPanel(condition="input.focus == 'yo'",
+                                                 uiOutput(outputId="nextYo")))
+                         ),
                 fluidRow(uiOutput(outputId="navState"),
                          uiOutput(outputId="despikePressure")),
-                hr(),
                 fluidRow(uiOutput(outputId="status")),
-                hr(),
                 fluidRow(plotOutput("plot",
                                     hover="hover",
                                     click="click",
                                     width="100%",
-                                    height="650px",
+                                    height="600px",
                                     brush=brushOpts(id="brush", resetOnNew=!TRUE))))
 
 
@@ -80,7 +82,7 @@ server <- function(input, output) {
 
 
   plotExists <- FALSE
-  state <- reactiveValues(rda="", flag=NULL, yoSelected=NULL, gliderExists=FALSE, usr=NULL)
+  state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -274,8 +276,35 @@ server <- function(input, output) {
                 selected="latitude")
   })
 
-  output$selectYo <- renderUI({
-    textInput("selectYo", "Yo number", value="1")
+  output$focusYo <- renderUI({
+    textInput("focusYo", "Yo number", value=if (is.null(state$focusYo)) "1" else state$focusYo)
+  })
+
+  observeEvent(input$focusYo, {
+               msg("'focusYo' text area altered\n")
+               state$focusYo <- as.numeric(input$focusYo)
+  })
+
+  output$previousYo <- renderUI({
+#    if (input$focus == 'yo' && as.numeric(input$yoSelected) > 1)
+      actionButton(inputId="previousYo", label="Previous yo")
+  })
+
+  observeEvent(input$previousYo, {
+               msg("'Previous Yo' button clicked; state$focusYo=", state$focusYo, "\n")
+               if (state$focusYo > 1)
+                 state$focusYo <<- state$focusYo - 1
+  })
+
+  output$nextYo <- renderUI({
+#    if (input$focus == 'yo' && as.numeric(input$yoSelected) < maxYo)
+      actionButton(inputId="nextYo", label="Next yo")
+  })
+
+  observeEvent(input$nextYo, {
+               msg("'Next Yo' button clicked; state$focusYo=", state$focusYo, "\n")
+               if (state$focusYo < maxYo)
+                 state$focusYo <<- state$focusYo + 1
   })
 
   output$deleteYo <- renderUI({
@@ -333,20 +362,20 @@ server <- function(input, output) {
 
 
   observeEvent(input$deleteYo, {
-               msg("  DELETE yo=", state$yoSelected, "\n")
-               yo <- g[["yoNumber"]]
-               bad <- yo == state$yoSelected
-               oldFlag <- state$flag
-               state$flag[bad] <- 3
-               newFlag <- state$flag
-               index <- which(newFlag != oldFlag)
-               old <- oldFlag[index]
-               new <- newFlag[index]
-               edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected),
-                                                 time=presentTime(),
-                                                 index=index, oldFlag=old, newFlag=new)
-               msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-               state$yoSelected <<- NULL
+               msg("  DELETE yo=", state$yoSelected, " ***IGNORED***\n")
+               ## yo <- g[["yoNumber"]]
+               ## bad <- yo == state$yoSelected
+               ## oldFlag <- state$flag
+               ## state$flag[bad] <- 3
+               ## newFlag <- state$flag
+               ## index <- which(newFlag != oldFlag)
+               ## old <- oldFlag[index]
+               ## new <- newFlag[index]
+               ## edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected),
+               ##                                   time=presentTime(),
+               ##                                   index=index, oldFlag=old, newFlag=new)
+               ## msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               ## state$yoSelected <<- NULL
   })
 
   observeEvent(input$click, {
@@ -491,6 +520,7 @@ server <- function(input, output) {
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
+               maxYo <<- max(g[["yoNumber"]])
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$flag <- g[["pressureFlag"]]
                msg(". done\n")
@@ -513,10 +543,11 @@ server <- function(input, output) {
   })
 
   output$plot <- renderPlot({
-    msg("plot with input$focus='", input$focus, "'\n", sep="")
-    msg("           input$plotChoice='", paste(input$plotChoice, collapse=","), "'\n", sep="")
-    msg("           input$despikePressure=", input$despikePressure, "\n", sep="")
-    msg("           input$selectYo='", input$selectYo, "'\n", sep="")
+    msg("plot with input: focus='", input$focus, "'",
+        ", plotChoice='", input$plotChoice, "'",
+        ", despikePressure=", input$despikePressure,
+        ", selectYo='", input$selectYo, "'",
+        ", focusYo=", state$focusYo, "\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
       if (input$despikePressure) {
@@ -539,7 +570,7 @@ server <- function(input, output) {
       visible <- (g[["navState"]] %in% input$navState) & !badPressure
       msg("  sum(visible)=", sum(visible), " before looking at input$focus\n", sep="")
       if (input$focus == "yo")
-        visible <- visible & (g[["yoNumber"]] == as.numeric(input$selectYo))
+        visible <- visible & (g[["yoNumber"]] == as.numeric(state$focusYo))
       msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
       flagged <- state$flag == 3
       if (input$plotChoice == "pt") {
@@ -548,7 +579,7 @@ server <- function(input, output) {
         oce.plot.ts(t[!flagged & visible], p[!flagged & visible],
                     type=input$plotType,
                     ylab="Pressure [dbar]", pch=".", cex=3, flipy=TRUE)
-        if (!is.null(state$yoSelected)) {
+        if (input$focus == "mission" && !is.null(state$yoSelected)) {
           yo <- g[["yoNumber"]]
           show <- yo == state$yoSelected & visible
           lines(t[show], p[show], lwd=2, type=input$plotType)
@@ -565,7 +596,7 @@ server <- function(input, output) {
         } else {
           plotTS(gg, pch=1, cex=0.3)
         }
-        if (!is.null(state$yoSelected)) {
+        if (input$focus == "mission" && !is.null(state$yoSelected)) {
           yo <- g[["yo", state$yoSelected]]
           visible <- yo[["navState"]] %in% input$navState
           lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3)
