@@ -568,7 +568,10 @@ server <- function(input, output) {
                g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
                edits[[1+length(edits)]] <<- list(category="navState", time=presentTime(), bad=!visible)
                msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
-               save(edits, g, file=rda)
+               mission <- input$mission
+               glider <- input$glider
+               sourceDirectory <- dataName()
+               save(glider, mission, sourceDirectory, edits, g, file=rda)
                msg("  ... done\n", sep="")
   })
 
