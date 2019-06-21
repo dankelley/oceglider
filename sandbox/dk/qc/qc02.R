@@ -47,12 +47,14 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                  uiOutput(outputId="saveRda"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="focus")),
-                                conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="plotChoice")),
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="colorBy"))),
                          column(2,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="focus")),
+                                conditionalPanel(condition="input.focus == 'yo'",
+                                                 uiOutput(outputId="selectYo")),
                                 uiOutput(outputId="deleteYo"))),
                 hr(),
                 fluidRow(uiOutput(outputId="navState"),
@@ -254,11 +256,11 @@ server <- function(input, output) {
                 label="Plot type",
                 ## FIXME: add yoNumber, time, badness
                 choices=if (is.null(state$yoSelected)) {
-                  c("none", "pt", "TS", "hist(S)", "hist(p)")
+                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)")
                 } else {
-                  c("none", "pt", "TS", "hist(S)", "hist(p)", "yo")
+                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo") # FIXME: delete the "yo" option?
                 },
-                selected=c("none"))
+                selected=c("pt"))
   })
 
   output$colorBy <- renderUI({
@@ -266,6 +268,10 @@ server <- function(input, output) {
                 label="Colour by",
                 choices=c("latitude", "longitude", "pressure", "temperature", "salinity", "navState", "(none)"),
                 selected="latitude")
+  })
+
+  output$selectYo <- renderUI({
+    textInput("selectYo", "Yo number", value="1")
   })
 
   output$deleteYo <- renderUI({
@@ -379,28 +385,53 @@ server <- function(input, output) {
                state$yoSelected <- NULL # brushing turns off yo selection
                if (input$plotChoice == "pt") {
                  msg("  pt\n")
-                 t <- g[["time"]]
-                 tnumeric <- as.numeric(t)
-                 p <- g[["pressure"]]
-                 bad <- xmin <= tnumeric & tnumeric <= xmax & ymin <= p & p <= ymax
+                 x <- as.numeric(g[["time"]])
+                 y <- g[["pressure"]]
+                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
                  bad[is.na(bad)] <- TRUE
                  state$flag[bad] <- 3
                  edits[[1+length(edits)]] <<- list(category="brush pt", time=presentTime(), bad=bad)
                  msg("  updated edits for brushed pt; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "TS") {
                  msg("  TS\n")
-                 SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
-                 CT <- g[["CT"]]
-                 bad <- xmin <= SA & SA <= xmax & ymin <= CT & CT <= ymax
+                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+                 y <- g[["CT"]]
+                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
                  bad[is.na(bad)] <- TRUE
                  msg(" sum(bad)=", sum(bad), "\n")
-                 ## bad[is.na(bad)] <- TRUE
                  edits[[1+length(edits)]] <<- list(category="brush TS", time=presentTime(), bad=bad)
                  msg("  updated edits for brushed TS; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "S profile") {
+                 msg("  S profile\n")
+                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+                 y <- g[["pressure"]]
+                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
+                 bad[is.na(bad)] <- TRUE
+                 msg(" sum(bad)=", sum(bad), "\n")
+                 edits[[1+length(edits)]] <<- list(category="brush Sprofile", time=presentTime(), bad=bad)
+                 msg("  updated edits for brushed Sprofile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "T profile") {
+                 msg("  T profile\n")
+                 x <- g[["CT"]] # FIXME: allow oceEOS=="unesco"
+                 y <- g[["pressure"]]
+                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
+                 bad[is.na(bad)] <- TRUE
+                 msg(" sum(bad)=", sum(bad), "\n")
+                 edits[[1+length(edits)]] <<- list(category="brush Tprofile", time=presentTime(), bad=bad)
+                 msg("  updated edits for brushed Tprofile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "density profile") {
+                 msg("  density profile\n")
+                 x <- g[["sigma0"]] # FIXME: allow oceEOS=="unesco"
+                 y <- g[["pressure"]]
+                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
+                 bad[is.na(bad)] <- TRUE
+                 msg(" sum(bad)=", sum(bad), "\n")
+                 edits[[1+length(edits)]] <<- list(category="brush density profile", time=presentTime(), bad=bad)
+                 msg("  updated edits for brushed density profile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "hist(S)") {
                  msg("  hist(S)\n")
-                 SA <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
-                 bad <- xmin <= SA & SA <= xmax
+                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+                 bad <- xmin <= x & x <= xmax
                  bad[is.na(bad)] <- TRUE
                  msg(" sum(bad)=", sum(bad), "\n")
                  ## bad[is.na(bad)] <- TRUE
@@ -408,8 +439,8 @@ server <- function(input, output) {
                  msg("  updated edits for brushed hist(S; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "hist(p)") {
                  msg("  hist(p)\n")
-                 p <- g[["pressure"]]
-                 bad <- xmin <= p & p <= xmax
+                 x <- g[["pressure"]]
+                 bad <- xmin <= x & x <= xmax
                  bad[is.na(bad)] <- TRUE
                  msg(" sum(bad)=", sum(bad), "\n")
                  #if (any(is.na(bad))) browser()
@@ -427,17 +458,19 @@ server <- function(input, output) {
                msg("readData...\n")
                dir <- dataName()
                msg("  about to read '", dir, "' .", sep="")
-               t <- try(read.glider.seaexplorer.delayed(dir))
-               if (inherits(t, "try-error")) {
+               tmp <- try(read.glider.seaexplorer.delayed(dir))
+               if (inherits(tmp, "try-error")) {
                  msg(" no data FIXME: put up a dialog box\n")
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                } else {
-                 g <<- t
+                 g <<- tmp
                  state$flag <- rep(1, length(g[["pressure"]]))
                  showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
                }
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
+               sigma0 <<- g[["sigma0"]]
+               spiciness <<- g[["spiciness"]]
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$gliderExists <- TRUE
@@ -477,6 +510,7 @@ server <- function(input, output) {
 
   output$plot <- renderPlot({
     msg("plot with input$focus='", input$focus, "', input$plotChoice='", paste(input$plotChoice, collapse=","), "', input$despikePressure=", input$despikePressure, "\n", sep="")
+    msg("input$selectYo='", input$selectYo, "'\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
       if (input$despikePressure) {
@@ -520,16 +554,6 @@ server <- function(input, output) {
         } else {
           plotTS(gg, pch=1, cex=0.3)
         }
-        ##OLD } else {
-        ##OLD   gg@data$payload1 <- g@data$payload1[visible,] # FIXME: use subset() instead?
-        ##OLD   if (input$colorBy != "(none)") {
-        ##OLD     cm <- colormap(gg[[input$colorBy]])
-        ##OLD     drawPalette(colormap=cm, zlab=input$colorBy)
-        ##OLD     plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3), col=cm$zcol, mar=c(3, 3, 2, 5.5))
-        ##OLD   } else {
-        ##OLD     plotTS(gg, pch=1, cex=ifelse(flagged[visible], 1, 0.3))
-        ##OLD   }
-        ##OLD }
         if (!is.null(state$yoSelected)) {
           yo <- g[["yo", state$yoSelected]]
           visible <- yo[["navState"]] %in% input$navState
@@ -538,6 +562,66 @@ server <- function(input, output) {
           mtext(paste("line is yo ", state$yoSelected))
         }
         plotExists <<- TRUE
+      } else if (input$plotChoice == "S profile") {
+        visible <- (g[["navState"]] %in% input$navState) & !badPressure
+        gg <- g
+        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
+        if (input$colorBy != "(none)") {
+          cm <- colormap(gg[[input$colorBy]])
+          drawPalette(colormap=cm, zlab=input$colorBy)
+          omar <- par("mar")
+          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+          plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3, col=cm$zcol,
+               xlab=resizableLabel("absolute salinity"),
+               ylab=resizableLabel("p"))
+          par(mar=omar)
+        } else {
+          plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3,
+               xlab=resizableLabel("absolute salinity"),
+               ylab=resizableLabel("p"))
+        }
+      } else if (input$plotChoice == "T profile") {
+        visible <- (g[["navState"]] %in% input$navState) & !badPressure
+        gg <- g
+        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
+        if (input$colorBy != "(none)") {
+          cm <- colormap(gg[[input$colorBy]])
+          drawPalette(colormap=cm, zlab=input$colorBy)
+          omar <- par("mar")
+          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+          plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3, col=cm$zcol,
+               xlab=resizableLabel("conservative temperature"),
+               ylab=resizableLabel("p"))
+          par(mar=omar)
+        } else {
+          plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3,
+               xlab=resizableLabel("conservative temperature"),
+               ylab=resizableLabel("p"))
+        }
+      } else if (input$plotChoice == "density profile") {
+        visible <- (g[["navState"]] %in% input$navState) & !badPressure
+        gg <- g
+        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
+        if (input$colorBy != "(none)") {
+          cm <- colormap(gg[[input$colorBy]])
+          drawPalette(colormap=cm, zlab=input$colorBy)
+          omar <- par("mar")
+          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+          plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3, col=cm$zcol,
+               xlab=resizableLabel("sigma0"),
+               ylab=resizableLabel("p"))
+          par(mar=omar)
+        } else {
+          plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+               pch=1, cex=0.3,
+               xlab=resizableLabel("sigma0"),
+               ylab=resizableLabel("p"))
+        }
       } else if (input$plotChoice == "hist(p)") {
         p <- g[["pressure"]]
         ##OLD if (input$flagAction == "colourize") {
