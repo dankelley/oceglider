@@ -228,7 +228,7 @@ server <- function(input, output) {
   }
 
   rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    tolower(paste0(varName(), "_", format(Sys.time(),"%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
+    tolower(paste0(varName(), "_", format(presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
   }
 
   output$gliderExists <- reactive({
