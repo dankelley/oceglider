@@ -5,7 +5,7 @@ debug <- "Yes"
 version <- "0.1.1"
 pressureThreshold <- 0.5
 pch <- 1
-cex <- 0.5
+cex <- 0.75
 
 library(shiny)
 ##library(shinythemes)
@@ -289,12 +289,7 @@ server <- function(input, output) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
-                choices=c("p(t)", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)"),
-                ## choices=if (is.null(state$yoSelected)) {
-                ##   c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)")
-                ## } else {
-                ##   c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo")
-                ## },
+                choices=c("p(t)", "S(t)", "T(t)", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)"),
                 selected="p(t)")
   })
 
@@ -366,26 +361,30 @@ server <- function(input, output) {
         dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
-        ## FIXME: maybe hide if dist[disti] exceeds some number
-        ##OLD res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f\n",
-        ##OLD                dist[disti],
-        ##OLD                if (dist[disti] < distThreshold) " (click to select) " else {
-        ##OLD                  if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-        ##OLD                d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure)
         res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                        d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                        d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
-      } else if (input$plotChoice == "TS") {
+      } else if (input$plotChoice == "S(t)") {
+        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-SA)/(state$usr[4]-state$usr[3]))^2)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+        disti <- which.min(dist)
+        d <- g[["payload1"]][disti,]
+        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
+                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
+                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+      } else if (input$plotChoice == "T(t)") {
+        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+        disti <- which.min(dist)
+        d <- g[["payload1"]][disti,]
+        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
+                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
+                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+       } else if (input$plotChoice == "TS") {
         dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
         dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
-        ## FIXME: maybe hide if dist[disti] exceeds some number
-        ##OLD res <- sprintf("dist=%.4f %s yo=%d %s p=%.1f S=%.4f T=%.4f\n",
-        ##OLD                dist[disti],
-        ##OLD                if (dist[disti] < distThreshold) " (click to select) " else {
-        ##OLD                  if (!is.null(state$yoSelected)) " (click to unselect)" else ""},
-        ##OLD                d$yoNumber, format(d$time, "%Y-%m-%dT%H:%M:%S"), d$pressure, d$salinity, d$temperature)
         res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                        d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                        d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
@@ -648,6 +647,55 @@ server <- function(input, output) {
           oce.plot.ts(t, p,
                       type=input$plotType,
                       ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+        }
+        plotExists <<- TRUE
+      } else if (input$plotChoice == "S(t)") {
+        x <- g[["time"]][look]
+        y <- g[["SA"]][look]
+        if (input$colorBy != "(none)") {
+          if (input$colorBy == "navState") {
+            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
+                        ylab=resizableLabel("absolute salinity"),
+                        col=navStateColors(g[["navState"]][look]))
+            navStateLegend()
+          } else {
+            cm <- colormap(g[[input$colorBy]][look])
+            drawPalette(colormap=cm, zlab=input$colorBy)
+            omar <- par("mar")
+            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
+                        ylab=resizableLabel("absolute salinity"),
+                        col=cm$zcol)
+            par(mar=omar)
+          }
+        } else {
+          oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
+                      ylab=resizableLabel("absolute salinity"))
+        }
+        plotExists <<- TRUE
+      } else if (input$plotChoice == "T(t)") {
+        x <- g[["time"]][look]
+        y <- g[["CT"]][look]
+        if (input$colorBy != "(none)") {
+          if (input$colorBy == "navState") {
+            oce.plot.ts(x, y,
+                        type=input$plotType, pch=pch, cex=cex,
+                        col=navStateColors(g[["navState"]][look]),
+                        ylab=resizableLabel("conservative temperature"))
+            navStateLegend()
+          } else {
+            cm <- colormap(g[[input$colorBy]][look])
+            drawPalette(colormap=cm, zlab=input$colorBy)
+            omar <- par("mar")
+            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
+                        col=cm$zcol,
+                        ylab=resizableLabel("conservative temperature"))
+            par(mar=omar)
+          }
+        } else {
+          oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
+                      ylab=resizableLabel("conservative temperature"))
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "TS") {
