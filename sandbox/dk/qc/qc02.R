@@ -739,11 +739,24 @@ server <- function(input, output) {
         gg@data$payload1 <- g@data$payload1[look, ]
         if (input$colorBy != "(none)") {
           if (input$colorBy == "navState") {
-            timing <- system.time({
-              plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                     mar=c(3, 3, 2, 5.5), type=input$plotType)
-            })
-            msg("plotTS (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
+            if (FALSE) {
+              ## timing test with random numbers
+              n <- length(look)
+              x <- rnorm(n)
+              y <- rnorm(n)
+              cm <- colormap(x^2+y^2)
+              timing <- system.time({
+                plot(x, y, col=cm$zcol, cex=cex, pch=pch)
+              })
+              msg("plot() with ", n, " random points) took time ", paste(timing, collapse=" "), sep="")
+            } else {
+              ## Actual plot
+              timing <- system.time({
+                plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
+                       mar=c(3, 3, 2, 5.5), type=input$plotType)
+              })
+              msg("plotTS (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
+            }
             navStateLegend()
           } else {
             cm <- colormap(gg[[input$colorBy]])
