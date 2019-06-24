@@ -4,24 +4,15 @@ title: question on power-on (glider 21 mission 51, for example)
 date: 2019-06-24
 ---
 
-Clark, don't shoot me for being stupid, but I'm adding some new things to my QC
-app, and wanted to double-check something on power on/off status.
 
-I've included some figs from qc02.R, which I'll be using to try to find the
-strong S spikes that Dave found in g21m51.  But that's not my question, really.
+Clark, don’t shoot me for being stupid, but I'm adding some new things to my QC app, and wanted to double-check something on power on/off status.  The figure shows $p(t)$ for SEA21 M51, colour-coded by navState (sorry for small font … this app is in flux and I’m focussing on getting the action to be useful, not on the aesthetics).
 
-What I want to know is whether I am right in thinking that power to the CTD was
-turned off at about minute 31 of this "yo", with power coming back on halfway
-through minute 41?
+**Question.** Am I right in thinking that power was turned off at about minute 31.5 or so, and then turned back on at minute 41.3 or so?  (I want to know this because I’m going to put in a thing where you can flag data for $N$ seconds after power-on.)
 
-The diagrams show yo 305 in three views. I'm sorry for the small fonts on the
-colour-coding legend, which I will clean up and put outside the plot later on.
+PS. it seems pretty clear that the S goes nuts when at the surface, so I will also likely add a QC button to remove at-surface values.  The trick is that it cannot be done just by navState because sometimes when it’s up there the state flicks back and forth between several values, like a bobsledder going back and forth before taking off. I will likely add a button/slider to remove the top N metres of the water column … after all, adding a button doesn’t say you have to click the button, but my feeling is that near-surface S will only be good if it’s actually rising after being in deep water for a minute or so … the navState alone is not good enough.
 
-Color coding by navstate (sorry for small font on that)
+![Pressure vs time, colour-coded by navState.](pt.png)
 
-![Pressure vs time, colour-coded by navState](3.png)
 
-![fig 1](1.png)
 
-![fig 2](2.png)
 
