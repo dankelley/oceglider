@@ -45,6 +45,13 @@ navStateColors <- function(navState)
   res
 }
 
+navStateLegend <- function()
+{
+  nsc <- navStateCodes("seaexplorer")
+  legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
+         col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
+}
+
 var <- list()
 src <- ""
 g <- NULL
@@ -106,7 +113,8 @@ server <- function(input, output) {
 
 
   plotExists <- FALSE
-  state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
+  ##state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
+  state <- reactiveValues(rda="", flag=NULL, focusYo="1", gliderExists=FALSE, usr=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -248,7 +256,7 @@ server <- function(input, output) {
   })
 
   output$listRda <- renderUI({
-    msg("output$listRda\n")
+    ##msg("output$listRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
       filedates <- gsub("([a-z0-9]*)_([a-z0-9]*)_(.*).rda", "\\3", files)
@@ -281,12 +289,13 @@ server <- function(input, output) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
-                choices=if (is.null(state$yoSelected)) {
-                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)")
-                } else {
-                  c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo")
-                },
-                selected=c("pt"))
+                choices=c("p(t)", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)"),
+                ## choices=if (is.null(state$yoSelected)) {
+                ##   c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)")
+                ## } else {
+                ##   c("pt", "TS", "S profile", "T profile", "density profile", "hist(S)", "hist(p)", "yo")
+                ## },
+                selected="p(t)")
   })
 
   output$plotType <- renderUI({
@@ -331,11 +340,11 @@ server <- function(input, output) {
                  state$focusYo <<- state$focusYo + 1
   })
 
-  output$deleteYo <- renderUI({
-    if (!is.null(state$yoSelected)) {
-      actionButton(inputId="deleteYo", label=paste("Delete yo #", state$yoSelected, sep=""))
-    }
-  })
+  ##deleteYo output$deleteYo <- renderUI({
+  ##deleteYo   if (!is.null(state$yoSelected)) {
+  ##deleteYo     actionButton(inputId="deleteYo", label=paste("Delete yo #", state$yoSelected, sep=""))
+  ##deleteYo   }
+  ##deleteYo })
 
   output$navState <- renderUI({
     ns <- navStateCodes("seaexplorer")
@@ -352,7 +361,7 @@ server <- function(input, output) {
     flagged <- state$flag == 3
     if (!is.null(x) && plotExists) {
       ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
-      if (input$plotChoice == "pt") {
+      if (input$plotChoice == "p(t)") {
         dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
         dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
@@ -392,7 +401,8 @@ server <- function(input, output) {
 
 
   observeEvent(input$deleteYo, {
-               msg("  DELETE yo=", state$yoSelected, " ***IGNORED***\n")
+               msg("  DELETE yo ***IGNORED***\n")
+               ##msg("  DELETE yo=", state$yoSelected, " ***IGNORED***\n")
                ## yo <- g[["yoNumber"]]
                ## bad <- yo == state$yoSelected
                ## oldFlag <- state$flag
@@ -409,30 +419,30 @@ server <- function(input, output) {
   })
 
   observeEvent(input$click, {
-               msg("click\n")
-               distThreshold <- 0.05
-               x <- input$click$x
-               y <- input$click$y
-               flagged <- state$flag == 3
-               if (input$plotChoice == "pt") {
-                 dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
-                 dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-                 disti <- which.min(dist)
-                 d <- g[["payload1"]][disti,]
-                 res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
-                                dist[disti], x, y, d$yoNumber, d$time, d$pressure)
-                 state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-                 msg(res)
-               } else if (input$plotChoice == "TS") {
-                 dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-                 dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-                 disti <- which.min(dist)
-                 d <- g[["payload1"]][disti,]
-                 res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
-                                dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
-                 state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-                 msg(res)
-               }
+               msg("click-to-select-yo **IGNORED**\n")
+               ## distThreshold <- 0.05
+               ## x <- input$click$x
+               ## y <- input$click$y
+               ## flagged <- state$flag == 3
+               ## if (input$plotChoice == "p(t)") {
+               ##   dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
+               ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+               ##   disti <- which.min(dist)
+               ##   d <- g[["payload1"]][disti,]
+               ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
+               ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure)
+               ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
+               ##   msg(res)
+               ## } else if (input$plotChoice == "TS") {
+               ##   dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+               ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+               ##   disti <- which.min(dist)
+               ##   d <- g[["payload1"]][disti,]
+               ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
+               ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
+               ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
+               ##   msg(res)
+               ## }
   })
 
   observeEvent(input$brush, {
@@ -445,8 +455,8 @@ server <- function(input, output) {
                msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
                msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
                msg("  count of flag==3: ", sum(state$flag==3), " (before)\n", sep="")
-               state$yoSelected <- NULL # brushing turns off yo selection
-               if (input$plotChoice == "pt") {
+               ## state$yoSelected <- NULL # brushing turns off yo selection
+               if (input$plotChoice == "p(t)") {
                  msg("  pt\n")
                  x <- as.numeric(g[["time"]])
                  y <- g[["pressure"]]
@@ -612,7 +622,7 @@ server <- function(input, output) {
       ##msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
       look <- !flagged & visible
 
-      if (input$plotChoice == "pt") {
+      if (input$plotChoice == "p(t)") {
         t <- g[["time"]][look]
         p <- g[["pressure"]][look]
         if (input$colorBy != "(none)") {
@@ -622,9 +632,7 @@ server <- function(input, output) {
                         type=input$plotType,
                         col=navStateColors(navState),
                         ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
-            nsc <- navStateCodes(g)
-            legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
-                   col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
+            navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
             drawPalette(colormap=cm, zlab=input$colorBy)
@@ -650,9 +658,7 @@ server <- function(input, output) {
             navState <- g[["navState"]][look]
             plotTS(gg, pch=pch, cex=cex, col=navStateColors(navState),
                    mar=c(3, 3, 2, 5.5), type=input$plotType)
-            nsc <- navStateCodes(g)
-            legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
-                   col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
+            navStateLegend()
           } else {
             cm <- colormap(gg[[input$colorBy]])
             drawPalette(colormap=cm, zlab=input$colorBy)
@@ -661,26 +667,35 @@ server <- function(input, output) {
         } else {
           plotTS(gg, pch=pch, cex=cex, type=input$plotType)
         }
-        if (input$focus == "mission" && !is.null(state$yoSelected)) {
-          yo <- g[["yo", state$yoSelected]]
-          visible <- yo[["navState"]] %in% input$navState
-          lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3)
-          points(yo[["SA"]][visible], yo[["CT"]][visible], pch=20, cex=1.4)
-          mtext(paste("line is yo ", state$yoSelected))
-        }
+        ## if (input$focus == "mission" && !is.null(state$yoSelected)) {
+        ##   yo <- g[["yo", state$yoSelected]]
+        ##   visible <- yo[["navState"]] %in% input$navState
+        ##   lines(yo[["SA"]][visible], yo[["CT"]][visible], lwd=3)
+        ##   points(yo[["SA"]][visible], yo[["CT"]][visible], pch=20, cex=1.4)
+        ##   mtext(paste("line is yo ", state$yoSelected))
+        ## }
         plotExists <<- TRUE
       } else if (input$plotChoice == "S profile") {
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
-          cm <- colormap(gg[[input$colorBy]])
-          drawPalette(colormap=cm, zlab=input$colorBy)
           omar <- par("mar")
-          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-          plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-               xlab=resizableLabel("absolute salinity"),
-               ylab=resizableLabel("p"))
+          if (input$colorBy == "navState") {
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+            plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex, col=navStateColors(gg[["navState"]]),
+                 xlab=resizableLabel("absolute salinity"),
+                 ylab=resizableLabel("p"))
+            navStateLegend()
+          } else {
+            cm <- colormap(gg[[input$colorBy]])
+            drawPalette(colormap=cm, zlab=input$colorBy)
+            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
+                 xlab=resizableLabel("absolute salinity"),
+                 ylab=resizableLabel("p"))
+          }
           par(mar=omar)
         } else {
           plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
@@ -692,14 +707,23 @@ server <- function(input, output) {
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
-          cm <- colormap(gg[[input$colorBy]])
-          drawPalette(colormap=cm, zlab=input$colorBy)
           omar <- par("mar")
-          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-          plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-               xlab=resizableLabel("conservative temperature"),
-               ylab=resizableLabel("p"))
+          if (input$colorBy == "navState") {
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+            plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex, col=navStateColors(gg[["navState"]]),
+                 xlab=resizableLabel("conservative temperature"),
+                 ylab=resizableLabel("p"))
+            navStateLegend()
+          } else {
+            cm <- colormap(gg[[input$colorBy]])
+            drawPalette(colormap=cm, zlab=input$colorBy)
+            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
+                 xlab=resizableLabel("conservative temperature"),
+                 ylab=resizableLabel("p"))
+          }
           par(mar=omar)
         } else {
           plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
@@ -711,14 +735,24 @@ server <- function(input, output) {
         gg <- g
         gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
         if (input$colorBy != "(none)") {
-          cm <- colormap(gg[[input$colorBy]])
-          drawPalette(colormap=cm, zlab=input$colorBy)
           omar <- par("mar")
-          par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-          plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               type=input$plotType, pch=pch, cex=cex,
-               xlab=resizableLabel("sigma0"),
-               ylab=resizableLabel("p"))
+          if (input$colorBy == "navState") {
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+            plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex, col=navStateColors(gg[["navState"]]),
+                 xlab=resizableLabel("sigma0"),
+                 ylab=resizableLabel("p"))
+            navStateLegend()
+          } else {
+            cm <- colormap(gg[[input$colorBy]])
+            drawPalette(colormap=cm, zlab=input$colorBy)
+            omar <- par("mar")
+            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+                 type=input$plotType, pch=pch, cex=cex,
+                 xlab=resizableLabel("sigma0"),
+                 ylab=resizableLabel("p"))
+          }
           par(mar=omar)
         } else {
           plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
@@ -734,18 +768,18 @@ server <- function(input, output) {
         hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
         msg("summary(SA):", summary(SA), "\n")
         msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
-      } else if (input$plotChoice == "yo") {
-        yo <- g[["yoNumber"]]
-        look <- yo == state$yoSelected
-        visible <- g[["navState"]] %in% input$navState
-        yoData <- g[["payload1"]][look & visible, ]
-        ctd <- with(yoData, as.ctd(salinity=salinity, temperature=temperature, pressure=pressure, longitude=longitude, latitude=latitude))
-        par(mfrow=c(2, 2))
-        plotProfile(ctd, xtype="salinity+temperature", type=input$plotType, pch=20, cex=3/4)
-        plotProfile(ctd, xtype="density", type=input$plotType, pch=20, cex=3/4)
-        plotTS(ctd, type=input$plotType, pch=20, cex=3/4)
-        plotScan(ctd, type=input$plotType, pch=20, cex=3/4)
-        par(mfrow=c(1, 1)) # return to normal state
+      ## } else if (input$plotChoice == "yo") {
+      ##   yo <- g[["yoNumber"]]
+      ##   look <- yo == state$yoSelected
+      ##   visible <- g[["navState"]] %in% input$navState
+      ##   yoData <- g[["payload1"]][look & visible, ]
+      ##   ctd <- with(yoData, as.ctd(salinity=salinity, temperature=temperature, pressure=pressure, longitude=longitude, latitude=latitude))
+      ##   par(mfrow=c(2, 2))
+      ##   plotProfile(ctd, xtype="salinity+temperature", type=input$plotType, pch=20, cex=3/4)
+      ##   plotProfile(ctd, xtype="density", type=input$plotType, pch=20, cex=3/4)
+      ##   plotTS(ctd, type=input$plotType, pch=20, cex=3/4)
+      ##   plotScan(ctd, type=input$plotType, pch=20, cex=3/4)
+      ##   par(mfrow=c(1, 1)) # return to normal state
       }
       plotExists <<- TRUE
       state$usr <<- par("usr")
