@@ -877,7 +877,7 @@ server <- function(input, output) {
     } else {
       state$usr <<- NULL
     }
-  }) # renderPlot
+  }, type="Xlib") # renderPlot. (The Xlib is to try to speed up.)
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
 
   output$despikePressure <- renderUI({
