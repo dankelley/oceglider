@@ -43,7 +43,7 @@ navStateColors <- function(navState)
   res[navState == 116] <- "red"        # at_surface
   res[navState == 117] <- "green"      # ascending
   res[navState == 118] <- "blue"       # inflecting_upwards
-  res
+  as.factor(res)
 }
 
 navStateLegend <- function()
@@ -554,7 +554,7 @@ server <- function(input, output) {
                g@data$payload1[["CT"]] <<- g[["CT"]]
                g@data$payload1[["sigma0"]] <<- g[["sigma0"]]
                g@data$payload1[["spiciness"]] <<- g[["spiciness"]]
-               g@data$payload1[["distance"]] <<- geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
+               g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
