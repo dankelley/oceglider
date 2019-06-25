@@ -4,9 +4,15 @@
 debug <- "Yes"
 version <- "0.1.1"
 pressureThreshold <- 0.5
-pch <- 1
-pch <- "." # 1
-cex <- 5 # 0.75
+## Circles for points look nice, but they are 5X to 10X slower than dots.
+## NOTE: we could add pulldown menus for pch and cex, at the expense of some interface space.
+if (FALSE) {
+  pch <- 1
+  cex <- 0.75
+} else {
+  pch <- "."
+  cex <- 2
+}
 
 library(shiny)
 ##library(shinythemes)
@@ -35,15 +41,17 @@ for (glider in gliders) {
 navStateColors <- function(navState)
 {
   n <- length(navState)
-  res <- rep("-", length=n)            # will create an error for an unknown navState
-  res[navState == 100] <- "pink"       # descending
-  res[navState == 105] <- "black"      # not_navigating
-  res[navState == 110] <- "gold"       # inflecting_upwards
-  res[navState == 115] <- "purple"     # surfacing
-  res[navState == 116] <- "red"        # at_surface
-  res[navState == 117] <- "green"      # ascending
-  res[navState == 118] <- "blue"       # inflecting_upwards
-  as.factor(res)
+  res <- rep(0L, length=n)             # will create an error for an unknown navState
+  res[navState == 100] <- 1L           # descending
+  res[navState == 105] <- 7L           # not_navigating
+  res[navState == 110] <- 2L           # inflecting_upwards
+  res[navState == 115] <- 3L           # surfacing
+  res[navState == 116] <- 4L           # at_surface
+  res[navState == 117] <- 5L           # ascending
+  res[navState == 118] <- 6L           # inflecting_upwards
+  if (any(res == 0))
+    stop("a navState is not in the allowed list of 100, 105, 110, 115, 116, 117 or 118")
+  res
 }
 
 navStateLegend <- function()
@@ -72,7 +80,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                 uiOutput(outputId="glider"),
                                 uiOutput(outputId="mission"),
                                 uiOutput(outputId="read")),
-                         column(3,
+                         column(2,
                                 ##h5("Continue previous analysis"),
                                 uiOutput(outputId="listRda"),
                                 uiOutput(outputId="loadRda"),
@@ -647,7 +655,7 @@ server <- function(input, output) {
                           col=gg[["navStateColor"]],
                           ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
             })
-            msg("p(t) plot (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
+            msg("p(t) plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
@@ -660,7 +668,7 @@ server <- function(input, output) {
                           col=cm$zcol,
                           ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
             })
-            msg("p(t) plot (coloured by ", input$colorBy, ") took time ", paste(timing, collapse=" "), sep="")
+            msg("p(t) plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
             par(mar=omar)
           }
         } else {
@@ -669,7 +677,7 @@ server <- function(input, output) {
                         type=input$plotType,
                         ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
           })
-          msg("p(t) plot (not coloured) took time ", paste(timing, collapse=" "), sep="")
+          msg("p(t) plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "C(t)") {
@@ -759,14 +767,14 @@ server <- function(input, output) {
               timing <- system.time({
                 plot(x, y, col=cm$zcol, cex=cex, pch=pch)
               })
-              msg("plot() with ", n, " random points) took time ", paste(timing, collapse=" "), sep="")
+              msg("plot() with ", n, " random points) took elapsed time ", timing[3], "s\n", sep="")
             } else {
               ## Actual plot
               timing <- system.time({
                 plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
                        mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
               })
-              msg("plotTS (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
+              msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             }
             navStateLegend()
           } else {
@@ -775,13 +783,13 @@ server <- function(input, output) {
             timing <- system.time({
               plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
             })
-            msg("plotTS (coloured by ", input$colorBy, ") took time ", paste(timing, collapse=" "), sep="")
+            msg("plotTS (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
         } else {
           timing <- system.time({
             plotTS(gg, pch=pch, cex=cex, type=input$plotType)
           })
-          msg("plotTS (with no colours) took time ", paste(timing, collapse=" "), sep="")
+          msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "S profile") {
@@ -888,9 +896,12 @@ server <- function(input, output) {
     } else {
       state$usr <<- NULL
     }
-  ##}) # renderPlot. (The Xlib is to try to speed up.)
-  ##}, type="Xlib", antialias="none") # renderPlot. (The Xlib is to try to speed up.)
-  }, type="Xlib") # renderPlot. (The Xlib is to try to speed up.)
+    ##}) # renderPlot. (The Xlib is to try to speed up.)
+    ##}, type="Xlib", antialias="none") # renderPlot. (The Xlib is to try to speed up.)
+    ## png("c.png",type="cairo",antialias="none", res=300, width=7, height=7, units='in')
+  }, type="cairo", antialias="none", res=200, pointsize=5) # renderPlot.
+  ## g21 m51 TS/latitude res=200 takes ??1.9s elapsed time (DK home machine)
+  ## g21 m51 TS/latitude res=100 takes 1.9s elapsed time (DK home machine)
 
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
 
