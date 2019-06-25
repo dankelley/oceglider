@@ -6,7 +6,7 @@ version <- "0.1.1"
 pressureThreshold <- 0.5
 pch <- 1
 pch <- "." # 1
-cex <- 3 # 0.75
+cex <- 5 # 0.75
 
 library(shiny)
 ##library(shinythemes)
@@ -24,16 +24,16 @@ for (glider in gliders) {
   missions[glider] <- list(list.files(paste(basedir, glider, "Data", sep="/")))
 }
 
+## use str(navStateCodes("seaexplorer")) to see codes
+## descending          : num 100
+## not_navigating      : num 105
+## inflecting_downwards: num 110
+## surfacing           : num 115
+## at_surface          : num 116
+## ascending           : num 117
+## inflecting_upwards  : num 118
 navStateColors <- function(navState)
 {
-  ## use str(navStateCodes("seaexplorer")) to see codes
-  ## descending          : num 100
-  ## not_navigating      : num 105
-  ## inflecting_downwards: num 110
-  ## surfacing           : num 115
-  ## at_surface          : num 116
-  ## ascending           : num 117
-  ## inflecting_upwards  : num 118
   n <- length(navState)
   res <- rep("-", length=n)            # will create an error for an unknown navState
   res[navState == 100] <- "pink"       # descending
@@ -93,17 +93,20 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                 conditionalPanel(condition="input.focus == 'yo'",
                                                  uiOutput(outputId="previousYo")),
                                 conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="nextYo")))
-                         ),
-                fluidRow(uiOutput(outputId="navState"),
-                         uiOutput(outputId="despikePressure")),
-                fluidRow(uiOutput(outputId="status")),
-                fluidRow(plotOutput("plot",
-                                    hover="hover",
-                                    click="click",
-                                    width="100%",
-                                    height="600px",
-                                    brush=brushOpts(id="brush", resetOnNew=!TRUE))))
+                                                 uiOutput(outputId="nextYo")))),
+                fluidRow(conditionalPanel(condition="output.gliderExists",
+                                          uiOutput(outputId="navState")),
+                         conditionalPanel(condition="output.gliderExists",
+                                          uiOutput(outputId="despikePressure"))),
+                fluidRow(conditionalPanel(condition="output.gliderExists",
+                                          uiOutput(outputId="status"))),
+                fluidRow(conditionalPanel(condition="output.gliderExists",
+                                          plotOutput("plot",
+                                                     hover="hover",
+                                                     click="click",
+                                                     width="100%",
+                                                     height="600px",
+                                                     brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
 
 
 server <- function(input, output) {
@@ -228,7 +231,7 @@ server <- function(input, output) {
   }
 
   rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    tolower(paste0(varName(), "_", format(presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
+    tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
   }
 
   output$gliderExists <- reactive({
@@ -266,7 +269,7 @@ server <- function(input, output) {
   })
 
   output$loadRda <- renderUI({
-    msg("output$loadRda\n")
+    ##msg("output$loadRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
       actionButton(inputId="loadRdaAction", label="Load previous")#h5(paste0("Load ", rda)))
@@ -274,13 +277,13 @@ server <- function(input, output) {
   })
 
   output$saveRda <- renderUI({
-    msg("output$saveRda\n")
+    ##msg("output$saveRda\n")
     ## hr()
     actionButton(inputId="saveRda", label="Save")
   })
 
   output$focus <- renderUI({
-    msg("output$focus\n")
+    ##msg("output$focus\n")
     selectInput(inputId="focus",
                 label="Focus",
                 choices=c("mission", "yo"),
@@ -301,8 +304,8 @@ server <- function(input, output) {
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
                 label="Colour by",
-                choices=c("latitude", "longitude", "pressure", "temperature", "salinity", "navState", "(none)"),
-                selected="latitude")
+                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "navState", "(none)"),
+                selected="distance")
   })
 
   output$focusYo <- renderUI({
@@ -539,13 +542,11 @@ server <- function(input, output) {
   observeEvent(input$readData, {
                msg("readData...\n")
                dir <- dataName()
-               msg("  about to read '", dir, "' .", sep="")
-               tmp <- try(read.glider.seaexplorer.delayed(dir))
-               if (inherits(tmp, "try-error")) {
-                 msg(" no data FIXME: put up a dialog box\n")
+               msg("  about to read files in the '", dir, "' directory\n", sep="")
+               g <<- try(read.glider.seaexplorer.delayed(dir))
+               if (inherits(g, "try-error")) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                } else {
-                 g <<- tmp
                  state$flag <- rep(1, length(g[["pressure"]]))
                  showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
                }
@@ -553,6 +554,7 @@ server <- function(input, output) {
                g@data$payload1[["CT"]] <<- g[["CT"]]
                g@data$payload1[["sigma0"]] <<- g[["sigma0"]]
                g@data$payload1[["spiciness"]] <<- g[["spiciness"]]
+               g@data$payload1[["distance"]] <<- geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
@@ -639,26 +641,35 @@ server <- function(input, output) {
         p <- gg[["pressure"]]
         if (input$colorBy != "(none)") {
           if (input$colorBy == "navState") {
-            oce.plot.ts(t, p,
-                        type=input$plotType,
-                        col=gg[["navStateColor"]],
-                        ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+            timing <- system.time({
+              oce.plot.ts(t, p,
+                          type=input$plotType,
+                          col=gg[["navStateColor"]],
+                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+            })
+            msg("p(t) plot (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
             drawPalette(colormap=cm, zlab=input$colorBy)
             omar <- par("mar")
             par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            oce.plot.ts(t, p,
-                        type=input$plotType,
-                        col=cm$zcol,
-                        ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+            timing <- system.time({
+              oce.plot.ts(t, p,
+                          type=input$plotType,
+                          col=cm$zcol,
+                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+            })
+            msg("p(t) plot (coloured by ", input$colorBy, ") took time ", paste(timing, collapse=" "), sep="")
             par(mar=omar)
           }
         } else {
-          oce.plot.ts(t, p,
-                      type=input$plotType,
-                      ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+          timing <- system.time({
+            oce.plot.ts(t, p,
+                        type=input$plotType,
+                        ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+          })
+          msg("p(t) plot (not coloured) took time ", paste(timing, collapse=" "), sep="")
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "C(t)") {
@@ -753,7 +764,7 @@ server <- function(input, output) {
               ## Actual plot
               timing <- system.time({
                 plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                       mar=c(3, 3, 2, 5.5), type=input$plotType)
+                       mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
               })
               msg("plotTS (coloured by navState) took time ", paste(timing, collapse=" "), sep="")
             }
@@ -762,7 +773,7 @@ server <- function(input, output) {
             cm <- colormap(gg[[input$colorBy]])
             drawPalette(colormap=cm, zlab=input$colorBy)
             timing <- system.time({
-              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3, 3, 2, 5.5), type=input$plotType)
+              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
             })
             msg("plotTS (coloured by ", input$colorBy, ") took time ", paste(timing, collapse=" "), sep="")
           }
@@ -877,7 +888,10 @@ server <- function(input, output) {
     } else {
       state$usr <<- NULL
     }
+  ##}) # renderPlot. (The Xlib is to try to speed up.)
+  ##}, type="Xlib", antialias="none") # renderPlot. (The Xlib is to try to speed up.)
   }, type="Xlib") # renderPlot. (The Xlib is to try to speed up.)
+
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
 
   output$despikePressure <- renderUI({
