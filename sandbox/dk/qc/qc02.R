@@ -23,7 +23,7 @@ library(oceanglider)
 options(oceEOS="gsw")
 
 ## Discover available gliders and their mission
-basedir <- "/data/glider/delayedData/"
+basedir <- "/Users/kelley/Dropbox/data/glider/delayedData/"
 gliders <- list.files(basedir)
 missions <- list()
 for (glider in gliders) {
@@ -322,7 +322,8 @@ server <- function(input, output) {
 
   observeEvent(input$focusYo, {
                msg("'focusYo' text area altered\n")
-               state$focusYo <- as.numeric(input$focusYo)
+               if (nchar(input$focusYo) > 0)
+                 state$focusYo <- as.numeric(input$focusYo)
   })
 
   output$previousYo <- renderUI({
