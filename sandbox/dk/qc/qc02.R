@@ -4,6 +4,7 @@
 debug <- "Yes"
 version <- "0.1.1"
 pressureThreshold <- 0.5
+## Development Notes
 ## Circles for points look nice, but they are 5X to 10X slower than dots.
 ## NOTE: we could add pulldown menus for pch and cex, at the expense of some interface space.
 if (FALSE) {
@@ -23,7 +24,7 @@ library(oceanglider)
 options(oceEOS="gsw")
 
 ## Discover available gliders and their mission
-basedir <- "/Users/kelley/Dropbox/data/glider/delayedData/"
+basedir <- "~/Dropbox/data/glider/delayedData/"
 gliders <- list.files(basedir)
 missions <- list()
 for (glider in gliders) {
@@ -393,8 +394,12 @@ server <- function(input, output) {
         res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                        d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                        d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
-       } else if (input$plotChoice == "TS") {
+      } else if (input$plotChoice == "TS") {
         dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+        msg("state$usr=", paste(state$usr,collapse=" "), "\n")
+        msg("x=", x, ", y=", y, "\n")
+        msg("head(SA)==", paste(head(SA), collapse=" "), "\n")
+        msg("head(CT)==", paste(head(CT), collapse=" "), "\n")
         dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
         disti <- which.min(dist)
         d <- g[["payload1"]][disti,]
