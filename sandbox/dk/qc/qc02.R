@@ -138,7 +138,7 @@ server <- function(input, output) {
 
   edits <- list()
 
-  dataName <- function(basedir="/data/glider/delayedData") {
+  dataName <- function() {
     if (nchar(input$glider) && nchar(input$mission)) {
       ## Start with what seems to be the most common directory structure.
       ## /data/glider/delayedData/SEA019/Data/M28/Payload/logs/
@@ -799,29 +799,31 @@ server <- function(input, output) {
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "S profile") {
-        gg <- g
-        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
+        ## FIXME: decide if this direct-access scheme is preferable. I think it will save a lot of memory
+        ## FIXME: pressure, if done throughout.
+        x <- g@data$payload1[look, "SA"]
+        y <- g@data$payload1[look, "pressure"]
         if (input$colorBy != "(none)") {
           omar <- par("mar")
           if (input$colorBy == "navState") {
             par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-                 type=input$plotType, pch=pch, cex=cex, col=g[["navStateColor"]][look],
+            plot(x, y, ylim=rev(range(y)),
+                 type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
                  xlab=resizableLabel("absolute salinity"),
                  ylab=resizableLabel("p"))
             navStateLegend()
           } else {
-            cm <- colormap(gg[[input$colorBy]])
+            cm <- colormap(g@data$payload1[look, input$colorBy])
             drawPalette(colormap=cm, zlab=input$colorBy)
             par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+            plot(x, y, ylim=rev(range(y, na.rm=TRUE)),
                  type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
                  xlab=resizableLabel("absolute salinity"),
                  ylab=resizableLabel("p"))
           }
           par(mar=omar)
         } else {
-          plot(gg[["SA"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
+          plot(x, y, ylim=rev(range(y, na.rm=TRUE)),
                type=input$plotType, pch=pch, cex=cex,
                xlab=resizableLabel("absolute salinity"),
                ylab=resizableLabel("p"))
