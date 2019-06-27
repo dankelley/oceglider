@@ -14,6 +14,9 @@ if (FALSE) {
   pch <- "."
   cex <- 2
 }
+mgp <- c(2, 0.7, 0)
+marProfile <- c(1, 3, 3, 5.5)          # gives space on RHS for palette (even if not drawn)
+marPalette <- c(1, 3, 3, 1)            # be sure 2nd and 3rd values correspond to marProfile
 
 library(shiny)
 ##library(shinythemes)
@@ -302,7 +305,9 @@ server <- function(input, output) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
-                choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS", "S profile", "T profile", "density profile", "hist(C)", "hist(S)", "hist(p)"),
+                choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
+                          "S profile", "T profile", "density profile", "conductivity profile",
+                          "hist(C)", "hist(S)", "hist(p)"),
                 selected="p(t)")
   })
 
@@ -624,17 +629,17 @@ server <- function(input, output) {
 
       if (input$despikePressure) {
         p <- g[["pressure"]]
-        msg("calculating badPressure with pressureThreshold=", pressureThreshold, "\n")
-        msg("  head(p)=", paste(head(p), collapse=" "), "\n")
+        ##msg("calculating badPressure with pressureThreshold=", pressureThreshold, "\n")
+        ##msg("  head(p)=", paste(head(p), collapse=" "), "\n")
         badp <- is.na(p)
         if (any(badp))
           p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
         pressureShift <- abs(p - runmed(p, k=11))
-        msg("  head(pressureShift)=", paste(head(pressureShift), collapse=" "), "\n")
+        ##msg("  head(pressureShift)=", paste(head(pressureShift), collapse=" "), "\n")
         badPressure <- pressureShift > pressureThreshold
         if (any(badp))
           badPressure[badp] <- TRUE
-        msg("  head(badPressure)=", paste(head(badPressure), collapse=" "), "\n")
+        ##msg("  head(badPressure)=", paste(head(badPressure), collapse=" "), "\n")
       } else {
         badPressure <- rep(FALSE, n)
       }
@@ -665,17 +670,18 @@ server <- function(input, output) {
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
             drawPalette(colormap=cm, zlab=input$colorBy)
-            omar <- par("mar")
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            #omar <- par("mar")
+            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
             timing <- system.time({
               oce.plot.ts(t, p,
                           type=input$plotType,
                           col=cm$zcol,
-                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE, mar=par("mar"))
             })
             msg("p(t) plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
-            par(mar=omar)
+            #par(mar=omar)
           }
         } else {
           timing <- system.time({
@@ -697,13 +703,14 @@ server <- function(input, output) {
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
             drawPalette(colormap=cm, zlab=input$colorBy)
-            omar <- par("mar")
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            #omar <- par("mar")
+            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
             oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
                         ylab=resizableLabel("conductivity S/m"),
-                        col=cm$zcol)
-            par(mar=omar)
+                        col=cm$zcol, mar=par("mar"))
+            #par(mar=omar)
           }
         } else {
           oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
@@ -721,13 +728,14 @@ server <- function(input, output) {
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
             drawPalette(colormap=cm, zlab=input$colorBy)
-            omar <- par("mar")
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            #omar <- par("mar")
+            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
             oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
                         ylab=resizableLabel("absolute salinity"),
-                        col=cm$zcol)
-            par(mar=omar)
+                        col=cm$zcol, mar=par("mar"))
+            #par(mar=omar)
           }
         } else {
           oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
@@ -746,13 +754,14 @@ server <- function(input, output) {
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
             drawPalette(colormap=cm, zlab=input$colorBy)
-            omar <- par("mar")
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+            #omar <- par("mar")
+            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
             oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
                         col=cm$zcol,
-                        ylab=resizableLabel("conservative temperature"))
-            par(mar=omar)
+                        ylab=resizableLabel("conservative temperature"), mar=par("mar"))
+            #par(mar=omar)
           }
         } else {
           oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
@@ -778,16 +787,17 @@ server <- function(input, output) {
               ## Actual plot
               timing <- system.time({
                 plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                       mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
+                       mar=c(3, 3, 1, 1), type=input$plotType)
               })
               msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             }
             navStateLegend()
           } else {
             cm <- colormap(gg[[input$colorBy]])
+            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
             drawPalette(colormap=cm, zlab=input$colorBy)
             timing <- system.time({
-              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3.2, 3.2, 2, 5.5), type=input$plotType)
+              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3, 3, 1, 5.5), type=input$plotType)
             })
             msg("plotTS (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
@@ -798,93 +808,53 @@ server <- function(input, output) {
           msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
         }
         plotExists <<- TRUE
-      } else if (input$plotChoice == "S profile") {
-        ## FIXME: decide if this direct-access scheme is preferable. I think it will save a lot of memory
-        ## FIXME: pressure, if done throughout.
-        x <- g@data$payload1[look, "SA"]
+      } else if (length(grep(" profile$", input$plotChoice))) {
+        if ("S profile" == input$plotChoice) {
+          dataName <- "SA"
+          axisName <- "absolute salinity"
+        } else if ("T profile" == input$plotChoice) {
+          dataName <- "CT"
+          axisName <- "conservative temperature"
+        } else if ("density profile" == input$plotChoice) {
+          dataName <- "sigma0"
+          axisName <- "sigma0"
+        } else if ("conductivity profile" == input$plotChoice) {
+          dataName <- "conductivity"
+          axisName <- "conductivity S/m"
+        } else {
+          stop("programmer error: unhandled profile name '", input$plotChoice, "'")
+        }
+        x <- g@data$payload1[look, dataName]
         y <- g@data$payload1[look, "pressure"]
+        ylim <- rev(range(y, na.rm=TRUE))
+        omar <- par("mar")
         if (input$colorBy != "(none)") {
-          omar <- par("mar")
           if (input$colorBy == "navState") {
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            plot(x, y, ylim=rev(range(y)),
+            par(mar=marProfile, mgp=mgp)
+            plot(x, y, ylim=ylim,
                  type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
-                 xlab=resizableLabel("absolute salinity"),
-                 ylab=resizableLabel("p"))
-            navStateLegend()
+                 xlab="", ylab=resizableLabel("p"), axes=FALSE)
+            navStateLegend() # FIXME: put on RHS
           } else {
             cm <- colormap(g@data$payload1[look, input$colorBy])
+            par(mar=marPalette, mgp=mgp)
             drawPalette(colormap=cm, zlab=input$colorBy)
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            plot(x, y, ylim=rev(range(y, na.rm=TRUE)),
+            par(mar=marProfile, mgp=mgp)
+            plot(x, y, ylim=ylim,
                  type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-                 xlab=resizableLabel("absolute salinity"),
-                 ylab=resizableLabel("p"))
+                 xlab="", ylab=resizableLabel("p"), axes=FALSE)
           }
-          par(mar=omar)
         } else {
-          plot(x, y, ylim=rev(range(y, na.rm=TRUE)),
+          par(mar=marProfile, mgp=mgp)
+          plot(x, y, ylim=ylim,
                type=input$plotType, pch=pch, cex=cex,
-               xlab=resizableLabel("absolute salinity"),
-               ylab=resizableLabel("p"))
+               xlab="", ylab=resizableLabel("p"), axes=FALSE)
         }
-      } else if (input$plotChoice == "T profile") {
-        gg <- g
-        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
-        if (input$colorBy != "(none)") {
-          omar <- par("mar")
-          if (input$colorBy == "navState") {
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-                 type=input$plotType, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                 xlab=resizableLabel("conservative temperature"),
-                 ylab=resizableLabel("p"))
-            navStateLegend()
-          } else {
-            cm <- colormap(gg[[input$colorBy]])
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-                 type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-                 xlab=resizableLabel("conservative temperature"),
-                 ylab=resizableLabel("p"))
-          }
-          par(mar=omar)
-        } else {
-          plot(gg[["CT"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               type=input$plotType, pch=pch, cex=cex,
-               xlab=resizableLabel("conservative temperature"),
-               ylab=resizableLabel("p"))
-        }
-      } else if (input$plotChoice == "density profile") {
-        gg <- g
-        gg@data$payload1 <- g@data$payload1[!flagged & visible,] # FIXME: use subset() instead?
-        if (input$colorBy != "(none)") {
-          omar <- par("mar")
-          if (input$colorBy == "navState") {
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-                 type=input$plotType, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                 xlab=resizableLabel("sigma0"),
-                 ylab=resizableLabel("p"))
-            navStateLegend()
-          } else {
-            cm <- colormap(gg[[input$colorBy]])
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            omar <- par("mar")
-            par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-                 type=input$plotType, pch=pch, cex=cex,
-                 xlab=resizableLabel("sigma0"),
-                 ylab=resizableLabel("p"))
-          }
-          par(mar=omar)
-        } else {
-          plot(gg[["sigma0"]], gg[["pressure"]], ylim=rev(range(gg[["pressure"]])),
-               type=input$plotType, pch=pch, cex=cex,
-               xlab=resizableLabel("sigma0"),
-               ylab=resizableLabel("p"))
-        }
+        box()
+        axis(2)
+        axis(3)
+        mtext(resizableLabel(axisName), side=3, line=2)
+        par(mar=omar)
       } else if (input$plotChoice == "hist(p)") {
         p <- g[["pressure"]]
         hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
