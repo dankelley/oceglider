@@ -19,8 +19,9 @@ only included for similarity with
 \code{\link{read.glider.seaexplorer.delayed}}.}
 
 \item{progressBar}{A logical indicating whether to show progress
-bars while reading the data. Can be useful when reading full
-datasets.}
+bars while reading the data, which can be useful when reading full
+datasets on slow machines. The default is to show the progress bar
+only in interactive mode.}
 
 \item{missingValue}{A value that indicates missing data; all
 values that match this are set to \code{NA}.}

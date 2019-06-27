@@ -473,7 +473,8 @@ setMethod(f="subset",
                       keepYo <- eval(substitute(subset), list(yolength=thisYolength))
                       ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
                       res <- x
-                      res@metadata$yo <- x@metadata$yo[keepYo]
+                      ##44 https://github.com/dankelley/oceanglider/issues/44
+                      ##44 res@metadata$yo <- x@metadata$yo[keepYo]
                       keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
                       ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
                       ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
@@ -581,8 +582,8 @@ setMethod(f="subset",
 #' \code{\link[gsw]{gsw_spiciness0}}, based on the water properties
 #' stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 #'
-#' \item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
-#' yo.
+#' \item glider object containing just the data for a particular yo,
+#' e.g. \code{x[["yo",1]]} yields the first yo.
 #'
 #'}
 #'
@@ -616,6 +617,14 @@ setMethod(f="[[",
                   return(x@data)
               else if (i == "metadata")
                   return(x@metadata)
+              else if (i == "yo" && !missing(j)) { # NOTE: not 'yoNumber'
+                  lines <- which(x@data$payload1$yoNumber == j)
+                  x@data$payload1 <- x@data$payload1[lines, ]
+                  for (f in names(x@metadata$flags$payload1)) {
+                      x@metadata$flags$payload1[[f]] <- x@metadata$flags$payload1[[f]][lines]
+                  }
+                  return(x)
+              }
               type <- x@metadata$type
               if (is.null(type))
                   stop("'type' is NULL")
@@ -665,8 +674,6 @@ setMethod(f="[[",
                   return(x@data$glider)
               if (i == "payload")
                   return(x@data$payload)
-              if (i == "yo")
-                  return(x@metadata$yo)
               if (missing(j)) {
                   ##. message("j is missing")
                   if (i %in% names(x@metadata)) {
@@ -685,15 +692,17 @@ setMethod(f="[[",
                   }
               }
               ##. message("j is not missing. j='", j, "'")
-              if (j == "glider")
-                  return(x@data$glider)
-              if (j == "payload")
-                  return(x@data$payload1)
-              if (j == "payload1")
-                  return(x@data$payload1)
-              if (j == "payload2")
-                  return(x@data$payload2)
-              stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+              ## if (j == "glider")
+              ##     return(x@data$glider)
+              ## if (j == "payload")
+              ##     return(x@data$payload1)
+              ## if (j == "payload1")
+              ##     return(x@data$payload1)
+              ## if (j == "payload2")
+              ##     return(x@data$payload2)
+              ## stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+              warning("[[", i, ",", j, "]] not understood, so returning NULL", sep="")
+              return(NULL)
           })
 
 #' Plot a glider Object
@@ -894,12 +903,13 @@ setMethod(f="summary",
               cat("* Type:    ", type, "\n", sep="")
               if ("subtype" %in% metadataNames)
                   cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
-              nyo <- length(object@metadata$yo)
-              if (nyo == 1)
-                  cat(sprintf("* Yo:      %d\n", object@metadata$yo))
-              else if (nyo > 1)
-                  cat(sprintf("* Yo:      %d values, between %d and %d\n",
-                              nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
+              ##44 https://github.com/dankelley/oceanglider/issues/44
+              ##44 nyo <- length(object@metadata$yo)
+              ##44 if (nyo == 1)
+              ##44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))
+              ##44 else if (nyo > 1)
+              ##44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
+              ##44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
               for (streamName in names(object@data)) {
                   stream <- object@data[[streamName]]
                   ## order names alphabetically (easier with long lists of unfamiliar names)

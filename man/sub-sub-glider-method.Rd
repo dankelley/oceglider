@@ -95,8 +95,8 @@ or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
 \code{\link[gsw]{gsw_spiciness0}}, based on the water properties
 stoed in the object. (Note that this is the TEOS-10/GSW variant.)
 
-\item data for a given yo, with e.g. \code{x[["yo", 1]]} for the first
-yo.
+\item glider object containing just the data for a particular yo,
+e.g. \code{x[["yo",1]]} yields the first yo.
 
 }
 }
