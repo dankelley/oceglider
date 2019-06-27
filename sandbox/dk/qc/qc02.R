@@ -316,7 +316,7 @@ server <- function(input, output) {
     selectInput(inputId="plotChoice",
                 label="Plot",
                 choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
-                          "S profile", "T profile", "density profile", "conductivity profile",
+                          "S profile", "T profile", "density profile", "C profile",
                           "hist(C)", "hist(S)", "hist(p)"),
                 selected="p(t)")
   })
@@ -828,7 +828,7 @@ server <- function(input, output) {
         } else if ("density profile" == input$plotChoice) {
           dataName <- "sigma0"
           axisName <- "sigma0"
-        } else if ("conductivity profile" == input$plotChoice) {
+        } else if ("C profile" == input$plotChoice) {
           dataName <- "conductivity"
           axisName <- "conductivity S/m"
         } else {
