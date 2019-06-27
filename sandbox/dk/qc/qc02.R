@@ -60,9 +60,19 @@ navStateColors <- function(navState)
 
 navStateLegend <- function()
 {
-  nsc <- navStateCodes("seaexplorer")
-  legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
-         col=navStateColors(nsc), legend=names(nsc), ncol=length(nsc))
+  codes <- navStateCodes("seaexplorer")
+  ## legend("top", pch=20, bg="transparent", x.intersp=0.5, cex=0.8, pt.cex=1.5,
+  ##        col=navStateColors(codes), legend=names(codes), ncol=length(codes))
+  usr <- par("usr")
+  x <- usr[2] + 0.01*(usr[2]-usr[1])
+  dy <- (usr[4]-usr[3])/(1+length(codes))
+  y <- usr[3] + dy/2
+  for (icode in seq_along(codes)) {
+    cat(file=stderr(), "code=", codes[[icode]], " (", names(codes)[icode], "), x=", x, ", y=", y, ", dy=", dy, "\n")
+    points(x, y, pch=21, cex=1.4, bg=navStateColors(codes[icode]), xpd=NA)
+    text(x, y, names(codes)[icode], xpd=NA, pos=4, cex=0.75, srt=60)
+    y <- y + dy
+  }
 }
 
 var <- list()
