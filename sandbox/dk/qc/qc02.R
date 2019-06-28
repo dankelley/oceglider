@@ -15,10 +15,14 @@ if (FALSE) {
   cex <- 2
 }
 mgp <- c(2, 0.7, 0)
-marPalette <- c(3, 3, 1, 1)            # used before drawing palettes
-marProfile <- c(1, 3, 3, 5.5)          # gives space on RHS for palette (even if not drawn)
-marTS <- c(3, 3, 1, 5.5)               # gives space on RHS for palette (even if not drawn)
-marPalette <- c(1, 3, 3, 1)            # be sure 2nd and 3rd values correspond to marProfile
+fullmar <- 3                           # space for margins with axes in them
+## In the next sequence, note that the palette values have to match main values in 1st and 3rd arg
+marPaletteProfile <- c(1, 1, fullmar, 1)
+marProfile <- c(1, fullmar, fullmar, fullmar+2.5)
+marPaletteTimeseries <- c(fullmar, 1, 1 , 1)
+marTimeseries <- c(fullmar, fullmar, 1, fullmar+2.5)
+marPaletteTS <- c(fullmar, 1, 1, 1)
+marTS <- c(fullmar, fullmar, 1, fullmar+2.5)
 
 library(shiny)
 ##library(shinythemes)
@@ -697,118 +701,66 @@ server <- function(input, output) {
       look <- !flagged & visible
       gg <- g
       gg@data$payload1 <- g@data$payload1[look, ]
-
-      if (input$plotChoice == "p(t)") {
-        t <- gg[["time"]]
-        p <- gg[["pressure"]]
+      msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
+      if (length(grep("\\(t\\)$", input$plotChoice))) {
+        msg("* a time-series plot (input$plotChoice is '", input$plotChoice, "')\n", sep="")
+        if (input$plotChoice == "p(t)") {
+          dataName <- "pressure"
+          axisName <- "p"
+        } else if (input$plotChoice == "C(t)") {
+          dataName <- "conductivity"
+          axisName <- "conductivity S/m"
+        } else if (input$plotChoice == "S(t)") {
+          dataName <- "SA"
+          axisName <- "absolute salinity"
+        } else if (input$plotChoice == "T(t)") {
+          dataName <- "CT"
+          axisName <- "conservative temperature"
+        } else {
+          stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
+        }
+        x <- g@data$payload1[look, "time"]
+        y <- g@data$payload1[look, dataName]
+        msg("time-seris plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
+        msg("time-seris plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
+        ylim <- range(y, na.rm=TRUE)
+        if (input$plotChoice == "p(t)") 
+          ylim <- rev(ylim)
+        ylab <- resizableLabel(axisName)
         if (input$colorBy != "(none)") {
           if (input$colorBy == "navState") {
             timing <- system.time({
-              oce.plot.ts(t, p,
+              oce.plot.ts(x, y,
                           type=input$plotType,
                           col=gg[["navStateColor"]],
-                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
+                          mar=marTimeseries,
+                          ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
             })
-            msg("p(t) plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+            msg(dataName, "time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+            par(mar=marPaletteTimeseries, mgp=mgp)
             drawPalette(colormap=cm, zlab=input$colorBy)
-            #omar <- par("mar")
-            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+                                        #omar <- par("mar")
+                                        #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
             timing <- system.time({
-              oce.plot.ts(t, p,
+              oce.plot.ts(x, y,
                           type=input$plotType,
                           col=cm$zcol,
-                          ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE, mar=par("mar"))
+                          mar=marTimeseries,
+                          ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
             })
-            msg("p(t) plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
-            #par(mar=omar)
+            msg(input$plotType, "time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
         } else {
           timing <- system.time({
-            oce.plot.ts(t, p,
-                        type=input$plotType,
-                        ylab="Pressure [dbar]", pch=pch, cex=cex, flipy=TRUE)
-          })
-          msg("p(t) plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
-        }
-        plotExists <<- TRUE
-      } else if (input$plotChoice == "C(t)") {
-        x <- g[["time"]][look]
-        y <- g[["conductivity"]][look]
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
-            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                        ylab=resizableLabel("conductivity S/m"),
-                        col=g[["navStateColor"]][look])
-            navStateLegend()
-          } else {
-            cm <- colormap(g[[input$colorBy]][look])
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            #omar <- par("mar")
-            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                        ylab=resizableLabel("conductivity S/m"),
-                        col=cm$zcol, mar=par("mar"))
-            #par(mar=omar)
-          }
-        } else {
-          oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                      ylab=resizableLabel("conductivity S/m"))
-        }
-        plotExists <<- TRUE
-      } else if (input$plotChoice == "S(t)") {
-        x <- g[["time"]][look]
-        y <- g[["SA"]][look]
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
-            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                        ylab=resizableLabel("absolute salinity"),
-                        col=g[["navStateColor"]][look])
-            navStateLegend()
-          } else {
-            cm <- colormap(g[[input$colorBy]][look])
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            #omar <- par("mar")
-            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                        ylab=resizableLabel("absolute salinity"),
-                        col=cm$zcol, mar=par("mar"))
-            #par(mar=omar)
-          }
-        } else {
-          oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                      ylab=resizableLabel("absolute salinity"))
-        }
-        plotExists <<- TRUE
-      } else if (input$plotChoice == "T(t)") {
-        x <- g[["time"]][look]
-        y <- g[["CT"]][look]
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
             oce.plot.ts(x, y,
-                        type=input$plotType, pch=pch, cex=cex,
-                        col=g[["navStateColor"]][look],
-                        ylab=resizableLabel("conservative temperature"))
-            navStateLegend()
-          } else {
-            cm <- colormap(g[[input$colorBy]][look])
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            #omar <- par("mar")
-            #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-            oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                        col=cm$zcol,
-                        ylab=resizableLabel("conservative temperature"), mar=par("mar"))
-            #par(mar=omar)
-          }
-        } else {
-          oce.plot.ts(x, y, type=input$plotType, pch=pch, cex=cex,
-                      ylab=resizableLabel("conservative temperature"))
+                        type=input$plotType,
+                        mar=marTimeseries,
+                        ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
+          })
+          msg(input$plotType,"time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "TS") {
@@ -837,7 +789,7 @@ server <- function(input, output) {
             navStateLegend()
           } else {
             cm <- colormap(gg[[input$colorBy]])
-            par(mar=marPalette, mgp=mgp)
+            par(mar=marPaletteTS, mgp=mgp)
             drawPalette(colormap=cm, zlab=input$colorBy)
             timing <- system.time({
               plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=marTS, type=input$plotType)
@@ -880,7 +832,7 @@ server <- function(input, output) {
             navStateLegend() # FIXME: put on RHS
           } else {
             cm <- colormap(g@data$payload1[look, input$colorBy])
-            par(mar=marPalette, mgp=mgp)
+            par(mar=marPaletteProfile, mgp=mgp)
             drawPalette(colormap=cm, zlab=input$colorBy)
             par(mar=marProfile, mgp=mgp)
             plot(x, y, ylim=ylim,
