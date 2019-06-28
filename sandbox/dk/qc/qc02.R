@@ -119,7 +119,7 @@ SA <- NULL
 CT <- NULL
 p <- NULL
 t <- NULL
-maxYo <- 0
+maxYo <- NULL
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
                 fluidRow(column(2, radioButtons("debug", "Debug", choices=c("Yes", "No"), selected="Yes", inline=TRUE)),
@@ -168,7 +168,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   msg <- function(...) {
     if (debug == "Yes")
       cat(file=stderr(), ...)
@@ -177,7 +177,7 @@ server <- function(input, output) {
 
   plotExists <- FALSE
   ##state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
-  state <- reactiveValues(rda="", flag=NULL, focusYo="1", gliderExists=FALSE, usr=NULL)
+  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -370,13 +370,32 @@ server <- function(input, output) {
   })
 
   output$focusYo <- renderUI({
-    textInput("focusYo", "Yo number", value=if (is.null(state$focusYo)) "1" else state$focusYo)
+    if (is.null(maxYo)) {
+      numericInput("focusYo",
+                   "Yo number",
+                   value=if (is.null(state$focusYo)) "1" else state$focusYo)
+    } else {
+      numericInput("focusYo",
+                   paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
+                   value=if (is.null(state$focusYo)) "1" else state$focusYo)
+      #, min=1, max=maxYo, step=NA)
+    }
   })
 
   observeEvent(input$focusYo, {
-               msg("'focusYo' text area altered\n")
-               if (nchar(input$focusYo) > 0)
-                 state$focusYo <- as.numeric(input$focusYo)
+               msg("'focusYo' text area altered; note: input$focusYo=", input$focusYo, ", maxYo=", maxYo, "\n")
+               if (!is.null(input$focusYo) && !is.null(maxYo)) {
+                 fy <- input$focusYo
+                 if (is.finite(fy)) {
+                   if (fy > maxYo) {
+                     updateNumericInput(session, "focusYo", value=maxYo)
+                   } else if (fy < 1) {
+                     updateNumericInput(session, "focusYo", value=1)
+                   } else {
+                     state$focusYo <<- fy
+                   }
+                 }
+               }
   })
 
   output$previousYo <- renderUI({
@@ -396,7 +415,7 @@ server <- function(input, output) {
   })
 
   observeEvent(input$nextYo, {
-               msg("'Next Yo' button clicked; state$focusYo=", state$focusYo, "\n")
+               #msg("'Next Yo' button clicked; state$focusYo=", state$focusYo, ", maxYo=", maxYo, "\n")
                if (state$focusYo < maxYo)
                  state$focusYo <<- state$focusYo + 1
   })
@@ -624,8 +643,10 @@ server <- function(input, output) {
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+               maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
                msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
+               msg("maxYo=", maxYo, " after reading raw data\n")
   })
 
   observeEvent(input$loadRdaAction, {
@@ -638,10 +659,11 @@ server <- function(input, output) {
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
-               maxYo <<- max(g[["yoNumber"]])
+               maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$flag <- g[["pressureFlag"]]
                msg(". done\n")
+               msg("maxYo=", maxYo, " after loading rda\n")
                state$rda <- filename
                state$gliderExists <- TRUE
                ##showModal(modalDialog("", "Loading of previous analysis is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
@@ -721,8 +743,8 @@ server <- function(input, output) {
         }
         x <- g@data$payload1[look, "time"]
         y <- g@data$payload1[look, dataName]
-        msg("time-seris plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
-        msg("time-seris plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
+        msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
+        msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
         ylim <- range(y, na.rm=TRUE)
         if (input$plotChoice == "p(t)") 
           ylim <- rev(ylim)
@@ -730,13 +752,13 @@ server <- function(input, output) {
         if (input$colorBy != "(none)") {
           if (input$colorBy == "navState") {
             timing <- system.time({
-              oce.plot.ts(x, y,
+              oce.plot.ts(x, y, ylim=ylim,
                           type=input$plotType,
                           col=gg[["navStateColor"]],
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
+                          ylab=ylab, pch=pch, cex=cex)
             })
-            msg(dataName, "time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+            msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             navStateLegend()
           } else {
             cm <- colormap(g[[input$colorBy]][look])
@@ -749,18 +771,18 @@ server <- function(input, output) {
                           type=input$plotType,
                           col=cm$zcol,
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
+                          ylab=ylab, pch=pch, cex=cex)
             })
-            msg(input$plotType, "time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+            msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
         } else {
           timing <- system.time({
             oce.plot.ts(x, y,
                         type=input$plotType,
                         mar=marTimeseries,
-                        ylab=ylab, pch=pch, cex=cex, flipy=TRUE)
+                        ylab=ylab, pch=pch, cex=cex)
           })
-          msg(input$plotType,"time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
+          msg(dataName, " time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
         }
         plotExists <<- TRUE
       } else if (input$plotChoice == "TS") {
@@ -852,15 +874,15 @@ server <- function(input, output) {
         par(mar=omar)
       } else if (input$plotChoice == "hist(p)") {
         p <- g[["pressure"]]
-        hist(p[!flagged & visible], breaks=100, main="p trimmed to unflagged values")
+        hist(p[!flagged & visible], breaks=100, main="p for whole dataset, trimmed to unflagged values")
       } else if (input$plotChoice == "hist(C)") {
         C <- g[["conductivity"]]
-        hist(C[!flagged & visible], breaks=100, main="C trimmed to unflagged values")
+        hist(C[!flagged & visible], breaks=100, main="C for whole dataset, trimmed to unflagged values")
         msg("summary(C):", summary(C), "\n")
         msg("summary(C[!flagged]):", summary(C[!flagged]), "\n")
        } else if (input$plotChoice == "hist(S)") {
         SA <- g[["SA"]]
-        hist(SA[!flagged & visible], breaks=100, main="SA trimmed to unflagged values")
+        hist(SA[!flagged & visible], breaks=100, main="SA for whole dataset, trimmed to unflagged values")
         msg("summary(SA):", summary(SA), "\n")
         msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
       }
