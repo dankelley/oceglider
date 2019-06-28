@@ -15,7 +15,9 @@ if (FALSE) {
   cex <- 2
 }
 mgp <- c(2, 0.7, 0)
+marPalette <- c(3, 3, 1, 1)            # used before drawing palettes
 marProfile <- c(1, 3, 3, 5.5)          # gives space on RHS for palette (even if not drawn)
+marTS <- c(3, 3, 1, 5.5)               # gives space on RHS for palette (even if not drawn)
 marPalette <- c(1, 3, 3, 1)            # be sure 2nd and 3rd values correspond to marProfile
 
 library(shiny)
@@ -619,7 +621,7 @@ server <- function(input, output) {
                p <<- g[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$gliderExists <- TRUE
-               msg("... done reading data\n")
+               msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
   })
 
   observeEvent(input$loadRdaAction, {
@@ -828,23 +830,23 @@ server <- function(input, output) {
               ## Actual plot
               timing <- system.time({
                 plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                       mar=c(3, 3, 1, 1), type=input$plotType)
+                       mar=marTS, type=input$plotType)
               })
               msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             }
             navStateLegend()
           } else {
             cm <- colormap(gg[[input$colorBy]])
-            par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0))
+            par(mar=marPalette, mgp=mgp)
             drawPalette(colormap=cm, zlab=input$colorBy)
             timing <- system.time({
-              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=c(3, 3, 1, 5.5), type=input$plotType)
+              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=marTS, type=input$plotType)
             })
             msg("plotTS (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
         } else {
           timing <- system.time({
-            plotTS(gg, pch=pch, cex=cex, type=input$plotType)
+            plotTS(gg, pch=pch, cex=cex, mar=marTS, type=input$plotType)
           })
           msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
         }
