@@ -27,7 +27,38 @@ library(oceanglider)
 options(oceEOS="gsw")
 
 ## Discover available gliders and their mission
-basedir <- "~/Dropbox/data/glider/delayedData/"
+baseTrial <- c("~/Dropbox/data",
+               "/data",
+               ".")
+basedir <- ""
+for (base in baseTrial) {
+  dir <- paste(base, "/glider/delayedData", sep="")
+  cat("trial base directory '", dir, "'\n", sep="")
+  if (file.exists(dir)) {
+    cat("  This trial base directory is OK.\n")
+    basedir <- dir
+    break
+  }
+}
+if (basedir == "") {
+  chances <- 3
+  cat('None of the following is a valid base directory: "', paste(baseTrial, collapse='", "'), '"\n', sep='')
+  if (!interactive())
+    stop("Try running this app interactively, so you can enter a base directory.\n")
+  for (chance in seq_len(chances)) {
+    cat("  Type the name of a base directory (chance", chance, "of", chances, "chances)\n")
+    base <- readLines(n=1)
+    basedir <- paste(base, "/glider/delayedData", sep="")
+    if (file.exists(basedir)) {
+      cat("That is a good base directory, thanks.\n")
+      break
+    } else {
+      cat("Sorry, '", base, "' does not contain a directory glider/delayedData\n", sep="")
+      if (chance > 3)
+        stop("Sorry, you only get", chances, "to specify a base filename.\n")
+    }
+  }
+}
 gliders <- list.files(basedir)
 missions <- list()
 for (glider in gliders) {
