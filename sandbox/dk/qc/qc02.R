@@ -371,7 +371,7 @@ server <- function(input, output, session) {
 
   output$focusYo <- renderUI({
     numericInput("focusYo",
-                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
+                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
                  value=if (is.null(state$focusYo)) "1" else state$focusYo)
   })
 
@@ -380,20 +380,16 @@ server <- function(input, output, session) {
                focusYoRaw <- reactive({
                  if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
                })
-               focusYo <- debounce(focusYoRaw, 1000)
-               cat(file=stderr(), "next is focusYo:\n")
-               print(file=stderr(), dput(focusYo))
-               fy <- focusYo()
-               cat(file=stderr(), "next is fy:\n")
-               print(file=stderr(), dput(fy))
-               if (!is.null(fy) && !is.null(maxYo)) {
-                 if (is.finite(fy)) {
-                   if (fy > maxYo) {
+               focusYo <- debounce(focusYoRaw, 5000)()
+               msg("focusYo=", focusYo, "\n")
+               if (!is.null(focusYo) && !is.null(maxYo)) {
+                 if (is.finite(focusYo)) {
+                   if (focusYo > maxYo) {
                      updateNumericInput(session, "focusYo", value=maxYo)
-                   } else if (fy < 1) {
+                   } else if (focusYo < 1) {
                      updateNumericInput(session, "focusYo", value=1)
                    } else {
-                     state$focusYo <<- fy
+                     state$focusYo <<- focusYo
                    }
                  }
                }
