@@ -377,8 +377,16 @@ server <- function(input, output, session) {
 
   observeEvent(input$focusYo, {
                msg("'focusYo' text area altered; note: input$focusYo=", input$focusYo, ", maxYo=", maxYo, "\n")
-               if (!is.null(input$focusYo) && !is.null(maxYo)) {
-                 fy <- input$focusYo
+               focusYoRaw <- reactive({
+                 if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
+               })
+               focusYo <- debounce(focusYoRaw, 1000)
+               cat(file=stderr(), "next is focusYo:\n")
+               print(file=stderr(), dput(focusYo))
+               fy <- focusYo()
+               cat(file=stderr(), "next is fy:\n")
+               print(file=stderr(), dput(fy))
+               if (!is.null(fy) && !is.null(maxYo)) {
                  if (is.finite(fy)) {
                    if (fy > maxYo) {
                      updateNumericInput(session, "focusYo", value=maxYo)
@@ -621,7 +629,9 @@ server <- function(input, output, session) {
                msg("readData...\n")
                dir <- dataName()
                msg("  about to read files in the '", dir, "' directory\n", sep="")
-               g <<- try(read.glider.seaexplorer.delayed(dir))
+               withProgress(message=paste("Reading files in directory '", dir, "'"), value=0, {
+                            g <<- try(read.glider.seaexplorer.delayed(dir))
+                       })
                if (inherits(g, "try-error")) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                } else {
@@ -634,7 +644,9 @@ server <- function(input, output, session) {
                g@data$payload1[["spiciness"]] <<- g[["spiciness"]]
                g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
-               p <<- g[["pressure"]]
+               SA <<- g@data$payload1[["SA"]]
+               CT <<- g@data$payload1[["CT"]]
+               p <<- g@data$payload1[["pressure"]]
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
@@ -647,23 +659,18 @@ server <- function(input, output, session) {
                filename <- paste(tolower(input$glider), "_", tolower(input$mission),
                                  "_", input$rdaInputFile, ".rda", sep="")
                msg("  load from '", filename, "' ..", sep="")
-               withProgress(message=paste0("Loading file '", filename, "'"), value=0, {
-                            load(filename)
-                            incProgress(1/3, detail="setting up variables")
-                            g <<- g
-                            SA <<- g[["SA"]]
-                            CT <<- g[["CT"]]
-                            p <<- g[["pressure"]]
-                            maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
-                            t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-                            state$flag <- g[["pressureFlag"]]
-                            msg(". done\n")
-                            msg("maxYo=", maxYo, " after loading rda\n")
-                            state$rda <- filename
-                            state$gliderExists <- TRUE
-                                 })
-               ##showModal(modalDialog("", "Loading of previous analysis is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
-
+               withProgress(message=paste0("Loading file '", filename, "'"), value=0, { load(filename) })
+               g <<- g
+               SA <<- g[["SA"]]
+               CT <<- g[["CT"]]
+               p <<- g[["pressure"]]
+               maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
+               t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+               state$flag <- g[["pressureFlag"]]
+               msg(". done\n")
+               msg("maxYo=", maxYo, " after loading rda\n")
+               state$rda <- filename
+               state$gliderExists <- TRUE
   })
 
   observeEvent(input$saveRda, {
