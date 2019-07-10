@@ -370,16 +370,9 @@ server <- function(input, output, session) {
   })
 
   output$focusYo <- renderUI({
-    if (is.null(maxYo)) {
-      numericInput("focusYo",
-                   "Yo number",
-                   value=if (is.null(state$focusYo)) "1" else state$focusYo)
-    } else {
-      numericInput("focusYo",
-                   paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
-                   value=if (is.null(state$focusYo)) "1" else state$focusYo)
-      #, min=1, max=maxYo, step=NA)
-    }
+    numericInput("focusYo",
+                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
+                 value=if (is.null(state$focusYo)) "1" else state$focusYo)
   })
 
   observeEvent(input$focusYo, {
@@ -654,18 +647,21 @@ server <- function(input, output, session) {
                filename <- paste(tolower(input$glider), "_", tolower(input$mission),
                                  "_", input$rdaInputFile, ".rda", sep="")
                msg("  load from '", filename, "' ..", sep="")
-               load(filename)
-               g <<- g
-               SA <<- g[["SA"]]
-               CT <<- g[["CT"]]
-               p <<- g[["pressure"]]
-               maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
-               t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-               state$flag <- g[["pressureFlag"]]
-               msg(". done\n")
-               msg("maxYo=", maxYo, " after loading rda\n")
-               state$rda <- filename
-               state$gliderExists <- TRUE
+               withProgress(message=paste0("Loading file '", filename, "'"), value=0, {
+                            load(filename)
+                            incProgress(1/3, detail="setting up variables")
+                            g <<- g
+                            SA <<- g[["SA"]]
+                            CT <<- g[["CT"]]
+                            p <<- g[["pressure"]]
+                            maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
+                            t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+                            state$flag <- g[["pressureFlag"]]
+                            msg(". done\n")
+                            msg("maxYo=", maxYo, " after loading rda\n")
+                            state$rda <- filename
+                            state$gliderExists <- TRUE
+                                 })
                ##showModal(modalDialog("", "Loading of previous analysis is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
 
   })
@@ -756,7 +752,7 @@ server <- function(input, output, session) {
                           type=input$plotType,
                           col=gg[["navStateColor"]],
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex)
+                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
             })
             msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
             navStateLegend()
@@ -771,7 +767,7 @@ server <- function(input, output, session) {
                           type=input$plotType,
                           col=cm$zcol,
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex)
+                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
             })
             msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
           }
@@ -780,7 +776,7 @@ server <- function(input, output, session) {
             oce.plot.ts(x, y,
                         type=input$plotType,
                         mar=marTimeseries,
-                        ylab=ylab, pch=pch, cex=cex)
+                        ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
           })
           msg(dataName, " time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
         }
