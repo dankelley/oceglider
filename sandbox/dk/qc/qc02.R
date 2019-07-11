@@ -388,7 +388,7 @@ server <- function(input, output, session) {
                  if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
                })
                ## focusYo <- debounce(focusYoRaw, 10000)()
-               focusYo <- throttle(focusYoRaw, 10000)()
+               focusYo <- debounce(focusYoRaw, 10e3)()
                msg("  focusYo=", focusYo, "\n")
                msg("  maxYo=", maxYo, "\n")
                if (!is.null(focusYo) && !is.null(maxYo)) {
@@ -715,7 +715,7 @@ server <- function(input, output, session) {
   })
 
   output$plot <- renderPlot({
-    msg("plot with input: focus='", input$focus, "'",
+    msg("\nplot with input: focus='", input$focus, "'",
         ", plotChoice='", input$plotChoice, "'",
         ", despikePressure=", input$despikePressure,
         ", selectYo='", input$selectYo, "'",
@@ -752,7 +752,7 @@ server <- function(input, output, session) {
       gg <- g
       gg@data$payload1 <- g@data$payload1[look, ]
       msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
-      msg("** sum(look)=", sum(look))
+      ##msg("** sum(look)=", sum(look))
       if (sum(look)) {
         if (length(grep("\\(t\\)$", input$plotChoice))) {
           msg("* a time-series plot (input$plotChoice is '", input$plotChoice, "')\n", sep="")
@@ -773,8 +773,8 @@ server <- function(input, output, session) {
           }
           x <- g@data$payload1[look, "time"]
           y <- g@data$payload1[look, dataName]
-          msg("LENGTH of x=", length(x))
-          msg("LENGTH of y=", length(y))
+          ## msg("LENGTH of x=", length(x), "\n")
+          ## msg("LENGTH of y=", length(y), "\n")
           msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
           msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
           ylim <- range(y, na.rm=TRUE)
@@ -822,24 +822,23 @@ server <- function(input, output, session) {
           gg@data$payload1 <- g@data$payload1[look, ]
           if (input$colorBy != "(none)") {
             if (input$colorBy == "navState") {
-              if (FALSE) {
-                ## timing test with random numbers
-                n <- length(look)
-                x <- rnorm(n)
-                y <- rnorm(n)
-                cm <- colormap(x^2+y^2)
-                timing <- system.time({
-                  plot(x, y, col=cm$zcol, cex=cex, pch=pch)
-                })
-                msg("plot() with ", n, " random points) took elapsed time ", timing[3], "s\n", sep="")
-              } else {
-                ## Actual plot
-                timing <- system.time({
-                  plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                         mar=marTS, type=input$plotType)
-                })
-                msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
-              }
+              ##TESTING if (FALSE) {
+              ##TESTING   ## timing test with random numbers
+              ##TESTING   n <- length(look)
+              ##TESTING   x <- rnorm(n)
+              ##TESTING   y <- rnorm(n)
+              ##TESTING   cm <- colormap(x^2+y^2)
+              ##TESTING   timing <- system.time({
+              ##TESTING     plot(x, y, col=cm$zcol, cex=cex, pch=pch)
+              ##TESTING   })
+              ##TESTING   msg("plot() with ", n, " random points) took elapsed time ", timing[3], "s\n", sep="")
+              ##TESTING } else {
+              ## Actual plot
+              timing <- system.time({
+                plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]], mar=marTS, type=input$plotType)
+              })
+              msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+              ##TESTING }
               navStateLegend()
             } else {
               cm <- colormap(gg[[input$colorBy]])
