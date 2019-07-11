@@ -105,7 +105,7 @@ navStateLegend <- function()
   dy <- (usr[4]-usr[3])/(1+length(codes))
   y <- usr[3] + dy/2
   for (icode in seq_along(codes)) {
-    cat(file=stderr(), "code=", codes[[icode]], " (", names(codes)[icode], "), x=", x, ", y=", y, ", dy=", dy, "\n")
+    ##cat(file=stderr(), "code=", codes[[icode]], " (", names(codes)[icode], "), x=", x, ", y=", y, ", dy=", dy, "\n")
     points(x, y, pch=21, cex=1.4, bg=navStateColors(codes[icode]), xpd=NA)
     text(x, y, names(codes)[icode], xpd=NA, pos=4, cex=0.75, srt=60)
     y <- y + dy
@@ -149,10 +149,16 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                  uiOutput(outputId="focus")),
                                 conditionalPanel(condition="input.focus == 'yo'",
                                                  uiOutput(outputId="focusYo")),
+                                ## conditionalPanel(condition="input.focus == 'yo'",
+                                ##                  uiOutput(outputId="previousYo")),
+                                ## conditionalPanel(condition="input.focus == 'yo'",
+                                ##                  uiOutput(outputId="nextYo"))
                                 conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="previousYo")),
-                                conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="nextYo")))),
+                                                 uiOutput(outputId="flagYo"))
+                                ),
+                         column(2,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="brushMode")))),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           uiOutput(outputId="navState")),
                          conditionalPanel(condition="output.gliderExists",
@@ -371,7 +377,8 @@ server <- function(input, output, session) {
 
   output$focusYo <- renderUI({
     numericInput("focusYo",
-                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
+                 ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
+                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
                  value=if (is.null(state$focusYo)) "1" else state$focusYo)
   })
 
@@ -380,41 +387,76 @@ server <- function(input, output, session) {
                focusYoRaw <- reactive({
                  if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
                })
-               focusYo <- debounce(focusYoRaw, 5000)()
-               msg("focusYo=", focusYo, "\n")
+               ## focusYo <- debounce(focusYoRaw, 10000)()
+               focusYo <- throttle(focusYoRaw, 10000)()
+               msg("  focusYo=", focusYo, "\n")
+               msg("  maxYo=", maxYo, "\n")
                if (!is.null(focusYo) && !is.null(maxYo)) {
                  if (is.finite(focusYo)) {
                    if (focusYo > maxYo) {
+                     msg("  A\n")
                      updateNumericInput(session, "focusYo", value=maxYo)
                    } else if (focusYo < 1) {
+                     msg("  B\n")
                      updateNumericInput(session, "focusYo", value=1)
                    } else {
+                     msg("  C\n")
                      state$focusYo <<- focusYo
                    }
                  }
                }
+               msg("  after, state$focusYo=", state$focusYo, "\n")
   })
 
-  output$previousYo <- renderUI({
-#    if (input$focus == 'yo' && as.numeric(input$yoSelected) > 1)
-      actionButton(inputId="previousYo", label="Previous yo")
+  ## output$previousYo <- renderUI({
+  ##     actionButton(inputId="previousYo", label="Previous yo")
+  ## })
+  ##
+  ## observeEvent(input$previousYo, {
+  ##              msg("'Previous Yo' button clicked; state$focusYo=", state$focusYo, "\n")
+  ##              if (state$focusYo > 1)
+  ##                state$focusYo <<- state$focusYo - 1
+  ## })
+
+  ## output$nextYo <- renderUI({
+  ##     actionButton(inputId="nextYo", label="Next yo")
+  ## })
+
+  ## observeEvent(input$nextYo, {
+  ##              #msg("'Next Yo' button clicked; state$focusYo=", state$focusYo, ", maxYo=", maxYo, "\n")
+  ##              if (state$focusYo < maxYo)
+  ##                state$focusYo <<- state$focusYo + 1
+  ## })
+
+  output$flagYo <- renderUI({
+      actionButton(inputId="flagYo", label="Flag yo")
   })
 
-  observeEvent(input$previousYo, {
-               msg("'Previous Yo' button clicked; state$focusYo=", state$focusYo, "\n")
-               if (state$focusYo > 1)
-                 state$focusYo <<- state$focusYo - 1
+  observeEvent(input$flagYo, {
+               msg("  state$focusYo=", state$focusYo, "\n")
+               if (!is.null(state$focusYo)) {
+                 yo <- g[["yoNumber"]]
+                 bad <- yo == state$focusYo
+                 oldFlag <- state$flag
+                 state$flag[bad] <<- 3
+                 newFlag <- state$flag
+                 index <- which(newFlag != oldFlag)
+                 old <- oldFlag[index]
+                 new <- newFlag[index]
+                 edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$focusYo),
+                                                   time=presentTime(),
+                                                   index=index, oldFlag=old, newFlag=new)
+                 msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+                 state$focusYo <<- NULL
+               }
   })
 
-  output$nextYo <- renderUI({
-#    if (input$focus == 'yo' && as.numeric(input$yoSelected) < maxYo)
-      actionButton(inputId="nextYo", label="Next yo")
-  })
 
-  observeEvent(input$nextYo, {
-               #msg("'Next Yo' button clicked; state$focusYo=", state$focusYo, ", maxYo=", maxYo, "\n")
-               if (state$focusYo < maxYo)
-                 state$focusYo <<- state$focusYo + 1
+  output$brushMode <- renderUI({
+      selectInput(inputId="brushMode",
+                  label="Brush mode",
+                  choices=c("flag", "highlight [broken]", "zoom [broken]"),
+                  selected="flag")
   })
 
   ##deleteYo output$deleteYo <- renderUI({
@@ -476,32 +518,15 @@ server <- function(input, output, session) {
                        d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       }
     }
+    res <- paste0(res, " brushMode=", input$brushMode)
     res
   })
 
   observeEvent(input$debug, {
-               cat(file=stderr(), "input$debug=", input$debug, "\n")
+               ##cat(file=stderr(), "input$debug=", input$debug, "\n")
                debug <<- input$debug
   })
 
-
-  observeEvent(input$deleteYo, {
-               msg("  DELETE yo ***IGNORED***\n")
-               ##msg("  DELETE yo=", state$yoSelected, " ***IGNORED***\n")
-               ## yo <- g[["yoNumber"]]
-               ## bad <- yo == state$yoSelected
-               ## oldFlag <- state$flag
-               ## state$flag[bad] <- 3
-               ## newFlag <- state$flag
-               ## index <- which(newFlag != oldFlag)
-               ## old <- oldFlag[index]
-               ## new <- newFlag[index]
-               ## edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$yoSelected),
-               ##                                   time=presentTime(),
-               ##                                   index=index, oldFlag=old, newFlag=new)
-               ## msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-               ## state$yoSelected <<- NULL
-  })
 
   observeEvent(input$click, {
                msg("click-to-select-yo **IGNORED**\n")
@@ -622,17 +647,19 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$readData, {
-               msg("readData...\n")
+               ###msg("readData...\n")
                dir <- dataName()
-               msg("  about to read files in the '", dir, "' directory\n", sep="")
-               withProgress(message=paste("Reading files in directory '", dir, "'"), value=0, {
-                            g <<- try(read.glider.seaexplorer.delayed(dir))
-                       })
+               ###msg("  about to read files in the '", dir, "' directory\n", sep="")
+               nfiles <- length(list.files(dir, "pld1.raw"))
+               withProgress(message=paste0("Reading ", nfiles, " pld1.raw files in '", dir, "'"),
+                            value=0,
+                            { g <<- try(read.glider.seaexplorer.delayed(dir)) }
+                            )
                if (inherits(g, "try-error")) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                } else {
                  state$flag <- rep(1, length(g[["pressure"]]))
-                 showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
+                 ###showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
                }
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
@@ -646,16 +673,16 @@ server <- function(input, output, session) {
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
-               msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
-               msg("maxYo=", maxYo, " after reading raw data\n")
+               ###msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
+               ###msg("maxYo=", maxYo, " after reading raw data\n")
   })
 
   observeEvent(input$loadRdaAction, {
-               msg("loadRda...\n")
+               ###msg("loadRda...\n")
                filename <- paste(tolower(input$glider), "_", tolower(input$mission),
                                  "_", input$rdaInputFile, ".rda", sep="")
-               msg("  load from '", filename, "' ..", sep="")
-               withProgress(message=paste0("Loading file '", filename, "'"), value=0, { load(filename) })
+               ###msg("  load from '", filename, "' ..", sep="")
+               withProgress(message=paste0("Loading '", filename, "'"), value=0, { load(filename) })
                g <<- g
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
@@ -663,25 +690,28 @@ server <- function(input, output, session) {
                maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$flag <- g[["pressureFlag"]]
-               msg(". done\n")
-               msg("maxYo=", maxYo, " after loading rda\n")
+               ###msg(". done\n")
+               ###msg("maxYo=", maxYo, " after loading rda\n")
                state$rda <- filename
                state$gliderExists <- TRUE
   })
 
   observeEvent(input$saveRda, {
-               msg("saveRda...\n")
+               ###msg("saveRda...\n")
                rda <- rdaName()
-               msg("  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
+               ###msg("  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
                visible <- g[["navState"]] %in% input$navState
                g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
                edits[[1+length(edits)]] <<- list(category="navState", time=presentTime(), bad=!visible)
-               msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
+               ###msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
                mission <- input$mission
                glider <- input$glider
                sourceDirectory <- dataName()
-               save(glider, mission, sourceDirectory, edits, g, file=rda)
-               msg("  ... done\n", sep="")
+               withProgress(message=paste0("Saving '", rda, "'"),
+                            value=0,
+                            { save(glider, mission, sourceDirectory, edits, g, file=rda) }
+                            )
+               ###msg("  ... done\n", sep="")
   })
 
   output$plot <- renderPlot({
@@ -694,7 +724,6 @@ server <- function(input, output, session) {
         "\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
-
       if (input$despikePressure) {
         p <- g[["pressure"]]
         ##msg("calculating badPressure with pressureThreshold=", pressureThreshold, "\n")
@@ -723,176 +752,182 @@ server <- function(input, output, session) {
       gg <- g
       gg@data$payload1 <- g@data$payload1[look, ]
       msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
-      if (length(grep("\\(t\\)$", input$plotChoice))) {
-        msg("* a time-series plot (input$plotChoice is '", input$plotChoice, "')\n", sep="")
-        if (input$plotChoice == "p(t)") {
-          dataName <- "pressure"
-          axisName <- "p"
-        } else if (input$plotChoice == "C(t)") {
-          dataName <- "conductivity"
-          axisName <- "conductivity S/m"
-        } else if (input$plotChoice == "S(t)") {
-          dataName <- "SA"
-          axisName <- "absolute salinity"
-        } else if (input$plotChoice == "T(t)") {
-          dataName <- "CT"
-          axisName <- "conservative temperature"
-        } else {
-          stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
-        }
-        x <- g@data$payload1[look, "time"]
-        y <- g@data$payload1[look, dataName]
-        msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
-        msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
-        ylim <- range(y, na.rm=TRUE)
-        if (input$plotChoice == "p(t)") 
-          ylim <- rev(ylim)
-        ylab <- resizableLabel(axisName)
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
-            timing <- system.time({
-              oce.plot.ts(x, y, ylim=ylim,
-                          type=input$plotType,
-                          col=gg[["navStateColor"]],
-                          mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
-            })
-            msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
-            navStateLegend()
+      msg("** sum(look)=", sum(look))
+      if (sum(look)) {
+        if (length(grep("\\(t\\)$", input$plotChoice))) {
+          msg("* a time-series plot (input$plotChoice is '", input$plotChoice, "')\n", sep="")
+          if (input$plotChoice == "p(t)") {
+            dataName <- "pressure"
+            axisName <- "p"
+          } else if (input$plotChoice == "C(t)") {
+            dataName <- "conductivity"
+            axisName <- "conductivity S/m"
+          } else if (input$plotChoice == "S(t)") {
+            dataName <- "SA"
+            axisName <- "absolute salinity"
+          } else if (input$plotChoice == "T(t)") {
+            dataName <- "CT"
+            axisName <- "conservative temperature"
           } else {
-            cm <- colormap(g[[input$colorBy]][look])
-            par(mar=marPaletteTimeseries, mgp=mgp)
-            drawPalette(colormap=cm, zlab=input$colorBy)
+            stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
+          }
+          x <- g@data$payload1[look, "time"]
+          y <- g@data$payload1[look, dataName]
+          msg("LENGTH of x=", length(x))
+          msg("LENGTH of y=", length(y))
+          msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
+          msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
+          ylim <- range(y, na.rm=TRUE)
+          if (input$plotChoice == "p(t)") 
+            ylim <- rev(ylim)
+          ylab <- resizableLabel(axisName)
+          if (input$colorBy != "(none)") {
+            if (input$colorBy == "navState") {
+              timing <- system.time({
+                oce.plot.ts(x, y, ylim=ylim,
+                            type=input$plotType,
+                            col=gg[["navStateColor"]],
+                            mar=marTimeseries,
+                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
+              })
+              msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+              navStateLegend()
+            } else {
+              cm <- colormap(g[[input$colorBy]][look])
+              par(mar=marPaletteTimeseries, mgp=mgp)
+              drawPalette(colormap=cm, zlab=input$colorBy)
                                         #omar <- par("mar")
                                         #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
+              timing <- system.time({
+                oce.plot.ts(x, y,
+                            type=input$plotType,
+                            col=cm$zcol,
+                            mar=marTimeseries,
+                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
+              })
+              msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+            }
+          } else {
             timing <- system.time({
               oce.plot.ts(x, y,
                           type=input$plotType,
-                          col=cm$zcol,
                           mar=marTimeseries,
                           ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
             })
-            msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+            msg(dataName, " time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
           }
-        } else {
-          timing <- system.time({
-            oce.plot.ts(x, y,
-                        type=input$plotType,
-                        mar=marTimeseries,
-                        ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
-          })
-          msg(dataName, " time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
-        }
-        plotExists <<- TRUE
-      } else if (input$plotChoice == "TS") {
-        gg <- g
-        gg@data$payload1 <- g@data$payload1[look, ]
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
-            if (FALSE) {
-              ## timing test with random numbers
-              n <- length(look)
-              x <- rnorm(n)
-              y <- rnorm(n)
-              cm <- colormap(x^2+y^2)
-              timing <- system.time({
-                plot(x, y, col=cm$zcol, cex=cex, pch=pch)
-              })
-              msg("plot() with ", n, " random points) took elapsed time ", timing[3], "s\n", sep="")
+          plotExists <<- TRUE
+        } else if (input$plotChoice == "TS") {
+          gg <- g
+          gg@data$payload1 <- g@data$payload1[look, ]
+          if (input$colorBy != "(none)") {
+            if (input$colorBy == "navState") {
+              if (FALSE) {
+                ## timing test with random numbers
+                n <- length(look)
+                x <- rnorm(n)
+                y <- rnorm(n)
+                cm <- colormap(x^2+y^2)
+                timing <- system.time({
+                  plot(x, y, col=cm$zcol, cex=cex, pch=pch)
+                })
+                msg("plot() with ", n, " random points) took elapsed time ", timing[3], "s\n", sep="")
+              } else {
+                ## Actual plot
+                timing <- system.time({
+                  plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
+                         mar=marTS, type=input$plotType)
+                })
+                msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+              }
+              navStateLegend()
             } else {
-              ## Actual plot
+              cm <- colormap(gg[[input$colorBy]])
+              par(mar=marPaletteTS, mgp=mgp)
+              drawPalette(colormap=cm, zlab=input$colorBy)
               timing <- system.time({
-                plotTS(gg, pch=pch, cex=cex, col=gg[["navStateColor"]],
-                       mar=marTS, type=input$plotType)
+                plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=marTS, type=input$plotType)
               })
-              msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
+              msg("plotTS (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
             }
-            navStateLegend()
           } else {
-            cm <- colormap(gg[[input$colorBy]])
-            par(mar=marPaletteTS, mgp=mgp)
-            drawPalette(colormap=cm, zlab=input$colorBy)
             timing <- system.time({
-              plotTS(gg, pch=pch, cex=cex, col=cm$zcol, mar=marTS, type=input$plotType)
+              plotTS(gg, pch=pch, cex=cex, mar=marTS, type=input$plotType)
             })
-            msg("plotTS (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+            msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
           }
+          plotExists <<- TRUE
+        } else if (length(grep(" profile$", input$plotChoice))) {
+          if ("S profile" == input$plotChoice) {
+            dataName <- "SA"
+            axisName <- "absolute salinity"
+          } else if ("T profile" == input$plotChoice) {
+            dataName <- "CT"
+            axisName <- "conservative temperature"
+          } else if ("density profile" == input$plotChoice) {
+            dataName <- "sigma0"
+            axisName <- "sigma0"
+          } else if ("C profile" == input$plotChoice) {
+            dataName <- "conductivity"
+            axisName <- "conductivity S/m"
+          } else {
+            stop("programmer error: unhandled profile name '", input$plotChoice, "'")
+          }
+          x <- g@data$payload1[look, dataName]
+          y <- g@data$payload1[look, "pressure"]
+          ylim <- rev(range(y, na.rm=TRUE))
+          omar <- par("mar")
+          if (input$colorBy != "(none)") {
+            if (input$colorBy == "navState") {
+              par(mar=marProfile, mgp=mgp)
+              plot(x, y, ylim=ylim,
+                   type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
+                   xlab="", ylab=resizableLabel("p"), axes=FALSE)
+              navStateLegend() # FIXME: put on RHS
+            } else {
+              cm <- colormap(g@data$payload1[look, input$colorBy])
+              par(mar=marPaletteProfile, mgp=mgp)
+              drawPalette(colormap=cm, zlab=input$colorBy)
+              par(mar=marProfile, mgp=mgp)
+              plot(x, y, ylim=ylim,
+                   type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
+                   xlab="", ylab=resizableLabel("p"), axes=FALSE)
+            }
+          } else {
+            par(mar=marProfile, mgp=mgp)
+            plot(x, y, ylim=ylim,
+                 type=input$plotType, pch=pch, cex=cex,
+                 xlab="", ylab=resizableLabel("p"), axes=FALSE)
+          }
+          box()
+          axis(2)
+          axis(3)
+          mtext(resizableLabel(axisName), side=3, line=2)
+          par(mar=omar)
+        } else if (input$plotChoice == "hist(p)") {
+          p <- g[["pressure"]]
+          hist(p[!flagged & visible], breaks=100, main="p for whole dataset, trimmed to unflagged values")
+        } else if (input$plotChoice == "hist(C)") {
+          C <- g[["conductivity"]]
+          hist(C[!flagged & visible], breaks=100, main="C for whole dataset, trimmed to unflagged values")
+          msg("summary(C):", summary(C), "\n")
+          msg("summary(C[!flagged]):", summary(C[!flagged]), "\n")
+        } else if (input$plotChoice == "hist(S)") {
+          SA <- g[["SA"]]
+          hist(SA[!flagged & visible], breaks=100, main="SA for whole dataset, trimmed to unflagged values")
+          msg("summary(SA):", summary(SA), "\n")
+          msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
         } else {
-          timing <- system.time({
-            plotTS(gg, pch=pch, cex=cex, mar=marTS, type=input$plotType)
-          })
-          msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
+          stop("unknown plot type (internal coding error)\n")
         }
         plotExists <<- TRUE
-      } else if (length(grep(" profile$", input$plotChoice))) {
-        if ("S profile" == input$plotChoice) {
-          dataName <- "SA"
-          axisName <- "absolute salinity"
-        } else if ("T profile" == input$plotChoice) {
-          dataName <- "CT"
-          axisName <- "conservative temperature"
-        } else if ("density profile" == input$plotChoice) {
-          dataName <- "sigma0"
-          axisName <- "sigma0"
-        } else if ("C profile" == input$plotChoice) {
-          dataName <- "conductivity"
-          axisName <- "conductivity S/m"
-        } else {
-          stop("programmer error: unhandled profile name '", input$plotChoice, "'")
-        }
-        x <- g@data$payload1[look, dataName]
-        y <- g@data$payload1[look, "pressure"]
-        ylim <- rev(range(y, na.rm=TRUE))
-        omar <- par("mar")
-        if (input$colorBy != "(none)") {
-          if (input$colorBy == "navState") {
-            par(mar=marProfile, mgp=mgp)
-            plot(x, y, ylim=ylim,
-                 type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
-                 xlab="", ylab=resizableLabel("p"), axes=FALSE)
-            navStateLegend() # FIXME: put on RHS
-          } else {
-            cm <- colormap(g@data$payload1[look, input$colorBy])
-            par(mar=marPaletteProfile, mgp=mgp)
-            drawPalette(colormap=cm, zlab=input$colorBy)
-            par(mar=marProfile, mgp=mgp)
-            plot(x, y, ylim=ylim,
-                 type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-                 xlab="", ylab=resizableLabel("p"), axes=FALSE)
-          }
-        } else {
-          par(mar=marProfile, mgp=mgp)
-          plot(x, y, ylim=ylim,
-               type=input$plotType, pch=pch, cex=cex,
-               xlab="", ylab=resizableLabel("p"), axes=FALSE)
-        }
-        box()
-        axis(2)
-        axis(3)
-        mtext(resizableLabel(axisName), side=3, line=2)
-        par(mar=omar)
-      } else if (input$plotChoice == "hist(p)") {
-        p <- g[["pressure"]]
-        hist(p[!flagged & visible], breaks=100, main="p for whole dataset, trimmed to unflagged values")
-      } else if (input$plotChoice == "hist(C)") {
-        C <- g[["conductivity"]]
-        hist(C[!flagged & visible], breaks=100, main="C for whole dataset, trimmed to unflagged values")
-        msg("summary(C):", summary(C), "\n")
-        msg("summary(C[!flagged]):", summary(C[!flagged]), "\n")
-       } else if (input$plotChoice == "hist(S)") {
-        SA <- g[["SA"]]
-        hist(SA[!flagged & visible], breaks=100, main="SA for whole dataset, trimmed to unflagged values")
-        msg("summary(SA):", summary(SA), "\n")
-        msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
+        state$usr <<- par("usr")
+      } else {
+        plot(c(0,1), c(0,1), xlab="", ylab="", type="n", axes=FALSE)
+        text(0.5, 0.5, "No data to plot")
+        state$usr <<- NULL
       }
-      plotExists <<- TRUE
-      state$usr <<- par("usr")
-    } else {
-      state$usr <<- NULL
     }
-    ##}) # renderPlot. (The Xlib is to try to speed up.)
-    ##}, type="Xlib", antialias="none") # renderPlot. (The Xlib is to try to speed up.)
-    ## png("c.png",type="cairo",antialias="none", res=300, width=7, height=7, units='in')
   }, type="cairo", antialias="none", res=200, pointsize=5) # renderPlot.
   ## g21 m51 TS/latitude res=200 takes ??1.9s elapsed time (DK home machine)
   ## g21 m51 TS/latitude res=100 takes 1.9s elapsed time (DK home machine)
