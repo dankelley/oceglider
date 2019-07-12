@@ -118,6 +118,7 @@ g <- NULL
 SA <- NULL
 CT <- NULL
 p <- NULL
+ndata <- 0
 t <- NULL
 maxYo <- NULL
 
@@ -171,15 +172,42 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      click="click",
                                                      width="100%",
                                                      height="600px",
-                                                     brush=brushOpts(id="brush", resetOnNew=!TRUE)))))
+                                                     brush=brushOpts(id="brush", delay=1000, delayType="debounce", resetOnNew=!TRUE)))))
 
 
 server <- function(input, output, session) {
+  ## focusYo <- reactive({
+  ##   if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
+  ## })
+  focusYo <- reactive({
+    if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
+  })
+
   msg <- function(...) {
     if (debug == "Yes")
       cat(file=stderr(), ...)
   }
 
+  #' suport function for plotting and brushing
+  lookIndices <- function() {
+    if (input$despikePressure) {
+      p <- g[["pressure"]]
+      badp <- is.na(p)
+      if (any(badp))
+        p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
+      pressureShift <- abs(p - runmed(p, k=11))
+      badPressure <- pressureShift > pressureThreshold
+      if (any(badp))
+        badPressure[badp] <- TRUE
+    } else {
+      badPressure <- rep(FALSE, ndata)
+    }
+    visible <- (g[["navState"]] %in% input$navState) & !badPressure
+    if (input$focus == "yo")
+      visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
+    visible <- visible & state$flag != 3
+    visible
+  }
 
   plotExists <- FALSE
   ##state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
@@ -365,7 +393,7 @@ server <- function(input, output, session) {
   })
 
   output$plotType <- renderUI({
-    selectInput(inputId="plotType", label="type", choices= c("l", "p", "o"), selected=c("p"))
+    selectInput(inputId="plotType", label="Plot Style", choices= c("l", "p", "o"), selected=c("p"))
   })
 
   output$colorBy <- renderUI({
@@ -382,26 +410,21 @@ server <- function(input, output, session) {
                  value=if (is.null(state$focusYo)) "1" else state$focusYo)
   })
 
-  observeEvent(input$focusYo, {
-               msg("'focusYo' text area altered; note: input$focusYo=", input$focusYo, ", maxYo=", maxYo, "\n")
-               focusYoRaw <- reactive({
-                 if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
-               })
-               ## focusYo <- debounce(focusYoRaw, 10000)()
-               focusYo <- debounce(focusYoRaw, 10e3)()
-               msg("  focusYo=", focusYo, "\n")
-               msg("  maxYo=", maxYo, "\n")
-               if (!is.null(focusYo) && !is.null(maxYo)) {
-                 if (is.finite(focusYo)) {
-                   if (focusYo > maxYo) {
-                     msg("  A\n")
+  observeEvent(focusYo, {
+               msg("observeEvent(focusYo) ...\n")
+               #focusYoRaw <- reactive({
+               #  if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
+               #})
+               #focusYo <- throttle(focusYoRaw, 5000)()
+               fy <- debounce(focusYo, 5000)()
+               state$focusYo <<- fy
+               msg("  fy=", fy, ",  maxYo=", maxYo, "\n")
+               if (!is.null(fy) && !is.null(maxYo)) {
+                 if (is.finite(fy)) {
+                   if (fy > maxYo) {
                      updateNumericInput(session, "focusYo", value=maxYo)
                    } else if (focusYo < 1) {
-                     msg("  B\n")
                      updateNumericInput(session, "focusYo", value=1)
-                   } else {
-                     msg("  C\n")
-                     state$focusYo <<- focusYo
                    }
                  }
                }
@@ -433,10 +456,10 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$flagYo, {
-               msg("  state$focusYo=", state$focusYo, "\n")
-               if (!is.null(state$focusYo)) {
+               msg("  input$focusYo=", input$focusYo, "\n")
+               if (!is.null(input$focusYo)) {
                  yo <- g[["yoNumber"]]
-                 bad <- yo == state$focusYo
+                 bad <- yo == input$focusYo
                  oldFlag <- state$flag
                  state$flag[bad] <<- 3
                  newFlag <- state$flag
@@ -447,7 +470,7 @@ server <- function(input, output, session) {
                                                    time=presentTime(),
                                                    index=index, oldFlag=old, newFlag=new)
                  msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-                 state$focusYo <<- NULL
+                 ##state$focusYo <<- NULL
                }
   })
 
@@ -518,7 +541,7 @@ server <- function(input, output, session) {
                        d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       }
     }
-    res <- paste0(res, " brushMode=", input$brushMode)
+    ## res <- paste0(res, " brushMode=", input$brushMode)
     res
   })
 
@@ -529,7 +552,7 @@ server <- function(input, output, session) {
 
 
   observeEvent(input$click, {
-               msg("click-to-select-yo **IGNORED**\n")
+               msg("input$click **IGNORED**\n")
                ## distThreshold <- 0.05
                ## x <- input$click$x
                ## y <- input$click$y
@@ -670,6 +693,7 @@ server <- function(input, output, session) {
                SA <<- g@data$payload1[["SA"]]
                CT <<- g@data$payload1[["CT"]]
                p <<- g@data$payload1[["pressure"]]
+               ndata <<- length(p)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
@@ -687,6 +711,7 @@ server <- function(input, output, session) {
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
+               ndata <<- length(p)
                maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$flag <- g[["pressureFlag"]]
@@ -719,36 +744,13 @@ server <- function(input, output, session) {
         ", plotChoice='", input$plotChoice, "'",
         ", despikePressure=", input$despikePressure,
         ", selectYo='", input$selectYo, "'",
-        ", focusYo=", state$focusYo,
+        ", state$focusYo=", state$focusYo,
+        ", input$focusYo=", input$focusYo,
         ", plotType=", input$plotType,
         "\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
-      if (input$despikePressure) {
-        p <- g[["pressure"]]
-        ##msg("calculating badPressure with pressureThreshold=", pressureThreshold, "\n")
-        ##msg("  head(p)=", paste(head(p), collapse=" "), "\n")
-        badp <- is.na(p)
-        if (any(badp))
-          p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
-        pressureShift <- abs(p - runmed(p, k=11))
-        ##msg("  head(pressureShift)=", paste(head(pressureShift), collapse=" "), "\n")
-        badPressure <- pressureShift > pressureThreshold
-        if (any(badp))
-          badPressure[badp] <- TRUE
-        ##msg("  head(badPressure)=", paste(head(badPressure), collapse=" "), "\n")
-      } else {
-        badPressure <- rep(FALSE, n)
-      }
-
-      ## flagged and visible yield 'look', which is used in many plot types
-      flagged <- state$flag == 3
-      visible <- (g[["navState"]] %in% input$navState) & !badPressure
-      ##msg("  sum(visible)=", sum(visible), " before looking at input$focus\n", sep="")
-      if (input$focus == "yo")
-        visible <- visible & (g[["yoNumber"]] == as.numeric(state$focusYo))
-      ##msg("  sum(visible)=", sum(visible), " after looking at input$focus\n", sep="")
-      look <- !flagged & visible
+      look <- lookIndices()
       gg <- g
       gg@data$payload1 <- g@data$payload1[look, ]
       msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
