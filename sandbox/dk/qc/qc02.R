@@ -1,7 +1,6 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
 
-
-debug <- TRUE
+debugFlag <- TRUE                      # a button lets user set this on and off
 version <- "0.1.1"
 pressureThreshold <- 0.5
 ## Development Notes
@@ -182,13 +181,12 @@ server <- function(input, output, session) {
   })
 
   msg <- function(...) {
-    ##cat(file=stderr(), "debug=", debug, "\n", sep="")
-    if (debug)
+    if (debugFlag)
       cat(file=stderr(), ...)
   }
 
   #' suport function for plotting and brushing
-  lookIndices <- function() {
+  visibleIndices <- function() {
     if (input$despikePressure) {
       p <- g[["pressure"]]
       badp <- is.na(p)
@@ -385,6 +383,7 @@ server <- function(input, output, session) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
+                ## NOTE: see BOOKMARK_plot_type for code that must align with this
                 choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
                           "S profile", "T profile", "density profile", "C profile",
                           "hist(C)", "hist(S)", "hist(p)"),
@@ -494,62 +493,58 @@ server <- function(input, output, session) {
   })
 
   output$status <- renderText({
-    x <- input$hover$x
-    y <- input$hover$y
+    hoverx <- input$hover$x
+    hovery <- input$hover$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "(Move mouse into plot window to see properties)"
-    distThreshold <- 0.05
-    flagged <- state$flag == 3
-    if (!is.null(x) && plotExists) {
-      ## note scaling of the x and y, dependent on plot type. The scales are a rough guess.
+    if (!is.null(hoverx) && plotExists) {
+      visible <- visibleIndices()
+      ## BOOKMARK_plot_type (note: status line does not show anything for histogram plots)
       if (input$plotChoice == "p(t)") {
-        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-        disti <- which.min(dist)
-        d <- g[["payload1"]][disti,]
-        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
-                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
-                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+        x <- as.numeric(g[["time"]])
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "C(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- g[["conductivity"]]
       } else if (input$plotChoice == "S(t)") {
-        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-SA)/(state$usr[4]-state$usr[3]))^2)
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-        disti <- which.min(dist)
-        d <- g[["payload1"]][disti,]
-        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
-                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
-                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+        x <- as.numeric(g[["time"]])
+        y <- g[["SA"]]
       } else if (input$plotChoice == "T(t)") {
-        dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-        disti <- which.min(dist)
-        d <- g[["payload1"]][disti,]
-        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
-                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
-                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+        x <- as.numeric(g[["time"]])
+        y <- g[["CT"]]
       } else if (input$plotChoice == "TS") {
-        dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-        msg("state$usr=", paste(state$usr,collapse=" "), "\n")
-        msg("x=", x, ", y=", y, "\n")
-        msg("head(SA)==", paste(head(SA), collapse=" "), "\n")
-        msg("head(CT)==", paste(head(CT), collapse=" "), "\n")
-        dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-        disti <- which.min(dist)
-        d <- g[["payload1"]][disti,]
-        res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
-                       d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
-                       d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+        x <- g[["SA"]]
+        y <- g[["CT"]]
+      } else if (input$plotChoice == "S profile") {
+        x <- g[["SA"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "T profile") {
+        x <- g[["CT"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "density profile") {
+        x <- g[["sigma0"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "C profile") {
+        x <- g[["sigma0"]]
+        y <- g[["conductivity"]]
+      } else if (length(grep("^hist", input$plotChoice))) {
+        return("(Status line is unavailable for histogram plots.)")
       }
+      dist <- sqrt(((hoverx-x)/(state$usr[2]-state$usr[1]))^2 + ((hovery-y)/(state$usr[4]-state$usr[3]))^2)
+      dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+      disti <- which.min(dist)
+      d <- g[["payload1"]][disti,]
+      res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
+                     d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
+                     d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
     }
-    ## res <- paste0(res, " brushMode=", input$brushMode)
     res
   })
 
   observeEvent(input$debug, {
-               ##cat(file=stderr(), "input$debug=", input$debug, "\n", sep="")
                if (!is.null(input$debug))
-                 debug <<- input$debug
+                 debugFlag <<- input$debug
   })
-
 
   observeEvent(input$click, {
                msg("input$click **IGNORED**\n")
@@ -750,7 +745,7 @@ server <- function(input, output, session) {
         "\n", sep="")
     if (!is.null(g))  {
       n <- length(g[["pressure"]])
-      look <- lookIndices()
+      look <- visibleIndices()
       gg <- g
       gg@data$payload1 <- g@data$payload1[look, ]
       msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
@@ -906,18 +901,14 @@ server <- function(input, output, session) {
           mtext(resizableLabel(axisName), side=3, line=2)
           par(mar=omar)
         } else if (input$plotChoice == "hist(p)") {
-          p <- g[["pressure"]]
-          hist(p[!flagged & visible], breaks=100, main="p for whole dataset, trimmed to unflagged values")
+          p <- gg[["pressure"]]
+          hist(p, breaks=100, main="p for whole dataset, trimmed to unflagged values")
         } else if (input$plotChoice == "hist(C)") {
-          C <- g[["conductivity"]]
-          hist(C[!flagged & visible], breaks=100, main="C for whole dataset, trimmed to unflagged values")
-          msg("summary(C):", summary(C), "\n")
-          msg("summary(C[!flagged]):", summary(C[!flagged]), "\n")
+          C <- gg[["conductivity"]]
+          hist(C, breaks=100, main="C for whole dataset, trimmed to unflagged values")
         } else if (input$plotChoice == "hist(S)") {
-          SA <- g[["SA"]]
-          hist(SA[!flagged & visible], breaks=100, main="SA for whole dataset, trimmed to unflagged values")
-          msg("summary(SA):", summary(SA), "\n")
-          msg("summary(SA[!flagged]):", summary(SA[!flagged]), "\n")
+          SA <- gg[["SA"]]
+          hist(SA, breaks=100, main="SA for whole dataset, trimmed to unflagged values")
         } else {
           stop("unknown plot type (internal coding error)\n")
         }
