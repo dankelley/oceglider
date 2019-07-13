@@ -1,7 +1,7 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
 
 
-debug <- "Yes"
+debug <- TRUE
 version <- "0.1.1"
 pressureThreshold <- 0.5
 ## Development Notes
@@ -33,24 +33,23 @@ library(oceanglider)
 options(oceEOS="gsw")
 
 ## Discover available gliders and their mission
-baseTrial <- c("~/Dropbox/data",
-               "/data",
-               ".")
+baseTrial <- c("~/Dropbox/data", "/data", "~/data")
 basedir <- ""
 for (base in baseTrial) {
   dir <- paste(base, "/glider/delayedData", sep="")
-  cat("trial base directory '", dir, "'\n", sep="")
+  cat("Directory '", dir, "' ", sep="")
   if (file.exists(dir)) {
-    cat("  This trial base directory is OK.\n")
+    cat("holds a glider/delayedData subdirectory, and will be used here.\n")
     basedir <- dir
     break
+  } else {
+    cat("does not hold a glider/delayedData subdirectory.\n")
   }
 }
 if (basedir == "") {
   chances <- 3
-  cat('None of the following is a valid base directory: "', paste(baseTrial, collapse='", "'), '"\n', sep='')
-  if (!interactive())
-    stop("Try running this app interactively, so you can enter a base directory.\n")
+  stop('None of the following is a valid base directory: "', paste(baseTrial, collapse='", "'), '"\n', sep='',
+       call.=FALSE)
   for (chance in seq_len(chances)) {
     cat("  Type the name of a base directory (chance", chance, "of", chances, "chances)\n")
     base <- readLines(n=1)
@@ -123,10 +122,9 @@ t <- NULL
 maxYo <- NULL
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
-                fluidRow(column(2, radioButtons("debug", "Debug", choices=c("Yes", "No"), selected="Yes", inline=TRUE)),
-                         column(2, radioButtons("instructions", "Instructions", choices=c("Hide", "Show"), selected="Hide", inline=TRUE))),
-                hr(),
-                conditionalPanel(condition="input.instructions=='Show'", fluidRow(includeMarkdown("qc02_help.md"))),
+                fluidRow(column(2, checkboxInput("debug", "Debug", value=TRUE)),
+                         column(2, checkboxInput("instructions", "Show Instructions", value=FALSE))),
+                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc02_help.md"))),
                 fluidRow(column(2,
                                 ##h5("Read original data"),
                                 uiOutput(outputId="glider"),
@@ -184,7 +182,8 @@ server <- function(input, output, session) {
   })
 
   msg <- function(...) {
-    if (debug == "Yes")
+    ##cat(file=stderr(), "debug=", debug, "\n", sep="")
+    if (debug)
       cat(file=stderr(), ...)
   }
 
@@ -546,8 +545,9 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$debug, {
-               ##cat(file=stderr(), "input$debug=", input$debug, "\n")
-               debug <<- input$debug
+               ##cat(file=stderr(), "input$debug=", input$debug, "\n", sep="")
+               if (!is.null(input$debug))
+                 debug <<- input$debug
   })
 
 
