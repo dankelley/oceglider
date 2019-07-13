@@ -3,6 +3,7 @@
 debugFlag <- TRUE                      # a button lets user set this on and off
 version <- "0.1.1"
 pressureThreshold <- 0.5
+badFlagValue <- 3
 ## Development Notes
 ## Circles for points look nice, but they are 5X to 10X slower than dots.
 ## NOTE: we could add pulldown menus for pch and cex, at the expense of some interface space.
@@ -171,11 +172,24 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      height="600px",
                                                      brush=brushOpts(id="brush", delay=1000, delayType="debounce", resetOnNew=!TRUE)))))
 
-
 server <- function(input, output, session) {
-  ## focusYo <- reactive({
-  ##   if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
-  ## })
+
+  saveEditEvent <- function(category, bad)
+  {
+    oldFlag <- state$flag
+    state$flag[bad] <<- badFlagValue
+    newFlag <- state$flag
+    changedIndex <- which(newFlag != oldFlag)
+    if (length(changedIndex) > 0) {
+      ## Ignore null edits (which result from some event-handling magic, I suppose)
+      edits[[1+length(edits)]] <<- list(category=category,
+                                        time=presentTime(),
+                                        changedIndex=changedIndex,
+                                        oldFlag=oldFlag[changedIndex],
+                                        newFlag=newFlag[changedIndex])
+    }
+  }
+
   focusYo <- reactive({
     if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
   })
@@ -383,7 +397,7 @@ server <- function(input, output, session) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
-                ## NOTE: see BOOKMARK_plot_type for code that must align with this
+                ## BOOKMARK_plot_type_1_of_3: note that 2 and 3 must align with this
                 choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
                           "S profile", "T profile", "density profile", "C profile",
                           "hist(C)", "hist(S)", "hist(p)"),
@@ -458,17 +472,7 @@ server <- function(input, output, session) {
                if (!is.null(input$focusYo)) {
                  yo <- g[["yoNumber"]]
                  bad <- yo == input$focusYo
-                 oldFlag <- state$flag
-                 state$flag[bad] <<- 3
-                 newFlag <- state$flag
-                 index <- which(newFlag != oldFlag)
-                 old <- oldFlag[index]
-                 new <- newFlag[index]
-                 edits[[1+length(edits)]] <<- list(category=paste("delete yo", state$focusYo),
-                                                   time=presentTime(),
-                                                   index=index, oldFlag=old, newFlag=new)
-                 msg("  updated edits; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-                 ##state$focusYo <<- NULL
+                 saveEditEvent(paste0("flag yo ", input$focusYo), bad)
                }
   })
 
@@ -498,8 +502,7 @@ server <- function(input, output, session) {
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "(Move mouse into plot window to see properties)"
     if (!is.null(hoverx) && plotExists) {
-      visible <- visibleIndices()
-      ## BOOKMARK_plot_type (note: status line does not show anything for histogram plots)
+      ## BOOKMARK_plot_type_2_of_3: note that 1 and 3 must align with this
       if (input$plotChoice == "p(t)") {
         x <- as.numeric(g[["time"]])
         y <- g[["pressure"]]
@@ -525,12 +528,13 @@ server <- function(input, output, session) {
         x <- g[["sigma0"]]
         y <- g[["pressure"]]
       } else if (input$plotChoice == "C profile") {
-        x <- g[["sigma0"]]
-        y <- g[["conductivity"]]
+        x <- g[["conductivity"]]
+        y <- g[["pressure"]]
       } else if (length(grep("^hist", input$plotChoice))) {
         return("(Status line is unavailable for histogram plots.)")
       }
       dist <- sqrt(((hoverx-x)/(state$usr[2]-state$usr[1]))^2 + ((hovery-y)/(state$usr[4]-state$usr[3]))^2)
+      visible <- visibleIndices()
       dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
       disti <- which.min(dist)
       d <- g[["payload1"]][disti,]
@@ -583,85 +587,62 @@ server <- function(input, output, session) {
                msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
                msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
                msg("  count of flag==3: ", sum(state$flag==3), " (before)\n", sep="")
-               ## state$yoSelected <- NULL # brushing turns off yo selection
+               ## BOOKMARK_plot_type_3_of_3: note that 1 and 2 must align with this
                if (input$plotChoice == "p(t)") {
-                 msg("  pt\n")
                  x <- as.numeric(g[["time"]])
                  y <- g[["pressure"]]
-                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
-                 bad[is.na(bad)] <- TRUE
-                 state$flag[bad] <- 3
-                 edits[[1+length(edits)]] <<- list(category="brush pt", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed pt; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-               } else if (input$plotChoice == "TS") {
-                 msg("  TS\n")
-                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+               } else if (input$plotChoice == "C(t)") {
+                 x <- as.numeric(g[["time"]])
+                 y <- g[["conductivity"]]
+               } else if (input$plotChoice == "S(t)") {
+                 x <- as.numeric(g[["time"]])
+                 y <- g[["SA"]]
+               } else if (input$plotChoice == "T(t)") {
+                 x <- as.numeric(g[["time"]])
                  y <- g[["CT"]]
-                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
-                 bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 edits[[1+length(edits)]] <<- list(category="brush TS", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed TS; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "TS") {
+                 x <- g[["SA"]]
+                 y <- g[["CT"]]
                } else if (input$plotChoice == "S profile") {
-                 msg("  S profile\n")
-                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+                 x <- g[["SA"]]
                  y <- g[["pressure"]]
-                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
-                 bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 edits[[1+length(edits)]] <<- list(category="brush Sprofile", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed Sprofile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "T profile") {
-                 msg("  T profile\n")
-                 x <- g[["CT"]] # FIXME: allow oceEOS=="unesco"
+                 x <- g[["CT"]]
                  y <- g[["pressure"]]
-                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
-                 bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 edits[[1+length(edits)]] <<- list(category="brush Tprofile", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed Tprofile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
                } else if (input$plotChoice == "density profile") {
-                 msg("  density profile\n")
-                 x <- g[["sigma0"]] # FIXME: allow oceEOS=="unesco"
+                 x <- g[["sigma0"]]
                  y <- g[["pressure"]]
-                 bad <- xmin <= x & x <= xmax & ymin <= y & y <= ymax
-                 bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 edits[[1+length(edits)]] <<- list(category="brush density profile", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed density profile; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+               } else if (input$plotChoice == "C profile") {
+                 x <- g[["conductivity"]]
+                 y <- g[["pressure"]]
                } else if (input$plotChoice == "hist(C)") {
-                 msg("  hist(C)\n")
                  x <- g[["conductivity"]]
                  bad <- xmin <= x & x <= xmax
                  bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 ## bad[is.na(bad)] <- TRUE
-                 edits[[1+length(edits)]] <<- list(category="brush hist(C)", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed hist(C; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
-                } else if (input$plotChoice == "hist(S)") {
-                 msg("  hist(S)\n")
-                 x <- g[["SA"]] # FIXME: allow oceEOS=="unesco"
+                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                 saveEditEvent("brush hist(C)", bad)
+                 return()
+               } else if (input$plotChoice == "hist(S)") {
+                 x <- g[["SA"]]
                  bad <- xmin <= x & x <= xmax
                  bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 ## bad[is.na(bad)] <- TRUE
-                 edits[[1+length(edits)]] <<- list(category="brush hist(S)", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed hist(S; new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                 saveEditEvent("brush hist(S)", bad)
+                 return()
                } else if (input$plotChoice == "hist(p)") {
-                 msg("  hist(p)\n")
                  x <- g[["pressure"]]
                  bad <- xmin <= x & x <= xmax
                  bad[is.na(bad)] <- TRUE
-                 msg(" sum(bad)=", sum(bad), "\n")
-                 #if (any(is.na(bad))) browser()
-                 edits[[1+length(edits)]] <<- list(category="brush hist(p)", time=presentTime(), bad=bad)
-                 msg("  updated edits for brushed hist(p); new length is ", length(edits), "; sum(bad)=", sum(bad), "\n", sep="")
+                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                 saveEditEvent("brush hist(p)", bad)
+                 return()
+               } else {
+                 stop("programming error: brushing for plot type '", input$plotChoice, "' is not coded yet")
                }
-               if (sum(bad)) {
-                 bad <- which(bad)
-                 msg("  total number of bad points: ", length(bad), "\n", sep="")
-                 state$flag[bad] <- 3 # HERE HERE HERE
-               }
+               bad <- ifelse(is.na(x) | is.na(y), TRUE, xmin <= x & x <= xmax & ymin <= y & y <= ymax)
+               bad[is.na(bad)] <- TRUE
+               bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+               saveEditEvent(paste0("brush ", input$plotChoice), bad)
   })
 
   observeEvent(input$readData, {
@@ -722,7 +703,7 @@ server <- function(input, output, session) {
                ###msg("  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
                visible <- g[["navState"]] %in% input$navState
                g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
-               edits[[1+length(edits)]] <<- list(category="navState", time=presentTime(), bad=!visible)
+               saveEditEvent("saving only visible navState", visible)
                ###msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
                mission <- input$mission
                glider <- input$glider
