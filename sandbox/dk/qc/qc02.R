@@ -126,12 +126,10 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                          column(2, checkboxInput("instructions", "Show Instructions", value=FALSE))),
                 conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc02_help.md"))),
                 fluidRow(column(2,
-                                ##h5("Read original data"),
                                 uiOutput(outputId="glider"),
                                 uiOutput(outputId="mission"),
                                 uiOutput(outputId="read")),
                          column(2,
-                                ##h5("Continue previous analysis"),
                                 uiOutput(outputId="listRda"),
                                 uiOutput(outputId="loadRda"),
                                 conditionalPanel(condition="output.gliderExists",
@@ -148,29 +146,40 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                  uiOutput(outputId="focus")),
                                 conditionalPanel(condition="input.focus == 'yo'",
                                                  uiOutput(outputId="focusYo")),
-                                ## conditionalPanel(condition="input.focus == 'yo'",
-                                ##                  uiOutput(outputId="previousYo")),
-                                ## conditionalPanel(condition="input.focus == 'yo'",
-                                ##                  uiOutput(outputId="nextYo"))
                                 conditionalPanel(condition="input.focus == 'yo'",
                                                  uiOutput(outputId="flagYo"))
-                                ),
+                                )
+                         ),
+                fluidRow(column(2,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="deleteInitialYos"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="brushMode")))),
+                                                 uiOutput(outputId="deleteTop"))),
+                         column(2,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="deleteInitialTimes")))
+                         ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="navState")),
+                                          uiOutput(outputId="despikePressure")),
                          conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="despikePressure"))),
+                                          uiOutput(outputId="navState"))
+                         ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="status"))),
+                                          uiOutput(outputId="status"))
+                ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           plotOutput("plot",
                                                      hover="hover",
                                                      click="click",
                                                      width="100%",
                                                      height="600px",
-                                                     brush=brushOpts(id="brush", delay=1000, delayType="debounce", resetOnNew=!TRUE)))))
+                                                     brush=brushOpts(id="brush",
+                                                                     delay=1000,
+                                                                     delayType="debounce",
+                                                                     resetOnNew=!TRUE)))
+                )
+                )
 
 server <- function(input, output, session) {
 
@@ -477,11 +486,27 @@ server <- function(input, output, session) {
   })
 
 
-  output$brushMode <- renderUI({
-      selectInput(inputId="brushMode",
-                  label="Brush mode",
-                  choices=c("flag", "highlight [broken]", "zoom [broken]"),
-                  selected="flag")
+  ###old output$brushMode <- renderUI({
+  ###old     selectInput(inputId="brushMode",
+  ###old                 label="Brush mode",
+  ###old                 choices=c("flag", "highlight [broken]", "zoom [broken]"),
+  ###old                 selected="flag")
+  ###old })
+
+  output$deleteInitialYos <- renderUI({
+    sliderInput("deleteInitialYos", h6("Delete initial yos"), min=0, max=10, value=1, step=1)
+  })
+
+  output$deleteTop <- renderUI({
+    sliderInput("deleteTop", h6("Delete top data [m]"), min=0, max=10, value=0, step=0.5)
+  })
+
+  output$deleteInitialTimes <- renderUI({
+    sliderInput("deleteInitialTimes", h6("Delete after powerup [s]"), min=0, max=20, value=0, step=0.5)
+  })
+
+  output$despikePressure <- renderUI({
+    checkboxInput(inputId="despikePressure", label="Despike pressure")
   })
 
   ##deleteYo output$deleteYo <- renderUI({
@@ -541,6 +566,9 @@ server <- function(input, output, session) {
       res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
+      res <- paste0(res, "[delete initial ", input$deleteInitialYos, " yos] ")
+      res <- paste0(res, "[delete top ", input$deleteTop, "m]")
+      res <- paste0(res, "[delete initial ", input$deleteInitialTimes, "s]")
     }
     res
   })
@@ -907,9 +935,6 @@ server <- function(input, output, session) {
 
   outputOptions(output, "gliderExists", suspendWhenHidden = FALSE)
 
-  output$despikePressure <- renderUI({
-    checkboxInput(inputId="despikePressure", label="Despike pressure")
-  })
 
 } # server
 
