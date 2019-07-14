@@ -171,7 +171,8 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           plotOutput("plot",
                                                      hover="hover",
-                                                     click="click",
+                                                     ##click="click",
+                                                     dblclick="dblclick",
                                                      width="100%",
                                                      height="600px",
                                                      brush=brushOpts(id="brush",
@@ -231,7 +232,7 @@ server <- function(input, output, session) {
 
   plotExists <- FALSE
   ##state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
-  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL)
+  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL, yoDblclicked=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -406,7 +407,7 @@ server <- function(input, output, session) {
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label="Plot",
-                ## BOOKMARK_plot_type_1_of_3: note that 2 and 3 must align with this
+                ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
                 choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
                           "S profile", "T profile", "density profile", "C profile",
                           "hist(C)", "hist(S)", "hist(p)"),
@@ -428,7 +429,7 @@ server <- function(input, output, session) {
     numericInput("focusYo",
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
                  if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
-                 value=if (is.null(state$focusYo)) "1" else state$focusYo)
+                 value=if (is.null(state$yoDblclicked)) "1" else state$yoDblclicked)
   })
 
   observeEvent(focusYo, {
@@ -494,15 +495,15 @@ server <- function(input, output, session) {
   ###old })
 
   output$deleteInitialYos <- renderUI({
-    sliderInput("deleteInitialYos", h6("Delete initial yos"), min=0, max=10, value=1, step=1)
+    sliderInput("deleteInitialYos", h6("Hide initial yos"), min=0, max=10, value=1, step=1)
   })
 
   output$deleteTop <- renderUI({
-    sliderInput("deleteTop", h6("Delete top data [m]"), min=0, max=10, value=0, step=0.5)
+    sliderInput("deleteTop", h6("Hide top data [m]"), min=0, max=10, value=0, step=0.5)
   })
 
   output$deleteInitialTimes <- renderUI({
-    sliderInput("deleteInitialTimes", h6("Delete after powerup [s]"), min=0, max=20, value=0, step=0.5)
+    sliderInput("deleteInitialTimes", h6("Hide after powerup [s]"), min=0, max=20, value=0, step=0.5)
   })
 
   output$despikePressure <- renderUI({
@@ -527,7 +528,7 @@ server <- function(input, output, session) {
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     res <- "(Move mouse into plot window to see properties)"
     if (!is.null(hoverx) && plotExists) {
-      ## BOOKMARK_plot_type_2_of_3: note that 1 and 3 must align with this
+      ## BOOKMARK_plot_type_2_of_4: note that 1, 3 and 4 must align with this
       if (input$plotChoice == "p(t)") {
         x <- as.numeric(g[["time"]])
         y <- g[["pressure"]]
@@ -567,8 +568,9 @@ server <- function(input, output, session) {
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       res <- paste0(res, "[delete initial ", input$deleteInitialYos, " yos] ")
-      res <- paste0(res, "[delete top ", input$deleteTop, "m]")
-      res <- paste0(res, "[delete initial ", input$deleteInitialTimes, "s]")
+      res <- paste0(res, "[delete top ", input$deleteTop, "m] ")
+      res <- paste0(res, "[delete initial ", input$deleteInitialTimes, "s] ")
+      res <- paste0(res, "[dbllicked=", state$yoDblclicked, "]")
     }
     res
   })
@@ -578,32 +580,78 @@ server <- function(input, output, session) {
                  debugFlag <<- input$debug
   })
 
-  observeEvent(input$click, {
-               msg("input$click **IGNORED**\n")
-               ## distThreshold <- 0.05
-               ## x <- input$click$x
-               ## y <- input$click$y
-               ## flagged <- state$flag == 3
-               ## if (input$plotChoice == "p(t)") {
-               ##   dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
-               ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-               ##   disti <- which.min(dist)
-               ##   d <- g[["payload1"]][disti,]
-               ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
-               ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure)
-               ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-               ##   msg(res)
-               ## } else if (input$plotChoice == "TS") {
-               ##   dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-               ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-               ##   disti <- which.min(dist)
-               ##   d <- g[["payload1"]][disti,]
-               ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
-               ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
-               ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-               ##   msg(res)
-               ## }
+  observeEvent(input$dblclick, {
+               dblclickx <- input$dblclick$x
+               dblclicky <- input$dblclick$y
+               msg("input$dblclick$x=", dblclickx," y=", dblclicky,"\n")
+               if (!is.null(dblclickx) && plotExists) {
+                 ## BOOKMARK_plot_type_3_of_4: note that 1, 2 and 4 must align with this
+                 if (input$plotChoice == "p(t)") {
+                   x <- as.numeric(g[["time"]])
+                   y <- g[["pressure"]]
+                 } else if (input$plotChoice == "C(t)") {
+                   x <- as.numeric(g[["time"]])
+                   y <- g[["conductivity"]]
+                 } else if (input$plotChoice == "S(t)") {
+                   x <- as.numeric(g[["time"]])
+                   y <- g[["SA"]]
+                 } else if (input$plotChoice == "T(t)") {
+                   x <- as.numeric(g[["time"]])
+                   y <- g[["CT"]]
+                 } else if (input$plotChoice == "TS") {
+                   x <- g[["SA"]]
+                   y <- g[["CT"]]
+                 } else if (input$plotChoice == "S profile") {
+                   x <- g[["SA"]]
+                   y <- g[["pressure"]]
+                 } else if (input$plotChoice == "T profile") {
+                   x <- g[["CT"]]
+                   y <- g[["pressure"]]
+                 } else if (input$plotChoice == "density profile") {
+                   x <- g[["sigma0"]]
+                   y <- g[["pressure"]]
+                 } else if (input$plotChoice == "C profile") {
+                   x <- g[["conductivity"]]
+                   y <- g[["pressure"]]
+                 } else if (length(grep("^hist", input$plotChoice))) {
+                   return("(Status line is unavailable for histogram plots.)")
+                 }
+                 dist <- sqrt(((dblclickx-x)/(state$usr[2]-state$usr[1]))^2 + ((dblclicky-y)/(state$usr[4]-state$usr[3]))^2)
+                 visible <- visibleIndices()
+                 dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+                 disti <- which.min(dist)
+                 d <- g[["payload1"]][disti,]
+                 msg("yo=", d$yoNumber, "\n")
+                 state$yoDblclicked <<- d$yoNumber
+               }
   })
+
+  ## observeEvent(input$click, {
+  ##              msg("input$click **IGNORED**\n")
+  ##              ## distThreshold <- 0.05
+  ##              ## x <- input$click$x
+  ##              ## y <- input$click$y
+  ##              ## flagged <- state$flag == 3
+  ##              ## if (input$plotChoice == "p(t)") {
+  ##              ##   dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
+  ##              ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+  ##              ##   disti <- which.min(dist)
+  ##              ##   d <- g[["payload1"]][disti,]
+  ##              ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
+  ##              ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure)
+  ##              ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
+  ##              ##   msg(res)
+  ##              ## } else if (input$plotChoice == "TS") {
+  ##              ##   dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
+  ##              ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+  ##              ##   disti <- which.min(dist)
+  ##              ##   d <- g[["payload1"]][disti,]
+  ##              ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
+  ##              ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
+  ##              ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
+  ##              ##   msg(res)
+  ##              ## }
+  ## })
 
   observeEvent(input$brush, {
                xmin <- input$brush$xmin
@@ -615,7 +663,7 @@ server <- function(input, output, session) {
                msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
                msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
                msg("  count of flag==3: ", sum(state$flag==3), " (before)\n", sep="")
-               ## BOOKMARK_plot_type_3_of_3: note that 1 and 2 must align with this
+               ## BOOKMARK_plot_type_4_of_4: note that 1, 2 and 3 must align with this
                if (input$plotChoice == "p(t)") {
                  x <- as.numeric(g[["time"]])
                  y <- g[["pressure"]]
