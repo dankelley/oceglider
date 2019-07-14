@@ -39,7 +39,7 @@ for (base in baseTrial) {
   dir <- paste(base, "/glider/delayedData", sep="")
   cat("Directory '", dir, "' ", sep="")
   if (file.exists(dir)) {
-    cat("holds a glider/delayedData subdirectory, and will be used here.\n")
+    cat("holds a glider/delayedData subdirectory, and will be used to construct the glider and mission menus.\n")
     basedir <- dir
     break
   } else {
@@ -226,7 +226,7 @@ server <- function(input, output, session) {
     visible <- (g[["navState"]] %in% input$navState) & !badPressure
     if (input$focus == "yo")
       visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
-    visible <- visible & state$flag != 3
+    visible <- visible & (state$flag != 3)
     visible
   }
 
@@ -673,6 +673,7 @@ server <- function(input, output, session) {
                } else if (input$plotChoice == "S(t)") {
                  x <- as.numeric(g[["time"]])
                  y <- g[["SA"]]
+                 msg("length(x)=", length(x), "\n")
                } else if (input$plotChoice == "T(t)") {
                  x <- as.numeric(g[["time"]])
                  y <- g[["CT"]]
@@ -716,8 +717,11 @@ server <- function(input, output, session) {
                  stop("programming error: brushing for plot type '", input$plotChoice, "' is not coded yet")
                }
                bad <- ifelse(is.na(x) | is.na(y), TRUE, xmin <= x & x <= xmax & ymin <= y & y <= ymax)
+               msg("1. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
                bad[is.na(bad)] <- TRUE
+               msg("2. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
                bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+               msg("3. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
                saveEditEvent(paste0("brush ", input$plotChoice), bad)
   })
 
