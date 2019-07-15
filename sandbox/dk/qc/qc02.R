@@ -217,6 +217,9 @@ server <- function(input, output, session) {
 
   #' suport function for plotting and brushing
   visibleIndices <- function() {
+    ## 1. start with data in desired navStage
+    visible <- g[["navState"]] %in% input$navState
+    ## 2. remove any pressure spikes
     if (input$despikePressure) {
       p <- g[["pressure"]]
       badp <- is.na(p)
@@ -226,13 +229,26 @@ server <- function(input, output, session) {
       badPressure <- pressureShift > pressureThreshold
       if (any(badp))
         badPressure[badp] <- TRUE
-    } else {
-      badPressure <- rep(FALSE, ndata)
+      visible <- visible & !badPressure
     }
-    visible <- (g[["navState"]] %in% input$navState) & !badPressure
-    if (input$focus == "yo")
+    ## 3. remove pressures less than a specified limit
+    if (input$deleteTop > 0) {
+      tooNearSurface <- p < input$deleteTop
+      visible <- visible & !tooNearSurface
+    }
+    ## 4. isolate to a particular yo, if we are in yo-focus mode
+    if (input$focus == "yo") {
       visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
-    visible <- visible & (state$flag != 3)
+    }
+    ## 5. ignore initial yos
+    if (input$deleteInitialYos > 0) {
+      visible <- visible & (g[["yoNumber"]] > as.numeric(input$deleteInitialYos))
+    }
+    ## 5. ignore for some time after powerup
+    msg("FIXME: ignore for some time after powerup\n")
+    ## 6. ignore already-flagged data
+    visible <- visible & (state$flag != badFlagValue)
+    ## DEVELOPER: put new tests after 5, and relabel 6 accordingly.
     visible
   }
 
@@ -244,8 +260,6 @@ server <- function(input, output, session) {
   {
     Sys.glob(paste(tolower(glider), "_", tolower(mission), "*.rda", sep=""))
   }
-
-  # flag=1 if ok; =3 if bad
 
   edits <- list()
 
