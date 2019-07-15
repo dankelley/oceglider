@@ -80,13 +80,14 @@ setMethod("handleFlags",
 #' @param flags A \code{\link{list}} specifying flag values upon which
 #' actions will be taken. This can take two forms. In the first, the
 #' list has named elements each containing a vector of integers. For example,
-#' salinities flagged with values of 1 or 3 through 9 would be specified
-#' by \code{flags=list(salinity=c(2,3,4,9))}. Several data items can be specified,
-#' e.g. \code{flags=list(salinity=c(2,3,4,9),temperature=c(2,3,4,9))} indicates
+#' salinities flagged with values of 3 ("suspect"), 4 ("fail")
+#' or 9 ("missing") would be specified by \code{flags=list(salinity=c(3,4,9))}.
+#' Several data items can be specified,
+#' e.g. \code{flags=list(salinity=c(3,4,9),temperature=c(3,4,9))} indicates
 #' that the actions are to take place for both salinity and temperature.
 #' In the second form, \code{flags} is a list with unnamed vectors, and
 #' this means to apply the actions to all the data entries; thus,
-#' \code{flags=list(c(2,3,4,9))} means to apply not just to salinity and temperature,
+#' \code{flags=list(c(3,4,9))} means to apply not just to salinity and temperature,
 #' but also to everything else for which flags have been set up. If \code{flags}
 #' is not provided, then \code{\link{defaultFlags}} is called on
 #' \code{object}, to try to determine a conservative default.

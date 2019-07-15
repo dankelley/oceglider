@@ -3,7 +3,13 @@
 debugFlag <- TRUE                      # a button lets user set this on and off
 version <- "0.1.1"
 pressureThreshold <- 0.5
-badFlagValue <- 3
+## * Data-quality Flag Scheme
+##
+##     name    "IOOS"
+##     mapping list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9)
+badFlagValue <- 4                      # "fail": flagged as bad
+initialFlagValue <- 2                  # "not evaluated": the default after reading data
+
 ## Development Notes
 ## Circles for points look nice, but they are 5X to 10X slower than dots.
 ## NOTE: we could add pulldown menus for pch and cex, at the expense of some interface space.
@@ -736,9 +742,7 @@ server <- function(input, output, session) {
                             )
                if (inherits(g, "try-error")) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
-               } else {
-                 state$flag <- rep(1, length(g[["pressure"]]))
-                 ###showModal(modalDialog("", "Reading of pld1 files is complete. Next, select a plot type, colour scheme, navState limitations, etc. You may save your work at any time, for later loading by timestamp.", easyClose=TRUE))
+                 stop()
                }
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
@@ -750,6 +754,9 @@ server <- function(input, output, session) {
                CT <<- g@data$payload1[["CT"]]
                p <<- g@data$payload1[["pressure"]]
                ndata <<- length(p)
+               state$flag <<- rep(initialFlagValue, ndata)
+               ## Will use a single flag
+               g@metadata$flags$payload1 <<- list(overall=state$flag)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
@@ -770,7 +777,7 @@ server <- function(input, output, session) {
                ndata <<- length(p)
                maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-               state$flag <- g[["pressureFlag"]]
+               state$flag <<- g@metadata$flags$payload1$overall
                ###msg(". done\n")
                ###msg("maxYo=", maxYo, " after loading rda\n")
                state$rda <- filename
@@ -783,11 +790,13 @@ server <- function(input, output, session) {
                ###msg("  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
                visible <- g[["navState"]] %in% input$navState
                g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
-               saveEditEvent("saving only visible navState", visible)
+               saveEditEvent("on file save, ignoring hidden navState", !visible)
                ###msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
                mission <- input$mission
                glider <- input$glider
                sourceDirectory <- dataName()
+               ## Will use a single flag
+               g@metadata$flags$payload1 <<- list(overall=state$flag)
                withProgress(message=paste0("Saving '", rda, "'"),
                             value=0,
                             { save(glider, mission, sourceDirectory, edits, g, file=rda) }
