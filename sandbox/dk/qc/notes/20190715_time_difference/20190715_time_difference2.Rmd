@@ -1,0 +1,42 @@
+---
+title: "time-difference patterns (part 2)"
+author: "Dan Kelley"
+date: "2019 July 16"
+output: pdf_document
+---
+
+```{r dev.args=list(pointsize=9)}
+library(oceanglider)
+## library(shiny); runApp('~/git/glider/code/qc/02.R')
+load("../../sea021_m51_2019-07-16_11:32:33.rda")
+t <- as.numeric(g[["time"]])
+p <- g[["pressure"]]
+dt <- diff(t)
+sddt <- sd(dt)
+meandt <- mean(dt)
+mediandt <- median(dt)
+
+yosep <- which(0!=diff(as.numeric(g[["yoNumber"]])))
+look <- 1:25000
+par(mar=c(3,3,1,1),mgp=c(2,.7,0),mfrow=c(2,1))
+threshold <- 20
+jumpIndex <- which(dt > threshold * mediandt)
+str(jumpIndex)
+col <- ifelse(dt[look] > threshold*mediandt, 'red', 'gray')
+cex <- ifelse(dt[look] > threshold*mediandt, 1, 0.5)
+pch <- 20
+plot(t[look], p[look], col=col, pch=pch, cex=cex)
+abline(v=t[yosep], col='blue')
+abline(v=t[jumpIndex], col='red')
+mtext('red=time jump; blue=yo ending', side=3, line=0)
+plot(t[look], dt[look], col=col, pch=pch, cex=cex)
+abline(v=t[yosep], col='blue')
+abline(v=t[jumpIndex], col='red')
+mtext('red=time jump; blue=yo ending', side=3, line=0)
+tsep <- which(dt > threshold * meandt)
+iseq <- seq(-3, 3)
+for (i in 1:8)
+    print(data.frame(index=tsep[i]+iseq,t=t[tsep[i]+iseq],dt=dt[tsep[i]+iseq]))
+
+```
+

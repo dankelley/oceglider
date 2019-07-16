@@ -126,6 +126,8 @@ p <- NULL
 ndata <- 0
 t <- NULL
 maxYo <- NULL
+powerOnThreshold <- 10 # used to find power-off events
+powerOffIndex <- NULL
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
                 fluidRow(column(2, checkboxInput("debug", "Debug", value=TRUE)),
@@ -158,13 +160,13 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                          ),
                 fluidRow(column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="deleteInitialYos"))),
+                                                 uiOutput(outputId="hideInitialYos"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="deleteTop"))),
+                                                 uiOutput(outputId="hideTop"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="deleteInitialTimes")))
+                                                 uiOutput(outputId="hideAfterPowerup")))
                          ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           uiOutput(outputId="despikePressure")),
@@ -232,8 +234,8 @@ server <- function(input, output, session) {
       visible <- visible & !badPressure
     }
     ## 3. remove pressures less than a specified limit
-    if (input$deleteTop > 0) {
-      tooNearSurface <- p < input$deleteTop
+    if (input$hideTop > 0) {
+      tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
     ## 4. isolate to a particular yo, if we are in yo-focus mode
@@ -241,11 +243,17 @@ server <- function(input, output, session) {
       visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
     }
     ## 5. ignore initial yos
-    if (input$deleteInitialYos > 0) {
-      visible <- visible & (g[["yoNumber"]] > as.numeric(input$deleteInitialYos))
+    if (input$hideInitialYos > 0) {
+      visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
     }
     ## 5. ignore for some time after powerup
-    msg("FIXME: ignore for some time after powerup\n")
+    if (input$hideAfterPowerup > 0) {
+      msg("input$hideAfterPowerup=", input$hideAfterPowerup, "\n")
+      for (i in seq_along(powerOffIndex)) {
+        if (i < 10)
+          msg("powerOffIndex[", i, "=", powerOffIndex[i], "; time=", g[["time"]][powerOffIndex[i]], "\n")
+      }
+    }
     ## 6. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
     ## DEVELOPER: put new tests after 5, and relabel 6 accordingly.
@@ -514,27 +522,21 @@ server <- function(input, output, session) {
   ###old                 selected="flag")
   ###old })
 
-  output$deleteInitialYos <- renderUI({
-    sliderInput("deleteInitialYos", h6("Hide initial yos"), min=0, max=10, value=1, step=1)
+  output$hideInitialYos <- renderUI({
+    sliderInput("hideInitialYos", h6("Hide initial yos"), min=0, max=10, value=1, step=1)
   })
 
-  output$deleteTop <- renderUI({
-    sliderInput("deleteTop", h6("Hide top data [m]"), min=0, max=10, value=0, step=0.5)
+  output$hideTop <- renderUI({
+    sliderInput("hideTop", h6("Hide top data [m]"), min=0, max=10, value=0, step=0.5)
   })
 
-  output$deleteInitialTimes <- renderUI({
-    sliderInput("deleteInitialTimes", h6("Hide after powerup [s]"), min=0, max=20, value=0, step=0.5)
+  output$hideAfterPowerup <- renderUI({
+    sliderInput("hideAfterPowerup", h6("Hide after powerup [s]"), min=0, max=20, value=0, step=0.5)
   })
 
   output$despikePressure <- renderUI({
     checkboxInput(inputId="despikePressure", label="Despike pressure")
   })
-
-  ##deleteYo output$deleteYo <- renderUI({
-  ##deleteYo   if (!is.null(state$yoSelected)) {
-  ##deleteYo     actionButton(inputId="deleteYo", label=paste("Delete yo #", state$yoSelected, sep=""))
-  ##deleteYo   }
-  ##deleteYo })
 
   output$navState <- renderUI({
     ns <- navStateCodes("seaexplorer")
@@ -587,9 +589,9 @@ server <- function(input, output, session) {
       res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
-      res <- paste0(res, "[delete initial ", input$deleteInitialYos, " yos] ")
-      res <- paste0(res, "[delete top ", input$deleteTop, "m] ")
-      res <- paste0(res, "[delete initial ", input$deleteInitialTimes, "s] ")
+      res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
+      res <- paste0(res, "[hide top ", input$hideTop, "m] ")
+      res <- paste0(res, "[hide ", input$hideAfterPowerup, "s after powerup")
       res <- paste0(res, "[dbllicked=", state$yoDblclicked, "]")
     }
     res
@@ -771,7 +773,9 @@ server <- function(input, output, session) {
                state$flag <<- rep(initialFlagValue, ndata)
                ## Will use a single flag
                g@metadata$flags$payload1 <<- list(overall=state$flag)
-               t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
+               t <<- as.numeric(g[["time"]]) # in seconds, for hover/brush operations
+               dt <- diff(t)
+               powerOffIndex <<- which(dt > powerOnThreshold * median(dt))
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
                ###msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
@@ -785,6 +789,7 @@ server <- function(input, output, session) {
                ###msg("  load from '", filename, "' ..", sep="")
                withProgress(message=paste0("Loading '", filename, "'"), value=0, { load(filename) })
                g <<- g
+               powerOffIndex <<- powerOffIndex
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
@@ -813,7 +818,7 @@ server <- function(input, output, session) {
                g@metadata$flags$payload1 <<- list(overall=state$flag)
                withProgress(message=paste0("Saving '", rda, "'"),
                             value=0,
-                            { save(glider, mission, sourceDirectory, edits, g, file=rda) }
+                            { save(g, glider, mission, sourceDirectory, edits, powerOffIndex, file=rda) }
                             )
                ###msg("  ... done\n", sep="")
   })
