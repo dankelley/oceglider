@@ -1,0 +1,33 @@
+---
+title: "time-difference patterns"
+author: "Dan Kelley"
+date: "2019 July 16"
+output: pdf_document
+---
+
+```{r}
+library(oceanglider)
+## library(shiny); runApp('~/git/glider/code/qc/02.R')
+load("../../sea021_m51_2019-07-16_11:32:33.rda")
+t <- as.numeric(g[["time"]])
+p <- g[["pressure"]]
+dt <- diff(t)
+sddt <- sd(dt)
+meandt <- mean(dt)
+
+yosep <- which(0!=diff(as.numeric(g[["yoNumber"]])))[1:10]
+look <- 1:7000
+par(mar=c(3,3,1,1),mgp=c(2,.7,0),mfrow=c(2,1))
+threshold <- 3
+col <- ifelse(dt[look] > threshold*meandt, 'red', 'gray')
+pch <- 20
+cex <- ifelse(dt[look] > threshold*meandt, 1, 0.5)
+plot(t[look], p[look], col=col, pch=pch, cex=cex)
+abline(v=t[yosep], col='red')
+plot(t[look], dt[look], col=col, pch=pch, cex=cex)
+abline(v=t[yosep], col='red')
+tsep <- which(dt > threshold * meandt)
+for (i in 1:8)
+    print(data.frame(t=t[tsep[i]+seq(-3,3)],dt=dt[tsep[i]+seq(-3,3)]))
+```
+
