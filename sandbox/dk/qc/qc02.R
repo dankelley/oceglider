@@ -191,11 +191,15 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                 )
 
 server <- function(input, output, session) {
+  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL, yoDblclicked=NULL)
 
   saveEditEvent <- function(category, bad)
   {
+    msg("saveEditEvent with sum(bad)=", sum(bad), "\n")
     oldFlag <- state$flag
+    msg(" sum(!state$flag)=", sum(!state$flag), " before setting some to bad\n")
     state$flag[bad] <<- badFlagValue
+    msg(" sum(!state$flag)=", sum(!state$flag), " after setting some to bad\n")
     newFlag <- state$flag
     changedIndex <- which(newFlag != oldFlag)
     if (length(changedIndex) > 0) {
@@ -270,8 +274,6 @@ server <- function(input, output, session) {
   }
 
   plotExists <- FALSE
-  ##state <- reactiveValues(rda="", flag=NULL, focusYo="1", yoSelected=NULL, gliderExists=FALSE, usr=NULL)
-  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL, yoDblclicked=NULL)
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -781,8 +783,8 @@ server <- function(input, output, session) {
                state$flag <<- g@metadata$flags$payload1$overall
                ###msg(". done\n")
                ###msg("maxYo=", maxYo, " after loading rda\n")
-               state$rda <- filename
-               state$gliderExists <- TRUE
+               state$rda <<- filename
+               state$gliderExists <<- TRUE
   })
 
   observeEvent(input$saveRda, {
@@ -798,6 +800,8 @@ server <- function(input, output, session) {
                sourceDirectory <- dataName()
                ## Will use a single flag
                g@metadata$flags$payload1 <<- list(overall=state$flag)
+               msg("saving with sum(2==g@metadata$flags$payload1$overall)/length(same) = ",
+                   sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
                withProgress(message=paste0("Saving '", rda, "'"),
                             value=0,
                             { save(g, glider, mission, sourceDirectory, edits, powerOffIndex, file=rda) }
