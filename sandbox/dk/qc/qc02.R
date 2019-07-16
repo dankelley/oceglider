@@ -219,8 +219,10 @@ server <- function(input, output, session) {
 
   #' suport function for plotting and brushing
   visibleIndices <- function() {
+    msg("visibleIndices ...\n")
     ## 1. start with data in desired navStage
     visible <- g[["navState"]] %in% input$navState
+    msg("  after select navState, sum(!visible) = ", sum(!visible), "\n")
     ## 2. remove any pressure spikes
     if (input$despikePressure) {
       p <- g[["pressure"]]
@@ -233,27 +235,34 @@ server <- function(input, output, session) {
         badPressure[badp] <- TRUE
       visible <- visible & !badPressure
     }
+    msg("  after despikePressure, sum(!visible) = ", sum(!visible), "\n")
     ## 3. remove pressures less than a specified limit
     if (input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
+    msg("  after hideTop, sum(!visible) = ", sum(!visible), "\n")
     ## 4. isolate to a particular yo, if we are in yo-focus mode
     if (input$focus == "yo") {
       visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
     }
-    ## 5. ignore initial yos
+    msg("  after focus, sum(!visible) = ", sum(!visible), "\n")
+    ## 5. hide initial yos
     if (input$hideInitialYos > 0) {
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
     }
+    msg("  after hideInitialYos, sum(!visible) = ", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
-    if (input$hideAfterPowerup > 0) {
-      msg("input$hideAfterPowerup=", input$hideAfterPowerup, "\n")
-      for (i in seq_along(powerOffIndex)) {
-        if (i < 10)
-          msg("powerOffIndex[", i, "=", powerOffIndex[i], "; time=", g[["time"]][powerOffIndex[i]], "\n")
+    if (FALSE) {
+      if (input$hideAfterPowerup > 0) {
+        for (poi in powerOffIndex) {
+          tstart <- t[poi + 1]
+          poweringUp <- (tstart < t) & (t < tstart + input$hideAfterPowerup)
+          visible[poweringUp] <- FALSE
+        }
       }
     }
+    msg("  DISABLED -- after hideAfterPowerup, sum(!visible) = ", sum(!visible), "\n")
     ## 6. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
     ## DEVELOPER: put new tests after 5, and relabel 6 accordingly.
@@ -647,33 +656,6 @@ server <- function(input, output, session) {
                  state$yoDblclicked <<- d$yoNumber
                }
   })
-
-  ## observeEvent(input$click, {
-  ##              msg("input$click **IGNORED**\n")
-  ##              ## distThreshold <- 0.05
-  ##              ## x <- input$click$x
-  ##              ## y <- input$click$y
-  ##              ## flagged <- state$flag == 3
-  ##              ## if (input$plotChoice == "p(t)") {
-  ##              ##   dist <- sqrt(((x-t)/(state$usr[2]-state$usr[1]))^2 + ((y-p)/(state$usr[4]-state$usr[3]))^2)
-  ##              ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-  ##              ##   disti <- which.min(dist)
-  ##              ##   d <- g[["payload1"]][disti,]
-  ##              ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f)\n",
-  ##              ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure)
-  ##              ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-  ##              ##   msg(res)
-  ##              ## } else if (input$plotChoice == "TS") {
-  ##              ##   dist <- sqrt(((x-SA)/(state$usr[2]-state$usr[1]))^2 + ((y-CT)/(state$usr[4]-state$usr[3]))^2)
-  ##              ##   dist[flagged] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-  ##              ##   disti <- which.min(dist)
-  ##              ##   d <- g[["payload1"]][disti,]
-  ##              ##   res <- sprintf("dist=%.4f x=%.4f y=%.4f (yo=%d, t=%s, p=%.1f, S=%.4f, T=%.4f)\n",
-  ##              ##                  dist[disti], x, y, d$yoNumber, d$time, d$pressure, d$salinity, d$temperature)
-  ##              ##   state$yoSelected <- if (dist[disti] < distThreshold) d$yoNumber else NULL
-  ##              ##   msg(res)
-  ##              ## }
-  ## })
 
   observeEvent(input$brush, {
                xmin <- input$brush$xmin
