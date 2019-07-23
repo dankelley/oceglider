@@ -1,7 +1,7 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
 
 debugFlag <- TRUE                      # a button lets user set this on and off
-version <- "0.2"
+version <- "0.3"
 pressureThreshold <- 0.5
 ## * Data-quality Flag Scheme
 ##
@@ -21,7 +21,7 @@ if (FALSE) {
   cex <- 2
 }
 mgp <- c(2, 0.7, 0)
-fullmar <- 3                           # space for margins with axes in them
+fullmar <- 3.3                         # space for margins with axes in them
 ## In the next sequence, note that the palette values have to match main values in 1st and 3rd arg
 marPaletteProfile <- c(1, 1, fullmar, 1)
 marProfile <- c(1, fullmar, fullmar, fullmar+2.5)
@@ -126,13 +126,13 @@ p <- NULL
 ndata <- 0
 t <- NULL
 maxYo <- NULL
-powerOnThreshold <- 10 # used to find power-off events
+powerOnThreshold <- 60 # if no samples during this number of seconds, assume power was off
 powerOffIndex <- NULL
 
 ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
                 fluidRow(column(2, checkboxInput("debug", "Debug", value=TRUE)),
                          column(2, checkboxInput("instructions", "Show Instructions", value=FALSE))),
-                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc02_help.md"))),
+                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc03_help.md"))),
                 fluidRow(column(2,
                                 uiOutput(outputId="glider"),
                                 uiOutput(outputId="mission"),
@@ -166,7 +166,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                  uiOutput(outputId="hideTop"))),
                          column(2,
                                 conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="hideAfterPowerup")))
+                                                 uiOutput(outputId="hideAfterPowerOn")))
                          ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           uiOutput(outputId="despikePressure")),
@@ -184,14 +184,21 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      width="100%",
                                                      height="600px",
                                                      brush=brushOpts(id="brush",
-                                                                     delay=1000,
+                                                                     delay=2000,
                                                                      delayType="debounce",
                                                                      resetOnNew=!TRUE)))
                 )
                 )
 
 server <- function(input, output, session) {
-  state <- reactiveValues(rda="", flag=NULL, focusYo=1, gliderExists=FALSE, usr=NULL, yoDblclicked=NULL)
+  state <- reactiveValues(rda="",
+                          flag=NULL,
+                          focusYo=1,
+                          gliderExists=FALSE,
+                          usr=NULL,
+                          yoDblclicked=NULL,
+                          hideAfterPowerOn=0
+                          )
 
   saveEditEvent <- function(category, bad)
   {
@@ -214,6 +221,10 @@ server <- function(input, output, session) {
 
   focusYo <- reactive({
     if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
+  })
+
+  hideAfterPowerOn <- reactive({
+    if (is.null(input$hideAfterPowerOn)) 0 else as.numeric(input$hideAfterPowerOn)
   })
 
   msg <- function(...) {
@@ -247,28 +258,24 @@ server <- function(input, output, session) {
     }
     msg("  after hideTop, sum(!visible) = ", sum(!visible), "\n")
     ## 4. isolate to a particular yo, if we are in yo-focus mode
-    if (input$focus == "yo") {
+    if (input$focus == "yo")
       visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
-    }
     msg("  after focus, sum(!visible) = ", sum(!visible), "\n")
     ## 5. hide initial yos
-    if (input$hideInitialYos > 0) {
+    if (input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
-    }
     msg("  after hideInitialYos, sum(!visible) = ", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
-    if (FALSE) {
-      if (input$hideAfterPowerup > 0) {
-        for (poi in powerOffIndex) {
-          tstart <- t[poi + 1]
-          poweringUp <- (tstart < t) & (t < tstart + input$hideAfterPowerup)
-          visible[poweringUp] <- FALSE
-        }
-      }
-    }
-    msg("  DISABLED -- after hideAfterPowerup, sum(!visible) = ", sum(!visible), "\n")
+    hapu <- debounce(hideAfterPowerOn, 2000)()
+    poweringOn <- g[["tSincePowerOn"]] < hapu
+    msg(vectorShow(t))
+    msg(vectorShow(g[["tSincePowerOn"]]))
+    msg(vectorShow(g[["tSincePowerOn"]]<hapu))
+    visible <- visible & !poweringOn
+    msg("  after hideAfterPowerup (first ", hapu, "s), sum(!visible) = ", sum(!visible), "\n")
     ## 6. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
+    msg("  after flagging already-flagged data, sum(!visible) = ", sum(!visible), "\n")
     ## DEVELOPER: put new tests after 5, and relabel 6 accordingly.
     visible
   }
@@ -384,7 +391,8 @@ server <- function(input, output, session) {
   }
 
   rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
+    #tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
+    tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y%m%d_%H%M"), ".rda", sep=""))
   }
 
   output$gliderExists <- reactive({
@@ -447,7 +455,7 @@ server <- function(input, output, session) {
     selectInput(inputId="plotChoice",
                 label="Plot",
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("p(t)", "C(t)", "S(t)", "T(t)", "TS",
+                choices=c("p(t)", "C(t)", "S(t)", "T(t)", "tSincePowerOn(t)", "TS",
                           "S profile", "T profile", "density profile", "C profile",
                           "hist(C)", "hist(S)", "hist(p)"),
                 selected="p(t)")
@@ -473,10 +481,7 @@ server <- function(input, output, session) {
 
   observeEvent(focusYo, {
                msg("observeEvent(focusYo) ...\n")
-               #focusYoRaw <- reactive({
-               #  if (is.null(input$focusYo)) NULL else as.numeric(input$focusYo)
-               #})
-               #focusYo <- throttle(focusYoRaw, 5000)()
+               ## fy <- throttle(focusYoRaw, 5000)()
                fy <- debounce(focusYo, 5000)()
                state$focusYo <<- fy
                msg("  fy=", fy, ",  maxYo=", maxYo, "\n")
@@ -490,6 +495,11 @@ server <- function(input, output, session) {
                  }
                }
                msg("  after, state$focusYo=", state$focusYo, "\n")
+  })
+
+  observeEvent(hideAfterPowerOn, {
+               msg("+++ observeEvent(hideAfterPowerOn) ...\n")
+               state$hideAfterPowerOn <<- debounce(hideAfterPowerOn, 5000)()
   })
 
   ## output$previousYo <- renderUI({
@@ -534,15 +544,15 @@ server <- function(input, output, session) {
   ###old })
 
   output$hideInitialYos <- renderUI({
-    sliderInput("hideInitialYos", h6("Hide initial yos"), min=0, max=10, value=1, step=1)
+    sliderInput("hideInitialYos", h6("Hide initial yos"), min=0, max=10, value=1)
   })
 
   output$hideTop <- renderUI({
-    sliderInput("hideTop", h6("Hide top data [m]"), min=0, max=10, value=0, step=0.5)
+    sliderInput("hideTop", h6("Hide top data [m]"), min=0, max=15, value=0)
   })
 
-  output$hideAfterPowerup <- renderUI({
-    sliderInput("hideAfterPowerup", h6("Hide after powerup [s]"), min=0, max=20, value=0, step=0.5)
+  output$hideAfterPowerOn <- renderUI({
+    sliderInput("hideAfterPowerOn", h6("Hide after power-on [s]"), min=0, max=20, value=0, step=0.25)
   })
 
   output$despikePressure <- renderUI({
@@ -574,6 +584,9 @@ server <- function(input, output, session) {
       } else if (input$plotChoice == "T(t)") {
         x <- as.numeric(g[["time"]])
         y <- g[["CT"]]
+      } else if (input$plotChoice == "tSincePowerOn(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- x - g[["tSincePowerOn"]]
       } else if (input$plotChoice == "TS") {
         x <- g[["SA"]]
         y <- g[["CT"]]
@@ -600,10 +613,10 @@ server <- function(input, output, session) {
       res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
-      res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
-      res <- paste0(res, "[hide top ", input$hideTop, "m] ")
-      res <- paste0(res, "[hide ", input$hideAfterPowerup, "s after powerup")
-      res <- paste0(res, "[dbllicked=", state$yoDblclicked, "]")
+      ##res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
+      ##res <- paste0(res, "[hide top ", input$hideTop, "m] ")
+      res <- paste0(res, "[hide ", state$hideAfterPowerOn, "s after powerup] ")
+      res <- paste0(res, "[dblclicked yo=", state$yoDblclicked, "]")
     }
     res
   })
@@ -631,6 +644,9 @@ server <- function(input, output, session) {
                  } else if (input$plotChoice == "T(t)") {
                    x <- as.numeric(g[["time"]])
                    y <- g[["CT"]]
+                 } else if (input$plotChoice == "tSincePowerOn(t)") {
+                   x <- as.numeric(g[["time"]])
+                   y <- x - g[["tSincePowerOn"]]
                  } else if (input$plotChoice == "TS") {
                    x <- g[["SA"]]
                    y <- g[["CT"]]
@@ -683,6 +699,9 @@ server <- function(input, output, session) {
                } else if (input$plotChoice == "T(t)") {
                  x <- as.numeric(g[["time"]])
                  y <- g[["CT"]]
+               } else if (input$plotChoice == "tSincePowerOn(t)") {
+                 x <- as.numeric(g[["time"]])
+                 y <- x - g[["tSincePowerOn"]]
                } else if (input$plotChoice == "TS") {
                  x <- g[["SA"]]
                  y <- g[["CT"]]
@@ -738,12 +757,17 @@ server <- function(input, output, session) {
                nfiles <- length(list.files(dir, "pld1.raw"))
                withProgress(message=paste0("Reading ", nfiles, " pld1.raw files in '", dir, "'"),
                             value=0,
-                            { g <<- try(read.glider.seaexplorer.delayed(dir)) }
+                            {
+                              g <<- try(read.glider.seaexplorer.delayed(dir))
+                            }
                             )
                if (inherits(g, "try-error")) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                  stop()
                }
+               p <<- g@data$payload1[["pressure"]]
+               ndata <<- length(p)
+               ## FIXME why save SA,CT into payload1 if we have global?
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
                g@data$payload1[["sigma0"]] <<- g[["sigma0"]]
@@ -752,14 +776,30 @@ server <- function(input, output, session) {
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                SA <<- g@data$payload1[["SA"]]
                CT <<- g@data$payload1[["CT"]]
-               p <<- g@data$payload1[["pressure"]]
-               ndata <<- length(p)
                state$flag <<- rep(initialFlagValue, ndata)
                ## Will use a single flag
                g@metadata$flags$payload1 <<- list(overall=state$flag)
-               t <<- as.numeric(g[["time"]]) # in seconds, for hover/brush operations
+               t <<- as.numeric(g[["time"]])
                dt <- diff(t)
-               powerOffIndex <<- which(dt > powerOnThreshold * median(dt))
+               ## Compute time since power-on.  This takes just 0.03s elapsed time, so
+               ## maybe we ought to do it when the slider is adjusted, instead of saving
+               ## it globally. However, I like the idea of doing it here, because
+               ## we might want to save it to the rda, for later use.
+               poi <- 1 + which(dt > powerOnThreshold) # power-on index
+               npoi <- length(poi)
+               lastPowerOn <- rep(NA, ndata)
+               lastPowerOn[seq(1L, poi[1]-1)] <- t[1]
+               for (i in seq_len(npoi-1))
+                 lastPowerOn[seq(poi[i], poi[i+1])] <- t[poi[i]]
+               lastPowerOn[seq(poi[npoi], ndata)] <- t[poi[npoi]]
+               g@data$payload1[["tSincePowerOn"]] <<- t - lastPowerOn
+               ## par(mfrow=c(2,1),mar=c(3,3,1,1), mgp=c(2,0.7,0))
+               ## look <- seq(1, 20e3)
+               ## plot(t[look], (t-tSincePowerOn)[look], type="p", pch=20, cex=1/3)
+               ## abline(h=10, col=2)
+               ## look <- ndata + seq(-20e3, 0)
+               ## plot(t[look], (t-tSincePowerOn)[look], type="p", pch=20, cex=1/3)
+               ## abline(h=10, col=2)
                maxYo <<- max(g@data$payload[["yoNumber"]], na.rm=TRUE)
                state$gliderExists <- TRUE
                ###msg("... done reading data; got payload1 data of dimension ", paste(dim(g@data$payload1), collapse="X"), "\n")
@@ -773,7 +813,6 @@ server <- function(input, output, session) {
                ###msg("  load from '", filename, "' ..", sep="")
                withProgress(message=paste0("Loading '", filename, "'"), value=0, { load(filename) })
                g <<- g
-               powerOffIndex <<- powerOffIndex
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
                p <<- g[["pressure"]]
@@ -804,9 +843,12 @@ server <- function(input, output, session) {
                    sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
                withProgress(message=paste0("Saving '", rda, "'"),
                             value=0,
-                            { save(g, glider, mission, sourceDirectory, edits, powerOffIndex, file=rda) }
+                            {
+                              save(g, glider, mission, sourceDirectory, edits,
+                                   file=rda)
+                            }
                             )
-               ###msg("  ... done\n", sep="")
+               msg("  ... finished saving to file '", rda, "'\n", sep="")
   })
 
   output$plot <- renderPlot({
@@ -840,6 +882,9 @@ server <- function(input, output, session) {
           } else if (input$plotChoice == "T(t)") {
             dataName <- "CT"
             axisName <- "conservative temperature"
+          } else if (input$plotChoice == "tSincePowerOn(t)") {
+            dataName <- "tSincePowerOn"
+            axisName <- "Time since powerup [s]"
           } else {
             stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
           }
@@ -850,7 +895,7 @@ server <- function(input, output, session) {
           msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
           msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
           ylim <- range(y, na.rm=TRUE)
-          if (input$plotChoice == "p(t)") 
+          if (input$plotChoice == "p(t)")
             ylim <- rev(ylim)
           ylab <- resizableLabel(axisName)
           if (input$colorBy != "(none)") {
@@ -996,6 +1041,7 @@ server <- function(input, output, session) {
       }
     }
   }, type="cairo", antialias="none", res=200, pointsize=5) # renderPlot.
+  #}, type="Xlib", antialias="none", res=200, pointsize=5) # renderPlot.
   ## g21 m51 TS/latitude res=200 takes ??1.9s elapsed time (DK home machine)
   ## g21 m51 TS/latitude res=100 takes 1.9s elapsed time (DK home machine)
 
