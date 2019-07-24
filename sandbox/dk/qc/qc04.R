@@ -31,7 +31,7 @@ marPaletteTS <- c(fullmar, 1, 1, 1)
 marTS <- c(fullmar, fullmar, 1, fullmar+2.5)
 
 library(shiny)
-##library(shinythemes)
+library(shinythemes)
 library(oce)
 library(oceanglider)
 ##library(shinycssloaders)
@@ -129,7 +129,8 @@ maxYo <- NULL
 powerOnThreshold <- 60 # if no samples during this number of seconds, assume power was off
 powerOffIndex <- NULL
 
-ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; margin-left:1ex} hr {size: '50'}")),
+ui <- fluidPage(shinythemes::themeSelector(),
+                                        #theme=shinytheme("cerulean"),
                 fluidRow(column(2, checkboxInput("debug", "Debug", value=TRUE)),
                          column(2, checkboxInput("instructions", "Show Instructions", value=FALSE))),
                 conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc03_help.md"))),
