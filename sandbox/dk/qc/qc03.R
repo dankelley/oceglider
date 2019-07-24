@@ -468,7 +468,7 @@ server <- function(input, output, session) {
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
                 label="Colour by",
-                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "navState", "(none)"),
+                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "navState", "tSincePowerOn", "(none)"),
                 selected="distance")
   })
 
