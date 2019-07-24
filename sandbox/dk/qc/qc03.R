@@ -182,7 +182,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      ##click="click",
                                                      dblclick="dblclick",
                                                      width="100%",
-                                                     height="600px",
+                                                     height="500px",
                                                      brush=brushOpts(id="brush",
                                                                      delay=2000,
                                                                      delayType="debounce",
@@ -232,7 +232,7 @@ server <- function(input, output, session) {
       cat(file=stderr(), ...)
   }
 
-  #' suport function for plotting and brushing
+  #' suport function for plotting and brushing, used in several spots
   visibleIndices <- function(message="") {
     msg("  visibleIndices(", message, ") {\n", sep="")
     msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, ", ndata=",ndata, "\n", sep="")
@@ -268,6 +268,7 @@ server <- function(input, output, session) {
     ## 5. ignore for some time after powerup
     hapu <- debounce(hideAfterPowerOn, 2000)()
     poweringOn <- g[["tSincePowerOn"]] < hapu
+    if (file.exists("stop")) browser()
     ## msg(vectorShow(t))
     ## msg(vectorShow(g[["tSincePowerOn"]]))
     ## msg(vectorShow(g[["tSincePowerOn"]]<hapu))
@@ -553,7 +554,7 @@ server <- function(input, output, session) {
   })
 
   output$hideAfterPowerOn <- renderUI({
-    sliderInput("hideAfterPowerOn", h6("Hide after power-on [s]"), min=0, max=20, value=0, step=0.25)
+    sliderInput("hideAfterPowerOn", h6("Hide after power-on [s]"), min=0, max=60, value=0)
   })
 
   output$despikePressure <- renderUI({
