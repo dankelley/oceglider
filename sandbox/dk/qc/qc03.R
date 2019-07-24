@@ -186,7 +186,7 @@ ui <- fluidPage(tags$style(HTML("body {font-family: 'Arial'; font-size: 12px; ma
                                                      brush=brushOpts(id="brush",
                                                                      delay=2000,
                                                                      delayType="debounce",
-                                                                     resetOnNew=!TRUE)))
+                                                                     resetOnNew=TRUE)))
                 )
                 )
 
@@ -204,9 +204,9 @@ server <- function(input, output, session) {
   {
     msg("saveEditEvent with sum(bad)=", sum(bad), "\n")
     oldFlag <- state$flag
-    msg(" sum(!state$flag)=", sum(!state$flag), " before setting some to bad\n")
+    msg(" sum(state$flag==3)=", sum(state$flag==3), " before setting some to bad\n")
     state$flag[bad] <<- badFlagValue
-    msg(" sum(!state$flag)=", sum(!state$flag), " after setting some to bad\n")
+    msg(" sum(state$flag==3)=", sum(state$flag==3), " after setting some to bad\n")
     newFlag <- state$flag
     changedIndex <- which(newFlag != oldFlag)
     if (length(changedIndex) > 0) {
@@ -233,12 +233,16 @@ server <- function(input, output, session) {
   }
 
   #' suport function for plotting and brushing
-  visibleIndices <- function() {
-    msg("visibleIndices ...\n")
-    ## 1. start with data in desired navStage
-    visible <- g[["navState"]] %in% input$navState
-    msg("  after select navState, sum(!visible) = ", sum(!visible), "\n")
-    ## 2. remove any pressure spikes
+  visibleIndices <- function(message="") {
+    msg("  visibleIndices(", message, ") {\n", sep="")
+    msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, ", ndata=",ndata, "\n", sep="")
+    ## 1. start with data being displayed
+    visible <- if (input$focus == "yo") g[["yoNumber"]] == as.numeric(input$focusYo) else rep(TRUE, ndata)
+    msg("    windowed by focus, sum(visible) = ", sum(visible), "\n")
+    ## 2. start with data in desired navStage
+    visible <- visible & (g[["navState"]] %in% input$navState)
+    msg("    after select navState, sum(visible) = ", sum(visible), "\n")
+    ## 3. remove any pressure spikes
     if (input$despikePressure) {
       p <- g[["pressure"]]
       badp <- is.na(p)
@@ -250,33 +254,30 @@ server <- function(input, output, session) {
         badPressure[badp] <- TRUE
       visible <- visible & !badPressure
     }
-    msg("  after despikePressure, sum(!visible) = ", sum(!visible), "\n")
-    ## 3. remove pressures less than a specified limit
+    msg("    after despikePressure, sum(visible) = ", sum(visible), "\n")
+    ## 4. remove pressures less than a specified limit
     if (input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
-    msg("  after hideTop, sum(!visible) = ", sum(!visible), "\n")
-    ## 4. isolate to a particular yo, if we are in yo-focus mode
-    if (input$focus == "yo")
-      visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
-    msg("  after focus, sum(!visible) = ", sum(!visible), "\n")
+    msg("    after hideTop, sum(visible) = ", sum(visible), "\n")
     ## 5. hide initial yos
     if (input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
-    msg("  after hideInitialYos, sum(!visible) = ", sum(!visible), "\n")
+    msg("    after hideInitialYos, sum(visible) = ", sum(visible), "\n")
     ## 5. ignore for some time after powerup
     hapu <- debounce(hideAfterPowerOn, 2000)()
     poweringOn <- g[["tSincePowerOn"]] < hapu
-    msg(vectorShow(t))
-    msg(vectorShow(g[["tSincePowerOn"]]))
-    msg(vectorShow(g[["tSincePowerOn"]]<hapu))
+    ## msg(vectorShow(t))
+    ## msg(vectorShow(g[["tSincePowerOn"]]))
+    ## msg(vectorShow(g[["tSincePowerOn"]]<hapu))
     visible <- visible & !poweringOn
-    msg("  after hideAfterPowerup (first ", hapu, "s), sum(!visible) = ", sum(!visible), "\n")
+    msg("    after hideAfterPowerup (first ", hapu, "s), sum(visible) = ", sum(visible), "\n")
     ## 6. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
-    msg("  after flagging already-flagged data, sum(!visible) = ", sum(!visible), "\n")
-    ## DEVELOPER: put new tests after 5, and relabel 6 accordingly.
+    msg("    after flagging already-flagged data, sum(visible) = ", sum(visible), "\n")
+    msg("  }  # visibleIndices(", message, ")\n", sep="")
+    ## DEVELOPER: put new tests here, and be sure to use msg()
     visible
   }
 
@@ -676,15 +677,15 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$brush, {
+               msg("input$brush ...\n")
                xmin <- input$brush$xmin
                xmax <- input$brush$xmax
                ymin <- input$brush$ymin
                ymax <- input$brush$ymax
-               bad <- NULL
-               msg("brush\n")
-               msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
-               msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
-               msg("  count of flag==3: ", sum(state$flag==3), " (before)\n", sep="")
+               ## msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
+               ## msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
+               bad <- state$flag == 3
+               msg("  sum(bad)=", sum(bad), " of ", length(bad), " [based on present state$flag]\n", sep="")
                ## BOOKMARK_plot_type_4_of_4: note that 1, 2 and 3 must align with this
                if (input$plotChoice == "p(t)") {
                  x <- as.numeric(g[["time"]])
@@ -742,11 +743,11 @@ server <- function(input, output, session) {
                  stop("programming error: brushing for plot type '", input$plotChoice, "' is not coded yet")
                }
                bad <- ifelse(is.na(x) | is.na(y), TRUE, xmin <= x & x <= xmax & ymin <= y & y <= ymax)
-               msg("1. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
+               msg("  sum(bad)=", sum(bad), ", length(bad)=", length(bad), " [after in-box test]\n")
                bad[is.na(bad)] <- TRUE
-               msg("2. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
-               bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
-               msg("3. length(bad)=", length(bad), ", sum(bad)=", sum(bad), "\n")
+               msg("  sum(bad)=", sum(bad), ", length(bad)=", length(bad), " [after changing NA to bad]\n")
+               bad <- bad & visibleIndices(paste("brush", input$plotChoice)) # restrict to relevant data
+               msg("  sum(bad)=", sum(bad), ", length(bad)=", length(bad), " [after restriction to visible]\n")
                saveEditEvent(paste0("brush ", input$plotChoice), bad)
   })
 
