@@ -60,11 +60,11 @@ setMethod("handleFlags",
 #'
 #' For example, \code{\link{read.glider.seaexplorer.delayed}}
 #' sets \code{flags$payload1$salinity} to be a vector of length
-#' matching the data stored in \code{data$payload1$salinity}, and 
+#' matching the data stored in \code{data$payload1$salinity}, and
 #' does the same for temperature and some other things that are typically
 #' assessed as part of quality-assessment procdures.  When these
 #' things are set up, they are also assigned numerical values, one for
-#' each element in the data set.  The initial value is set to 
+#' each element in the data set.  The initial value is set to
 #' value 2, which means \code{not_evaluated}
 #' in the IOOS 2017 quality-control scheme (see [1] table 2).
 #'
@@ -223,20 +223,24 @@ handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
                 ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
                 flagsThis <- if (all) flags[[1]] else flags[[name]]
                 ##> message("flagsThis:");print(flagsThis)
-                gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n")
+                gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n", sep="")
                 actionsThis <- if (all) actions[[1]] else actions[[name]]
-                if (name %in% names(object@metadata$flags[[where]])) {
+                singleFlag <- all && identical("overall", names(object@metadata$flags[[where]]))
+                gliderDebug(debug, "singleFlag=", singleFlag, "\n", sep="")
+                if (name %in% names(object@metadata$flags[[where]]) || singleFlag) {
                     gliderDebug(debug, "name: \"", name, "\"\n", sep="")
-                    actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
+                    if (singleFlag) {
+                        actionNeeded <- object@metadata$flags[[where]][["overall"]] %in% flagsThis
+                    } else {
+                        actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
+                    }
+                    gliderDebug(debug, vectorShow(actionNeeded))
                     ##> if (name == "salinity") browser()
                     ##gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
                     if (any(actionNeeded)) {
                         gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
                                     sum(actionNeeded), " are flagged\n", sep="")
-                        if (debug > 1) {
-                            message("\nactionsThis follows...")
-                            print(actionsThis)
-                        }
+                        gliderDebug(debug, vectorShow(actoinsThis))
                         if (is.function(actionsThis)) {
                             object@data[[where]][[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
                         } else if (is.character(actionsThis)) {
