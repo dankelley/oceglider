@@ -287,7 +287,7 @@ server <- function(input, output, session) {
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
-    Sys.glob(paste(tolower(glider), "_", tolower(mission), "*.rda", sep=""))
+    Sys.glob(paste(tolower(glider), tolower(mission), "*.rda", sep=""))
   }
 
   edits <- list()
@@ -389,17 +389,13 @@ server <- function(input, output, session) {
     NULL
   }
 
-  varName <- function() {
-    tolower(paste(input$glider, "_", input$mission, sep=""))
-  }
-
-  rdaName <- function(time=TRUE) { # timestamp does not give seconds, saving 3 chars in pulldown menu
-    #tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y-%m-%d_%H:%M:%S"), ".rda", sep=""))
-    tolower(paste0(varName(), "_", format(oce::presentTime(), "%Y%m%d_%H%M"), ".rda", sep=""))
+  rdaName <- function(time=TRUE) { # skip sec in timestamp, to save 3 char in pulldown menu
+    tolower(paste0(paste(input$glider, input$mission, sep=""),
+                   "_",
+                   format(oce::presentTime(), "%Y%m%d_%H%M"), ".rda", sep=""))
   }
 
   output$gliderExists <- reactive({
-    msg("***gliderExists... (will return ", state$gliderExists, ")***\n")
     state$gliderExists
   })
 
@@ -427,8 +423,8 @@ server <- function(input, output, session) {
     ##msg("output$listRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
-      filedates <- gsub("([a-z0-9]*)_([a-z0-9]*)_(.*).rda", "\\3", files)
-      selectInput(inputId="rdaInputFile", label="Continue", choices=filedates, selected=filedates[1])
+      fileTimes <- gsub("([a-z0-9]*)_([0-9]+)_([0-9]+).rda", "\\2\\3", files)
+      selectInput(inputId="rdaInputFile", label="Continue", choices=fileTimes, selected=fileTimes[1])
     }
   })
 
@@ -501,7 +497,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(hideAfterPowerOn, {
-               msg("+++ observeEvent(hideAfterPowerOn) ...\n")
+               ##msg("+++ observeEvent(hideAfterPowerOn) ...\n")
                state$hideAfterPowerOn <<- debounce(hideAfterPowerOn, 5000)()
   })
 
@@ -811,10 +807,14 @@ server <- function(input, output, session) {
 
   observeEvent(input$loadRdaAction, {
                ###msg("loadRda...\n")
-               filename <- paste(tolower(input$glider), "_", tolower(input$mission),
-                                 "_", input$rdaInputFile, ".rda", sep="")
+               filename <- paste(tolower(input$glider), tolower(input$mission),
+                                 "_", substr(input$rdaInputFile, 1, 8),
+                                 "_", substr(input$rdaInputFile, 9, 12), ".rda", sep="")
                ###msg("  load from '", filename, "' ..", sep="")
-               withProgress(message=paste0("Loading '", filename, "'"), value=0, { load(filename) })
+               withProgress(message=paste0("Loading '", filename, "'"), value=0,
+                            {
+                              load(filename)
+                            })
                g <<- g
                SA <<- g[["SA"]]
                CT <<- g[["CT"]]
