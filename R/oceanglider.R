@@ -225,12 +225,13 @@ handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
                 ##> message("flagsThis:");print(flagsThis)
                 gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n", sep="")
                 actionsThis <- if (all) actions[[1]] else actions[[name]]
-                singleFlag <- all && identical("overall", names(object@metadata$flags[[where]]))
+                ## FIXME: document this singleFlag behaviour
+                singleFlag <- length(object@metadata$flags[[where]]) == 1 && (is.null(names(object@metadata$flags[[where]])) || names(object@metadata$flags[[where]]) == "overall")
                 gliderDebug(debug, "singleFlag=", singleFlag, "\n", sep="")
                 if (name %in% names(object@metadata$flags[[where]]) || singleFlag) {
                     gliderDebug(debug, "name: \"", name, "\"\n", sep="")
                     if (singleFlag) {
-                        actionNeeded <- object@metadata$flags[[where]][["overall"]] %in% flagsThis
+                        actionNeeded <- object@metadata$flags[[where]][[1]] %in% flagsThis
                     } else {
                         actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
                     }

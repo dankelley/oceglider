@@ -777,7 +777,7 @@ server <- function(input, output, session) {
                CT <<- g@data$payload1[["CT"]]
                state$flag <<- rep(initialFlagValue, ndata)
                ## Will use a single flag
-               g@metadata$flags$payload1 <<- list(overall=state$flag)
+               g@metadata$flags$payload1 <<- list(state$flag) # NOTE: no name given, which means apply to all
                t <<- as.numeric(g[["time"]])
                dt <- diff(t)
                ## Compute time since power-on.  This takes just 0.03s elapsed time, so
