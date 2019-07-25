@@ -8,7 +8,7 @@
 #'
 #' @importFrom methods new
 #' @import knitr
-#' @importFrom oce handleFlags setFlags subset summary
+#' @importFrom oce handleFlags setFlags subset summary vectorShow
 #' @docType package
 #' @name oceanglider-class
 NULL
@@ -240,7 +240,7 @@ handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
                     if (any(actionNeeded)) {
                         gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
                                     sum(actionNeeded), " are flagged\n", sep="")
-                        gliderDebug(debug, vectorShow(actoinsThis))
+                        gliderDebug(debug, vectorShow(actionsThis))
                         if (is.function(actionsThis)) {
                             object@data[[where]][[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
                         } else if (is.character(actionsThis)) {
