@@ -609,12 +609,11 @@ server <- function(input, output, session) {
       dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
       disti <- which.min(dist)
       d <- g[["payload1"]][disti,]
-      res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d (%.3fE %.3fN %s)\n",
+      res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d %.3fE %.3fN %s\n",
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       ##res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
       ##res <- paste0(res, "[hide top ", input$hideTop, "m] ")
-      res <- paste0(res, "[hide ", state$hideAfterPowerOn, "s after powerup] ")
       res <- paste0(res, "[dblclicked yo=", state$yoDblclicked, "]")
     }
     res
