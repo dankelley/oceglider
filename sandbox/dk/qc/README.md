@@ -1,20 +1,25 @@
-qc03.R same feature set as qc02.R but save logical vectors for tests, in hopes of increasing speed.
+**Versions**
 
-qc02.R try not using the sidebar. I liked a topbar better, in my whale-collision app
+* qc05.R evolution from qc04.R
 
-qc01.R is a shiny app for doing QC of seaexplorer data. It is presently in an
-early stage of development, with more finalized features expected by autumn of
-2019, after use with real-world data during summer of 2019.
+* qc04.R evolution from qc03.R
+
+* qc03.R same feature set as qc02.R but save logical vectors for tests, in
+  hopes of increasing speed.
+
+* qc02.R try not using the sidebar. I liked a topbar better, in my
+  whale-collision app
+
+* qc01.R is a shiny app for doing QC of seaexplorer data. It is presently in an
+  early stage of development, with more finalized features expected by autumn
+of 2019, after use with real-world data during summer of 2019.
 
 
-**TO DO**
+**To Do list**
 
-* [ ] need 10X or better speedup in power-on blanking (try debouncing first to test speed)
+* [ ] 
+* [ ] put mean, and mean+sd*(seq(-3,3)) lines on histograms
 * [ ] colour by inversion (special case: note in data)
 * [ ] implement an undo scheme
-* [ ] consider whether to add plot zooming. Surprisingly, I'm finding that I
-   don't feel any need for this, in my tests to date. I am presently using
-brushing to flag data, but I could add a two-value button to toggle the action
-to mean zooming.
 
 
