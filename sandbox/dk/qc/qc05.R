@@ -134,8 +134,8 @@ powerOffIndex <- NULL
 
 ui <- fluidPage(shinythemes::themeSelector(),
                                         #theme=shinytheme("cerulean"),
-                fluidRow(column(2, checkboxInput("debug", "Debug", value=TRUE)),
-                         column(2, checkboxInput("instructions", "Show Instructions", value=FALSE))),
+                fluidRow(column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
+                         column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE))),
                 conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc03_help.md"))),
                 fluidRow(column(2,
                                 uiOutput(outputId="glider"),
@@ -159,8 +159,7 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                 conditionalPanel(condition="input.focus == 'yo'",
                                                  uiOutput(outputId="focusYo")),
                                 conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="flagYo"))
-                                )
+                                                 uiOutput(outputId="flagYo")))
                          ),
                 fluidRow(column(2,
                                 conditionalPanel(condition="output.gliderExists",
@@ -172,11 +171,16 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="hideAfterPowerOn")))
                          ),
-                fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="despikePressure")),
-                         conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="navState"))
+                fluidRow(column(3,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="despikePressure"))),
+                         column(3,
+                                conditionalPanel(condition="output.gliderExists",
+                                                 uiOutput(outputId="trimOutliers")))
                          ),
+                fluidRow(conditionalPanel(condition="output.gliderExists",
+                                          uiOutput(outputId="navState"))
+                ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           uiOutput(outputId="status"))
                 ),
@@ -239,13 +243,14 @@ server <- function(input, output, session) {
   #' suport function for plotting and brushing, used in several spots
   visibleIndices <- function(message="") {
     msg("  visibleIndices(", message, ") {\n", sep="")
-    msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, ", ndata=",ndata, "\n", sep="")
+    msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, "\n", sep="")
+    msg("    total number of original data points:         ndata         =", ndata, "\n")
     ## 1. start with data being displayed
     visible <- if (input$focus == "yo") g[["yoNumber"]] == as.numeric(input$focusYo) else rep(TRUE, ndata)
-    msg("    windowed by focus, sum(visible) = ", sum(visible), "\n")
+    msg("    windowed by focus:                            sum(~visible) =", sum(!visible), "\n")
     ## 2. start with data in desired navStage
     visible <- visible & (g[["navState"]] %in% input$navState)
-    msg("    after select navState, sum(visible) = ", sum(visible), "\n")
+    msg("    after select navState:                        sum(!visible) =", sum(!visible), "\n")
     ## 3. remove any pressure spikes
     if (input$despikePressure) {
       p <- g[["pressure"]]
@@ -258,17 +263,17 @@ server <- function(input, output, session) {
         badPressure[badp] <- TRUE
       visible <- visible & !badPressure
     }
-    msg("    after despikePressure, sum(visible) = ", sum(visible), "\n")
+    msg("    after despikePressure:                        sum(!visible) =", sum(!visible), "\n")
     ## 4. remove pressures less than a specified limit
     if (input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
-    msg("    after hideTop, sum(visible) = ", sum(visible), "\n")
+    msg("    after hideTop:                                sum(!visible) =", sum(!visible), "\n")
     ## 5. hide initial yos
     if (input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
-    msg("    after hideInitialYos, sum(visible) = ", sum(visible), "\n")
+    msg("    after hideInitialYos:                         sum(!visible) =", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
     hapu <- debounce(hideAfterPowerOn, 2000)()
     poweringOn <- g[["tSincePowerOn"]] < hapu
@@ -277,10 +282,19 @@ server <- function(input, output, session) {
     ## msg(vectorShow(g[["tSincePowerOn"]]))
     ## msg(vectorShow(g[["tSincePowerOn"]]<hapu))
     visible <- visible & !poweringOn
-    msg("    after hideAfterPowerup (first ", hapu, "s), sum(visible) = ", sum(visible), "\n")
+    msg("    after hideAfterPowerup:                       sum(!visible) =", sum(!visible), "\n")
+    if (input$trimOutliers) {
+      SAok <- abs(SA - SAmean) < 3 * SAsd
+      CTok <- abs(CT - CTmean) < 3 * CTsd
+      Cok <- abs(C - Cmean) < 3 * Csd
+      ok <- SAok & CTok & Cok
+      ok[is.na(ok)] <- FALSE
+      visible <- visible & ok
+      msg("    after trimOutliers:                           sum(!visible) =", sum(!visible), "\n")
+    }
     ## 6. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
-    msg("    after flagging already-flagged data, sum(visible) = ", sum(visible), "\n")
+    msg("    after accounting for already-flagged data:    sum(!visible) =", sum(!visible), "\n")
     msg("  }  # visibleIndices(", message, ")\n", sep="")
     ## DEVELOPER: put new tests here, and be sure to use msg()
     visible
@@ -405,7 +419,7 @@ server <- function(input, output, session) {
   output$glider <- renderUI({
     state$gliderExists <- FALSE
     selectInput(inputId="glider",
-                label="Read raw data",
+                label=h6("Read raw data"),
                 choices=gliders,
                 selected=gliders[1])
   })
@@ -427,7 +441,7 @@ server <- function(input, output, session) {
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
       fileTimes <- gsub("([a-z0-9]*)_([0-9]+)_([0-9]+).rda", "\\2\\3", files)
-      selectInput(inputId="rdaInputFile", label="Continue", choices=fileTimes, selected=fileTimes[1])
+      selectInput(inputId="rdaInputFile", label=h6("Continue"), choices=fileTimes, selected=fileTimes[1])
     }
   })
 
@@ -435,7 +449,7 @@ server <- function(input, output, session) {
     ##msg("output$loadRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
-      actionButton(inputId="loadRdaAction", label="Load previous")#h5(paste0("Load ", rda)))
+      actionButton(inputId="loadRdaAction", label=h6("Load previous"))
     }
   })
 
@@ -448,39 +462,39 @@ server <- function(input, output, session) {
   output$focus <- renderUI({
     ##msg("output$focus\n")
     selectInput(inputId="focus",
-                label="Focus",
+                label=h6("Focus"),
                 choices=c("mission", "yo"),
                 selected=c("mission"))
   })
 
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
-                label="Plot",
+                label=h6("Plot"),
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("p(t)",
+                choices=c("TS",
                           "C(t)",
+                          "p(t)",
                           "S(t)",
                           "T(t)",
-                          "TS",
                           "tSincePowerOn(t)",
+                          "C profile",
+                          "density profile",
                           "S profile",
                           "T profile",
-                          "density profile",
-                          "C profile",
                           "hist(C)",
-                          "hist(T)",
+                          "hist(p)",
                           "hist(S)",
-                          "hist(p)"),
+                          "hist(T)"),
                 selected="p(t)")
   })
 
   output$plotType <- renderUI({
-    selectInput(inputId="plotType", label="Plot Style", choices= c("l", "p", "o"), selected=c("p"))
+    selectInput(inputId="plotType", label=h6("Plot Style"), choices= c("l", "p", "o"), selected=c("p"))
   })
 
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
-                label="Colour by",
+                label=h6("Colour by"),
                 choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "navState", "tSincePowerOn", "(none)"),
                 selected="distance")
   })
@@ -565,16 +579,20 @@ server <- function(input, output, session) {
   })
 
   output$hideAfterPowerOn <- renderUI({
-    sliderInput("hideAfterPowerOn", h6("Hide after power-on [s]"), min=0, max=60, value=0)
+    sliderInput("hideAfterPowerOn", h6("Hide after power-on"), min=0, max=120, value=0)
   })
 
   output$despikePressure <- renderUI({
-    checkboxInput(inputId="despikePressure", label="Despike pressure")
+    checkboxInput(inputId="despikePressure", label=h6("Hide p outliers"))
+  })
+
+  output$trimOutliers <- renderUI({
+    checkboxInput(inputId="trimOutliers", label=h6("Hide S & T outliers"))
   })
 
   output$navState <- renderUI({
     ns <- navStateCodes("seaexplorer")
-    checkboxGroupInput(inputId="navState", label="Show navState",
+    checkboxGroupInput(inputId="navState", label=h6(""),
                        choices=ns, selected=ns, inline=TRUE)
   })
 
@@ -1059,28 +1077,28 @@ server <- function(input, output, session) {
           par(mar=omar)
         } else if (input$plotChoice == "hist(p)") {
           hist(gg[["pressure"]], breaks=100, main="Histogram of unflagged values", xlab="Pressure [dbar]")
-          abline(v=pmean + psd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
+          abline(v=pmean + psd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD), lwd=1.4)
           mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
                 at=pmean + psd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3)
+                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
         } else if (input$plotChoice == "hist(C)") {
           hist(gg[["conductivity"]], breaks=100, main="Histogram of unflagged values", xlab="Conductivity")
           abline(v=Cmean + Csd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
           mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
                 at=Cmean + Csd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3)
+                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
         } else if (input$plotChoice == "hist(S)") {
           hist(gg[["SA"]], breaks=100, main="Histogram of unflagged values", xlab="Absolute Salinity")
           abline(v=SAmean + SAsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
           mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
                 at=SAmean + SAsd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3)
+                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
         } else if (input$plotChoice == "hist(T)") {
           hist(gg[["CT"]], breaks=100, main="Histogram of unflagged values", xlab="Conservative Temperature")
           abline(v=CTmean + CTsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
           mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
                 at=CTmean + CTsd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3)
+                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
         } else {
           stop("unknown plot type (internal coding error)\n")
         }
