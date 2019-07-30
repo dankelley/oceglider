@@ -1,5 +1,7 @@
 **Versions**
 
+* qc06.R evolution from qc05.R
+
 * qc05.R evolution from qc04.R
 
 * qc04.R evolution from qc03.R
