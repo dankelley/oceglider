@@ -54,14 +54,16 @@ simply click any unchecked boxes to recover hidden data.
 
 *Keyboard shortcuts*
 
-The following key-press events provide a quick way to navigate graphical views.
+The following key-press events provide a quick way to navigate graphical views. (Whether a given event has an effect depends on the focus.)
 
 * `n`: in yo-focus, go to the next yo. (Ignored in mission-focus.)
 * `p`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
 * `m`: in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
 * `y`: in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
-* `s`: in mission-focus, save the yo number under the mouse.  (Ignored in
+* `s`: in mission-focus, select the yo number under the mouse, so that
+the next `y` operation will open a graph for that yo.  (Ignored in
   mission-focus.)
+* `?`: provides this summary
 
 *Typical workflow*
 

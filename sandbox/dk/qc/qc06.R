@@ -605,6 +605,20 @@ server <- function(input, output, session) {
                  ##msg(" 's' pressed (x=", hoverx, ", y=", hovery, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
                  ##msg("after: yoSelected=", state$yoSelected, "\n")
+               } else if (input$keypress == 63) { # "?" gives help
+                 showModal(modalDialog(title="Key-stroke commands",
+        HTML("
+<ul>
+<li> '<b>n</b>': in yo-focus, go to the next yo. (Ignored in mission-focus.)
+<li> '<b>p</b>`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
+<li> '<b>m</b>': in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
+<li> '<b>y</b>': in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
+<li> '<b>s</b>': in mission-focus, select the yo number under the mouse, so that
+the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
+  mission-focus.)
+</ul>"),
+        easyClose = TRUE
+        ))
                }
   })
 
