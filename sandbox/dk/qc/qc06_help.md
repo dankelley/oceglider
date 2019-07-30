@@ -49,8 +49,8 @@ The following key-press events provide a quick way to navigate graphical views.
 
 * `n`: in yo-focus, go to the next yo. (Ignored in mission-focus.)
 * `p`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
-* `m`: in yo-focus, switch to mission-focus. (Ignored in yo-focus.)
-* `y`: in mission-focus, switch to yo-focus. (Ignored mission-focus.)
+* `m`: in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
+* `y`: in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
 
 
 *Typical workflow*
