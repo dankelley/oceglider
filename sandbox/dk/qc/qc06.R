@@ -153,10 +153,14 @@ powerOnThreshold <- 60 # if no samples during this number of seconds, assume pow
 powerOffIndex <- NULL
 
 ui <- fluidPage(shinythemes::themeSelector(),
-                                        #theme=shinytheme("cerulean"),
+                tags$script('$(document).on("keypress",
+                            function (e) {
+                              Shiny.onInputChange("keypress", e.which);
+                              Shiny.onInputChange("keypresstrigger", Math.random());
+                            });'),
                 fluidRow(column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE))),
-                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc03_help.md"))),
+                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc06_help.md"))),
                 fluidRow(column(2,
                                 uiOutput(outputId="glider"),
                                 uiOutput(outputId="mission"),
@@ -515,7 +519,7 @@ server <- function(input, output, session) {
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
                 label=h6("Colour by"),
-                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "N2 extremes", "navState", "tSincePowerOn", "(none)"),
+                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "N2", "navState", "tSincePowerOn", "(none)"),
                 selected="distance")
   })
 
@@ -524,6 +528,31 @@ server <- function(input, output, session) {
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
                  if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
                  value=if (is.null(state$yoDblclicked)) "1" else state$yoDblclicked)
+  })
+
+  observeEvent(input$keypresstrigger, {
+               ##msg("keypress '", input$keypress, "'\n", sep="")
+               if (input$keypress == 109) {
+                 ##msg("  m=mission-focus\n")
+                 if (input$focus == "yo")
+                     updateTextInput(session, "focus", value="mission")
+               } else if (input$keypress == 121) {
+                 ##msg("  y=yo-focus\n")
+                 if (input$focus == "mission")
+                     updateTextInput(session, "focus", value="yo")
+               } else if (input$keypress == 110) {
+                 ##msg("  n=next yo\n")
+                 if (input$focus == "yo") {
+                   if (input$focusYo < maxYo)
+                     updateNumericInput(session, "focusYo", value=input$focusYo+1)
+                 }
+               } else if (input$keypress == 112) {
+                 ##msg("  p=previous yo\n")
+                 if (input$focus == "yo") {
+                   if (input$focusYo > (input$hideInitialYos+1))
+                     updateNumericInput(session, "focusYo", value=input$focusYo-1)
+                 }
+               }
   })
 
   observeEvent(focusYo, {
@@ -996,8 +1025,8 @@ server <- function(input, output, session) {
               })
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
-            } else if (input$colorBy == "N2 extremes") {
-              msg("line 970 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
+            ##?} else if (input$colorBy == "N2 extremes") {
+            ##?  msg("line 970 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
