@@ -9,6 +9,7 @@ pressureThreshold <- 0.5
 ##     mapping list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9)
 badFlagValue <- 4                      # "fail": flagged as bad
 initialFlagValue <- 2                  # "not evaluated": the default after reading data
+N2L <- 1                               # used in N2 calculation
 
 ## Development Notes
 ## Circles for points look nice, but they are 5X to 10X slower than dots.
@@ -39,6 +40,25 @@ library(oceanglider)
 ##library(shinycssloaders)
 
 options(oceEOS="gsw")
+
+N2profile <- function(pressure, sigma0, g=9.8, L=1, rho0=1025)
+{
+  z <- swZ(pressure)
+  o <- order(z)
+  oo <- order(o)
+  if (L > 0) {
+    m <- runlm(z[o], sigma0[o], L=L)
+    sigma0 <- m$y[o]
+    z <- m$x[o]
+    rval <- -g / rho0 * m$dydx
+  } else {
+    rval <- -g / rho0 * diff(sigma0)/diff(z)
+    rval <- c(rval[1], rval)
+  }
+  rval[!is.finite(rval)] <- NA
+  rval[oo]
+}
+
 
 ## Discover available gliders and their mission
 baseTrial <- c("~/Dropbox/data", "/data", "~/data")
@@ -801,12 +821,24 @@ server <- function(input, output, session) {
                psd <<- sd(p, na.rm=TRUE)
 
                ## FIXME save into object, for later use (even outside this app)
+               ## yo-by-yo N^2 calculation
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
-               g@data$payload1[["sigma0"]] <<- g[["sigma0"]]
+               sigma0 <-  g[["sigma0"]]
+               g@data$payload1[["sigma0"]] <<- sigma0
                g@data$payload1[["spiciness"]] <<- g[["spiciness"]]
                g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
+               ## It's a bit tricky to calculate N^2, because it will be defined
+               ## per yo.
+               A <- split(data.frame(p=p, sigma0=sigma0), g[["yoNumber"]])
+               rho0 <- 1000 + mean(sigma0, na.rm=TRUE)
+               N2 <- NULL
+               for (Ayo in A) {
+                 N2 <- c(N2, N2profile(Ayo$p, Ayo$sigma0, L=N2L, rho0=rho0))
+               }
+               g@data$payload1[["N2"]] <<- N2
+
                SA <<- g[["SA"]]
                SAmean <<- mean(SA, na.rm=TRUE)
                SAsd <<- sd(SA, na.rm=TRUE)
@@ -965,7 +997,7 @@ server <- function(input, output, session) {
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              msg("Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
+              msg("line 970 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
@@ -1014,6 +1046,8 @@ server <- function(input, output, session) {
               msg("plotTS (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               ##TESTING }
               navStateLegend()
+            } else if (input$colorBy == "N2 extremes") {
+              msg("line 1020 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
             } else {
               cm <- colormap(gg[[input$colorBy]])
               par(mar=marPaletteTS, mgp=mgp)
