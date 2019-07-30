@@ -1,7 +1,8 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
 
-debugFlag <- TRUE                      # a button lets user set this on and off
 version <- "0.6"
+debugFlag <- TRUE                      # a button lets user set this on and off
+plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
 ## * Data-quality Flag Scheme
 ##
@@ -181,9 +182,9 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                 conditionalPanel(condition="output.gliderExists",
                                                  uiOutput(outputId="focus")),
                                 conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="focusYo")),
-                                conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="flagYo")))
+                                                 uiOutput(outputId="focusYo")))
+                                ## conditionalPanel(condition="input.focus == 'yo'",
+                                ##                  uiOutput(outputId="flagYo"))
                          ),
                 fluidRow(column(2,
                                 conditionalPanel(condition="output.gliderExists",
@@ -223,14 +224,62 @@ ui <- fluidPage(shinythemes::themeSelector(),
                 )
 
 server <- function(input, output, session) {
+
   state <- reactiveValues(rda="",
                           flag=NULL,
                           focusYo=1,
                           gliderExists=FALSE,
                           usr=NULL,
-                          yoDblclicked=NULL,
-                          hideAfterPowerOn=0
-                          )
+                          yoSelected=NULL,
+                          hideAfterPowerOn=0)
+
+  saveYoAtMouse <- function(xmouse, ymouse)
+  {
+    if (plotExists && !is.null(xmouse) && !grepl("^hist", input$plotChoice)) {
+      ## BOOKMARK_plot_type_3_of_4: note that 1, 2 and 4 must align with this
+      if (input$plotChoice == "p(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "C(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- g[["conductivity"]]
+      } else if (input$plotChoice == "S(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- g[["SA"]]
+      } else if (input$plotChoice == "T(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- g[["CT"]]
+      } else if (input$plotChoice == "tSincePowerOn(t)") {
+        x <- as.numeric(g[["time"]])
+        y <- x - g[["tSincePowerOn"]]
+      } else if (input$plotChoice == "TS") {
+        x <- g[["SA"]]
+        y <- g[["CT"]]
+      } else if (input$plotChoice == "S profile") {
+        x <- g[["SA"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "T profile") {
+        x <- g[["CT"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "density profile") {
+        x <- g[["sigma0"]]
+        y <- g[["pressure"]]
+      } else if (input$plotChoice == "C profile") {
+        x <- g[["conductivity"]]
+        y <- g[["pressure"]]
+      } else if (length(grep("^hist", input$plotChoice))) {
+        return()
+      }
+      dist <- sqrt(((xmouse-x)/(state$usr[2]-state$usr[1]))^2 + ((ymouse-y)/(state$usr[4]-state$usr[3]))^2)
+      visible <- visibleIndices()
+      dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
+      disti <- which.min(dist)
+      d <- g[["payload1"]][disti,]
+      msg("yo=", d$yoNumber, "\n")
+      state$yoSelected <<- d$yoNumber
+    }
+  }
+
 
   saveEditEvent <- function(category, bad)
   {
@@ -324,7 +373,6 @@ server <- function(input, output, session) {
     visible
   }
 
-  plotExists <- FALSE
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
@@ -527,31 +575,36 @@ server <- function(input, output, session) {
     numericInput("focusYo",
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
                  if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
-                 value=if (is.null(state$yoDblclicked)) "1" else state$yoDblclicked)
+                 value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
 
   observeEvent(input$keypresstrigger, {
                ##msg("keypress '", input$keypress, "'\n", sep="")
-               if (input$keypress == 109) {
+               if (input$keypress == 109) { # "m" only works if focus is 'yo'
                  ##msg("  m=mission-focus\n")
                  if (input$focus == "yo")
                      updateTextInput(session, "focus", value="mission")
-               } else if (input$keypress == 121) {
+               } else if (input$keypress == 121) { # "y" only works if focus is 'mission'
                  ##msg("  y=yo-focus\n")
                  if (input$focus == "mission")
                      updateTextInput(session, "focus", value="yo")
-               } else if (input$keypress == 110) {
+               } else if (input$keypress == 110) { # "n" only works if focus is 'yo'
                  ##msg("  n=next yo\n")
                  if (input$focus == "yo") {
                    if (input$focusYo < maxYo)
                      updateNumericInput(session, "focusYo", value=input$focusYo+1)
                  }
-               } else if (input$keypress == 112) {
+               } else if (input$keypress == 112) { # "p" only works if focus is 'yo'
                  ##msg("  p=previous yo\n")
                  if (input$focus == "yo") {
                    if (input$focusYo > (input$hideInitialYos+1))
                      updateNumericInput(session, "focusYo", value=input$focusYo-1)
                  }
+               } else if (input$keypress == 115) { # "s" only works if focus is 'mission'
+                 ##msg("before: yoSelected=", state$yoSelected, "\n")
+                 ##msg(" 's' pressed (x=", hoverx, ", y=", hovery, ")\n")
+                 saveYoAtMouse(input$hover$x, input$hover$y)
+                 ##msg("after: yoSelected=", state$yoSelected, "\n")
                }
   })
 
@@ -598,18 +651,18 @@ server <- function(input, output, session) {
   ##                state$focusYo <<- state$focusYo + 1
   ## })
 
-  output$flagYo <- renderUI({
-      actionButton(inputId="flagYo", label="Flag yo")
-  })
+  ## output$flagYo <- renderUI({
+  ##     actionButton(inputId="flagYo", label="Flag yo")
+  ## })
 
-  observeEvent(input$flagYo, {
-               msg("  input$focusYo=", input$focusYo, "\n")
-               if (!is.null(input$focusYo)) {
-                 yo <- g[["yoNumber"]]
-                 bad <- yo == input$focusYo
-                 saveEditEvent(paste0("flag yo ", input$focusYo), bad)
-               }
-  })
+  ## observeEvent(input$flagYo, {
+  ##              msg("  input$focusYo=", input$focusYo, "\n")
+  ##              if (!is.null(input$focusYo)) {
+  ##                yo <- g[["yoNumber"]]
+  ##                bad <- yo == input$focusYo
+  ##                saveEditEvent(paste0("flag yo ", input$focusYo), bad)
+  ##              }
+  ## })
 
 
   ###old output$brushMode <- renderUI({
@@ -695,7 +748,7 @@ server <- function(input, output, session) {
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       ##res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
       ##res <- paste0(res, "[hide top ", input$hideTop, "m] ")
-      res <- paste0(res, "[dblclicked yo=", state$yoDblclicked, "]")
+      res <- paste0(res, "[dblclicked yo=", state$yoSelected, "]")
     }
     res
   })
@@ -705,53 +758,10 @@ server <- function(input, output, session) {
                  debugFlag <<- input$debug
   })
 
+
   observeEvent(input$dblclick, {
-               dblclickx <- input$dblclick$x
-               dblclicky <- input$dblclick$y
-               msg("input$dblclick$x=", dblclickx," y=", dblclicky,"\n")
-               if (!is.null(dblclickx) && plotExists) {
-                 ## BOOKMARK_plot_type_3_of_4: note that 1, 2 and 4 must align with this
-                 if (input$plotChoice == "p(t)") {
-                   x <- as.numeric(g[["time"]])
-                   y <- g[["pressure"]]
-                 } else if (input$plotChoice == "C(t)") {
-                   x <- as.numeric(g[["time"]])
-                   y <- g[["conductivity"]]
-                 } else if (input$plotChoice == "S(t)") {
-                   x <- as.numeric(g[["time"]])
-                   y <- g[["SA"]]
-                 } else if (input$plotChoice == "T(t)") {
-                   x <- as.numeric(g[["time"]])
-                   y <- g[["CT"]]
-                 } else if (input$plotChoice == "tSincePowerOn(t)") {
-                   x <- as.numeric(g[["time"]])
-                   y <- x - g[["tSincePowerOn"]]
-                 } else if (input$plotChoice == "TS") {
-                   x <- g[["SA"]]
-                   y <- g[["CT"]]
-                 } else if (input$plotChoice == "S profile") {
-                   x <- g[["SA"]]
-                   y <- g[["pressure"]]
-                 } else if (input$plotChoice == "T profile") {
-                   x <- g[["CT"]]
-                   y <- g[["pressure"]]
-                 } else if (input$plotChoice == "density profile") {
-                   x <- g[["sigma0"]]
-                   y <- g[["pressure"]]
-                 } else if (input$plotChoice == "C profile") {
-                   x <- g[["conductivity"]]
-                   y <- g[["pressure"]]
-                 } else if (length(grep("^hist", input$plotChoice))) {
-                   return("(Status line is unavailable for histogram plots.)")
-                 }
-                 dist <- sqrt(((dblclickx-x)/(state$usr[2]-state$usr[1]))^2 + ((dblclicky-y)/(state$usr[4]-state$usr[3]))^2)
-                 visible <- visibleIndices()
-                 dist[!visible] <- 2 * max(dist, na.rm=TRUE) # make flagged points be "far away"
-                 disti <- which.min(dist)
-                 d <- g[["payload1"]][disti,]
-                 msg("yo=", d$yoNumber, "\n")
-                 state$yoDblclicked <<- d$yoNumber
-               }
+               msg("input$dblclick$x=", input$dblclick$x," y=", input$dblclick$y,"\n")
+               saveYoAtMouse(input$dblclick$x, input$dblclick$y)
   })
 
   observeEvent(input$brush, {
