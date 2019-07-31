@@ -143,10 +143,13 @@ navStateLegend <- function()
 var <- list()
 src <- ""
 g <- NULL
-SA <- SAmean <- SAsd <- NULL
-CT <- CTmean <- CTsd <- NULL
-C <- Cmean <- Csd <- NULL
-p <- pmean <- pad <- NULL
+SA <- CT <- C <- p <- NULL
+SAmean <- SAsd <- NA
+CTmean <- CTsd <- NA
+Cmean <- Csd <- NA
+pmean <- psd <- NA
+N2pmean <- N2psd <- N2nlmean <- N2nlsd <- NA # pos and neg log N2 mean and std dev
+
 ndata <- 0
 t <- NULL
 maxYo <- NULL
@@ -317,13 +320,13 @@ server <- function(input, output, session) {
   visibleIndices <- function(message="") {
     msg("  visibleIndices(", message, ") {\n", sep="")
     msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, "\n", sep="")
-    msg("    total number of original data points:         ndata         =", ndata, "\n")
+    msg("    total number of original data points:            ndata         =", ndata, "\n")
     ## 1. start with data being displayed
     visible <- if (input$focus == "yo") g[["yoNumber"]] == as.numeric(input$focusYo) else rep(TRUE, ndata)
-    msg("    windowed by focus:                            sum(~visible) =", sum(!visible), "\n")
+    msg("    windowed by focus:                               sum(!visible) =", sum(!visible), "\n")
     ## 2. start with data in desired navStage
     visible <- visible & (g[["navState"]] %in% input$navState)
-    msg("    after select navState:                        sum(!visible) =", sum(!visible), "\n")
+    msg("    after select navState:                           sum(!visible) =", sum(!visible), "\n")
     ## 3. remove any pressure spikes
     if (input$despikePressure) {
       p <- g[["pressure"]]
@@ -336,26 +339,23 @@ server <- function(input, output, session) {
         badPressure[badp] <- TRUE
       visible <- visible & !badPressure
     }
-    msg("    after despikePressure:                        sum(!visible) =", sum(!visible), "\n")
+    msg("    after despikePressure:                           sum(!visible) =", sum(!visible), "\n")
     ## 4. remove pressures less than a specified limit
     if (input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
-    msg("    after hideTop:                                sum(!visible) =", sum(!visible), "\n")
+    msg("    after hideTop:                                   sum(!visible) =", sum(!visible), "\n")
     ## 5. hide initial yos
     if (input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
-    msg("    after hideInitialYos:                         sum(!visible) =", sum(!visible), "\n")
+    msg("    after hideInitialYos:                            sum(!visible) =", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
     hapu <- debounce(hideAfterPowerOn, 2000)()
     poweringOn <- g[["tSincePowerOn"]] < hapu
     if (file.exists("stop")) browser()
-    ## msg(vectorShow(t))
-    ## msg(vectorShow(g[["tSincePowerOn"]]))
-    ## msg(vectorShow(g[["tSincePowerOn"]]<hapu))
     visible <- visible & !poweringOn
-    msg("    after hideAfterPowerup:                       sum(!visible) =", sum(!visible), "\n")
+    msg("    after hideAfterPowerup:                          sum(!visible) =", sum(!visible), "\n")
     if (input$trimOutliers) {
       SAok <- abs(SA - SAmean) < 3 * SAsd
       CTok <- abs(CT - CTmean) < 3 * CTsd
@@ -363,11 +363,19 @@ server <- function(input, output, session) {
       ok <- SAok & CTok & Cok
       ok[is.na(ok)] <- FALSE
       visible <- visible & ok
-      msg("    after trimOutliers:                           sum(!visible) =", sum(!visible), "\n")
+      msg("    after trimOutliers:                              sum(!visible) =", sum(!visible), "\n")
     }
-    ## 6. ignore already-flagged data
+    ## 6. for input$plotChoice=="N2 extremes", only show extreme data,
+    ##    to avoid missing important data by over-plotting.
+    if (input$colorBy == "N2 extremes") {
+      N2 <- g[["N2"]]
+      visible <- visible & ((N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd)))
+      visible[is.na(visible)] <- FALSE
+      msg("    after isolating to high positive or negative N2: sum(!visible) =", sum(!visible), "\n")
+    }
+    ## 7. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
-    msg("    after accounting for already-flagged data:    sum(!visible) =", sum(!visible), "\n")
+    msg("    after accounting for already-flagged data:       sum(!visible) =", sum(!visible), "\n")
     msg("  }  # visibleIndices(", message, ")\n", sep="")
     ## DEVELOPER: put new tests here, and be sure to use msg()
     visible
@@ -567,7 +575,7 @@ server <- function(input, output, session) {
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
                 label=h6("Colour by"),
-                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "N2", "navState", "tSincePowerOn", "(none)"),
+                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "N2", "N2 extremes", "navState", "tSincePowerOn", "(none)"),
                 selected="distance")
   })
 
@@ -890,6 +898,10 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                for (Ayo in A) {
                  N2 <- c(N2, N2profile(Ayo$p, Ayo$sigma0, L=N2L, rho0=rho0))
                }
+               N2plmean <<- mean(log10(subset(N2, N2 > 0)), na.rm=TRUE)
+               N2plsd <<- sd(log10(subset(N2, N2 > 0)), na.rm=TRUE)
+               N2nlmean <<- mean(log10(-subset(N2, N2 < 0)), na.rm=TRUE)
+               N2nlsd <<- sd(log10(-subset(N2, N2 < 0)), na.rm=TRUE)
                g@data$payload1[["N2"]] <<- N2
 
                SA <<- g[["SA"]]
@@ -955,13 +967,15 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                C <<- g[["conductivity"]]
                Cmean <<- mean(C, na.rm=TRUE)
                Csd <<- sd(C, na.rm=TRUE)
-
+               N2 <- g[["N2"]]
+               N2plmean <<- mean(log10(subset(N2, N2 > 0)), na.rm=TRUE)
+               N2plsd <<- sd(log10(subset(N2, N2 > 0)), na.rm=TRUE)
+               N2nlmean <<- mean(log10(-subset(N2, N2 < 0)), na.rm=TRUE)
+               N2nlsd <<- sd(log10(-subset(N2, N2 < 0)), na.rm=TRUE)
                ndata <<- length(p)
                maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
                state$flag <<- g@metadata$flags$payload1$overall
-               ###msg(". done\n")
-               ###msg("maxYo=", maxYo, " after loading rda\n")
                state$rda <<- filename
                state$gliderExists <<- TRUE
   })
@@ -1030,10 +1044,8 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
           }
           x <- g@data$payload1[look, "time"]
           y <- g@data$payload1[look, dataName]
-          ## msg("LENGTH of x=", length(x), "\n")
-          ## msg("LENGTH of y=", length(y), "\n")
-          msg("time-series plot range of x (time):", paste(range(x, na.rm=TRUE), collapse=" to "), "\n")
-          msg("time-series plot range of y:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
+          msg("time-series plot. x (time) range:", paste(range(x, na.rm=TRUE), collapse=" to "),
+              ", y range:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
           ylim <- range(y, na.rm=TRUE)
           if (input$plotChoice == "p(t)")
             ylim <- rev(ylim)
@@ -1049,8 +1061,13 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               })
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
-            ##?} else if (input$colorBy == "N2 extremes") {
-            ##?  msg("line 970 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
+            } else if (input$colorBy == "N2 extremes") {
+              msg("L1065 'N2 extremes' -- time-series plot\n")
+              oce.plot.ts(x, y, ylim=ylim,
+                          type=input$plotType,
+                          col=ifelse(g@data$payload1[look, "N2"] > 0, "forestgreen", "red"),
+                          mar=marTimeseries,
+                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
@@ -1100,7 +1117,12 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               ##TESTING }
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              msg("line 1020 Color by=", input$colorBy, " (N2 extremes -- FIXME not coded yet)\n")
+              msg("L1120 'N2 extremes' -- TS plot\n")
+              timing <- system.time({
+                plotTS(gg, pch=pch, cex=cex,
+                       col=ifelse(gg[["N2"]]>0, "forestgreen", "red"),
+                       mar=marTS, type=input$plotType)
+              })
             } else {
               cm <- colormap(gg[[input$colorBy]])
               par(mar=marPaletteTS, mgp=mgp)
@@ -1144,6 +1166,8 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                    type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
               navStateLegend() # FIXME: put on RHS
+            } else if (input$colorBy == "N2 extremes") {
+              msg("L1157 'N2 extremes' -- FIXME not coded yet\n")
             } else {
               cm <- colormap(g@data$payload1[look, input$colorBy])
               par(mar=marPaletteProfile, mgp=mgp)

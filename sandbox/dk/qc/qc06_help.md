@@ -25,7 +25,9 @@ is searched. One of these directories must hold data for this app to work.
 
 2. Once a glider/mission pair is selected, you have two choices:
     * You may click the button labeled `Read` to read the raw data from the
-      appropriate subdirectory of `/data/glider/delayedData`.
+      appropriate subdirectory of `/data/glider/delayedData` (or one of
+      several other directories that are examined, in sequence, as th
+      app starts).
     * You may use the pull-down menu that is in the second-from-left column, if
       that menu displays a date and time. This lets you resume a previous
 analysis.  (These previous analyses are stored in `.rda` files in the present
@@ -54,7 +56,8 @@ simply click any unchecked boxes to recover hidden data.
 
 *Keyboard shortcuts*
 
-The following key-press events provide a quick way to navigate graphical views. (Whether a given event has an effect depends on the focus.)
+The following key-press events provide a quick way to navigate graphical views.
+(Whether a given event has an effect depends on the focus.)
 
 * `n`: in yo-focus, go to the next yo. (Ignored in mission-focus.)
 * `p`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
@@ -69,20 +72,44 @@ the next `y` operation will open a graph for that yo.  (Ignored in
 
 A typical workflow for editing wild data involves a cycle:
 
-* Start at mission-focus, often with a TS or S(t) diagram, notice a spot that
-  appears anomalous.
-* Move the mouse over an anomalous point, and then press `s` to save pointer to
-  the yo from which the anomalous data came.
-* Switch to yo-focus by pressing `y`.
-* Possibly after trying a variety of plot types (and colourizing schemes),
-  determine some data that are suspicious and ought to be flagged. Select the
-data by pressing the mouse, and dragging it (while still pressed) to another
-location, the data within the resultant rectangle being flagged.
+* Start at mission-focus, with the `Plot` menu set to `p(t)`
+  to show a pressure time-series.  Try colourizing by
+  distance, latitude, or longitude, and see whether the
+  data appear to be sensible for the bottom topography of the domain in
+  question.  If there are some odd high pressures, try clicking the button
+  marked `Hide S & T outliers`, or the one marked `Hide p outliers`. Often
+  this will remove very wild points.
+* Set the `Color by` menu to `N2 extremes`, to highlight spots
+  where the absolute value of N2 is anomalously
+  high.  Positive N2 cases are coloured green, and negative cases
+  are coloured red. Thus red indicates gravitational instability,
+  and green indicates strong stability.  Two important cases
+  are handled as follows:
+  1. If the CTD power is turned on only for a portion of a profile,
+  then an averaging procedure may make for odd N2 values near the
+  surface or near the bottom. These will show up as bands of
+  red or green, in a pressure time-series.  In such cases, try
+  adjusting the slider named `Hide after power-on`, to ignore a time
+  interval after power-on.
+  2. Another anomalous pattern shows up as red and
+  green pairs of horizontal lines in the TS diagram, which indicates
+  salinity anomalies.  Handle these by putting the mouse over one of 
+  points in `mission` focus, typing `s` to select the relevant
+  yo, and then typing `y` to go to focus on that yo. Since bad salinity
+  is the culprit, it can help to now set `Plot` to `S(t)`, in
+  which the odd salinity is likely easily seen.  Drag
+  the mouse to create a rectangle that encloses points that appear
+  to be anomalous, and they will be discarded from future analysis. 
 * Press `m` to return to mission focus, and continue looking for suspicious
-  data.
+  data. Work back and forth between yo and mission focus views, trying
+  whatever combinations of plot types and colourizing schemes seem to
+  be informative for your own dataset.
+* Explore what happens when you unset `not_navigating`, `surfacing`, etc.,
+  buttons. This hides some navigation states from view.  You may find
+  that near-surface data are problematic.
 
-These steps can all be done with menus, but the keystrokes are much quicker,
-and become second nature after a few minutes of use.
+Use the pull-down menus, if you find these more convenient than using the
+keyboard.
 
 
 *Saving data*
