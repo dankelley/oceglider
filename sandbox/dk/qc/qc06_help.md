@@ -26,8 +26,7 @@ is searched. One of these directories must hold data for this app to work.
 2. Once a glider/mission pair is selected, you have two choices:
     * You may click the button labeled `Read` to read the raw data from the
       appropriate subdirectory of `/data/glider/delayedData` (or one of
-      several other directories that are examined, in sequence, as th
-      app starts).
+      several other directories that are examined, as noted above).
     * You may use the pull-down menu that is in the second-from-left column, if
       that menu displays a date and time. This lets you resume a previous
 analysis.  (These previous analyses are stored in `.rda` files in the present
