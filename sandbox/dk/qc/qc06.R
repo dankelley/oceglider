@@ -189,23 +189,22 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                 ## conditionalPanel(condition="input.focus == 'yo'",
                                 ##                  uiOutput(outputId="flagYo"))
                          ),
-                fluidRow(column(2,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="hideInitialYos"))),
-                         column(2,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="hideTop"))),
-                         column(2,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="hideAfterPowerOn")))
+                fluidRow(column(2, conditionalPanel(condition="output.gliderExists",
+                                                    uiOutput(outputId="hideInitialYos"))),
+                         column(2, conditionalPanel(condition="output.gliderExists",
+                                                    uiOutput(outputId="hideTop"))),
+                         column(2, conditionalPanel(condition="output.gliderExists",
+                                                    uiOutput(outputId="hideAfterPowerOn"))),
+                         column(3, conditionalPanel(condition="output.gliderExists",
+                                                    uiOutput(outputId="trimOutliers")))
                          ),
-                fluidRow(column(3,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="despikePressure"))),
-                         column(3,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="trimOutliers")))
-                         ),
+                ## fluidRow(#column(3,
+                ##          #       conditionalPanel(condition="output.gliderExists",
+                ##          #                        uiOutput(outputId="despikePressure"))),
+                ##          column(3,
+                ##                 conditionalPanel(condition="output.gliderExists",
+                ##                                  uiOutput(outputId="trimOutliers")))
+                ##          ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           uiOutput(outputId="navState"))
                 ),
@@ -322,24 +321,25 @@ server <- function(input, output, session) {
     msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, "\n", sep="")
     msg("    total number of original data points:            ndata         =", ndata, "\n")
     ## 1. start with data being displayed
-    visible <- if (input$focus == "yo") g[["yoNumber"]] == as.numeric(input$focusYo) else rep(TRUE, ndata)
-    msg("    windowed by focus:                               sum(!visible) =", sum(!visible), "\n")
+    visible <- rep(TRUE, ndata)
+    if (!is.null(input$focus) && input$focus == "yo")
+      visible <- visible & (g[["yoNumber"]] == as.numeric(input$focusYo))
     ## 2. start with data in desired navStage
     visible <- visible & (g[["navState"]] %in% input$navState)
     msg("    after select navState:                           sum(!visible) =", sum(!visible), "\n")
     ## 3. remove any pressure spikes
-    if (input$despikePressure) {
-      p <- g[["pressure"]]
-      badp <- is.na(p)
-      if (any(badp))
-        p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
-      pressureShift <- abs(p - runmed(p, k=11))
-      badPressure <- pressureShift > pressureThreshold
-      if (any(badp))
-        badPressure[badp] <- TRUE
-      visible <- visible & !badPressure
-    }
-    msg("    after despikePressure:                           sum(!visible) =", sum(!visible), "\n")
+    ##. if (input$despikePressure) {
+    ##.   p <- g[["pressure"]]
+    ##.   badp <- is.na(p)
+    ##.   if (any(badp))
+    ##.     p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
+    ##.   pressureShift <- abs(p - runmed(p, k=11))
+    ##.   badPressure <- pressureShift > pressureThreshold
+    ##.   if (any(badp))
+    ##.     badPressure[badp] <- TRUE
+    ##.   visible <- visible & !badPressure
+    ##. }
+    ##. msg("    after despikePressure:                           sum(!visible) =", sum(!visible), "\n")
     ## 4. remove pressures less than a specified limit
     if (input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
@@ -356,7 +356,7 @@ server <- function(input, output, session) {
     if (file.exists("stop")) browser()
     visible <- visible & !poweringOn
     msg("    after hideAfterPowerup:                          sum(!visible) =", sum(!visible), "\n")
-    if (input$trimOutliers) {
+    if (!is.null(input$trimOutliers) && input$trimOutliers) {
       SAok <- abs(SA - SAmean) < 3 * SAsd
       CTok <- abs(CT - CTmean) < 3 * CTsd
       Cok <- abs(C - Cmean) < 3 * Csd
@@ -543,7 +543,7 @@ server <- function(input, output, session) {
     ##msg("output$focus\n")
     selectInput(inputId="focus",
                 label=h6("Focus"),
-                choices=c("mission", "yo"),
+                choices=c("mission"="mission", "yo"="yo"),
                 selected=c("mission"))
   })
 
@@ -706,9 +706,9 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
     sliderInput("hideAfterPowerOn", h6("Hide after power-on"), min=0, max=120, value=0)
   })
 
-  output$despikePressure <- renderUI({
-    checkboxInput(inputId="despikePressure", label=h6("Hide p outliers"))
-  })
+  ## output$despikePressure <- renderUI({
+  ##   checkboxInput(inputId="despikePressure", label=h6("Hide p outliers"))
+  ## })
 
   output$trimOutliers <- renderUI({
     checkboxInput(inputId="trimOutliers", label=h6("Hide S & T outliers"))
@@ -1008,7 +1008,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
   output$plot <- renderPlot({
     msg("\nplot with input: focus='", input$focus, "'",
         ", plotChoice='", input$plotChoice, "'",
-        ", despikePressure=", input$despikePressure,
+        #", despikePressure=", input$despikePressure,
         ", selectYo='", input$selectYo, "'",
         ", state$focusYo=", state$focusYo,
         ", input$focusYo=", input$focusYo,
@@ -1038,7 +1038,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
             axisName <- "conservative temperature"
           } else if (input$plotChoice == "tSincePowerOn(t)") {
             dataName <- "tSincePowerOn"
-            axisName <- "Time since powerup [s]"
+            axisName <- "Time since powerup"
           } else {
             stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
           }
@@ -1062,13 +1062,12 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              msg("L1065 'N2 extremes' -- time-series plot\n")
               oce.plot.ts(x, y, ylim=ylim,
                           type=input$plotType,
                           col=ifelse(g@data$payload1[look, "N2"] > 0, "forestgreen", "red"),
                           mar=marTimeseries,
                           ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
-            } else {
+             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
               drawPalette(colormap=cm, zlab=input$colorBy)
@@ -1117,7 +1116,6 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               ##TESTING }
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              msg("L1120 'N2 extremes' -- TS plot\n")
               timing <- system.time({
                 plotTS(gg, pch=pch, cex=cex,
                        col=ifelse(gg[["N2"]]>0, "forestgreen", "red"),
@@ -1166,8 +1164,6 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                    type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
               navStateLegend() # FIXME: put on RHS
-            } else if (input$colorBy == "N2 extremes") {
-              msg("L1157 'N2 extremes' -- FIXME not coded yet\n")
             } else {
               cm <- colormap(g@data$payload1[look, input$colorBy])
               par(mar=marPaletteProfile, mgp=mgp)

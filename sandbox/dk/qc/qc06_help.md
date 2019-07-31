@@ -76,8 +76,9 @@ A typical workflow for editing wild data involves a cycle:
   distance, latitude, or longitude, and see whether the
   data appear to be sensible for the bottom topography of the domain in
   question.  If there are some odd high pressures, try clicking the button
-  marked `Hide S & T outliers`, or the one marked `Hide p outliers`. Often
-  this will remove very wild points.
+  marked `Hide S & T outliers`, which may also remove wild pressure points,
+  if the cause is a problem with the logging computer at high
+  sampling rates.
 * Set the `Color by` menu to `N2 extremes`, to highlight spots
   where the absolute value of N2 is anomalously
   high.  Positive N2 cases are coloured green, and negative cases
