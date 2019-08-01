@@ -34,14 +34,14 @@ directory, when you press the button labeled `Save`.)
 
 *Examining and flagging data*
 
-After the data are loaded, a plot will appear. Above the plot is a status line
-that indicates the data nearest the hovering location of the mouse.  Menu items
+After the data is loaded, a plot will appear. Above the plot is a status line
+that describes the data nearest the hovering location of the mouse.  Menu items
 permit a wide variety of plot types, and exploring these can often reveal
 spurious data.
 
 In any plot style, pressing and dragging the mouse will flag data within a
 selected rectangle. Used carefully, this can be a powerful tool for identifying
-spurious data. Since mouse-drag operations cannot be undone, though, some care
+spurious data. Since mouse-drag operations cannot be undone, some care
 is required. For example, if the conductivity sensor is prone to giving
 temporary spurious salinity values, it might be sensible to brush a `C(t)` or
 `S(t)` plot, instead of brushing a `TS` plot, because the time-series view
@@ -76,7 +76,7 @@ A typical workflow for editing wild data involves a cycle:
   distance, latitude, or longitude, and see whether the
   data appear to be sensible for the bottom topography of the domain in
   question.  If there are some odd high pressures, try clicking the button
-  marked `Hide S & T outliers`, which may also remove wild pressure points,
+  marked `Hide S & T outliers`, which may also remove wild pressure points
   if the cause is a problem with the logging computer at high
   sampling rates.
 * Set the `Color by` menu to `N2 extremes`, to highlight spots
@@ -88,15 +88,15 @@ A typical workflow for editing wild data involves a cycle:
   1. If the CTD power is turned on only for a portion of a profile,
   then an averaging procedure may make for odd N2 values near the
   surface or near the bottom. These will show up as bands of
-  red or green, in a pressure time-series.  In such cases, try
-  adjusting the slider named `Hide after power-on`, to ignore a time
+  red or green in a pressure time-series.  In such cases, try
+  adjusting the slider named `Hide after power-on` to ignore a time
   interval after power-on.
   2. Another anomalous pattern shows up as red and
   green pairs of horizontal lines in the TS diagram, which indicates
   salinity anomalies.  Handle these by putting the mouse over one of 
   points in `mission` focus, typing `s` to select the relevant
   yo, and then typing `y` to go to focus on that yo. Since bad salinity
-  is the culprit, it can help to now set `Plot` to `S(t)`, in
+  is the culprit, it can help to set `Plot` to `S(t)`, in
   which the odd salinity is likely easily seen.  Drag
   the mouse to create a rectangle that encloses points that appear
   to be anomalous, and they will be discarded from future analysis. 
@@ -108,7 +108,7 @@ A typical workflow for editing wild data involves a cycle:
   buttons. This hides some navigation states from view.  You may find
   that near-surface data are problematic.
 
-Use the pull-down menus, if you find these more convenient than using the
+Use the pull-down menus if you find these more convenient than using the
 keyboard.
 
 
