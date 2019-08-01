@@ -8,6 +8,11 @@ first on the SeaExplorer data that is being used in his own research program.
 This tool is being developed during a period of active use, and the goal is to
 make it work well in a practical context, not in some imagined general setting.
 
+In addition to this document, the developers have put some instructional videos
+online at https://www.youtube.com/channel/UC5Go198V3B0SGBSju2_bdKA. (Since the
+tutorials were created during the development process, some features have
+become out-of-date.)
+
 Please contact the author, if you see ways that the app might be altered, to be
 of more benefit to you and other users.
 
