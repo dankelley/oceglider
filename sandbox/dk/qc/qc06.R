@@ -190,13 +190,13 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                 ##                  uiOutput(outputId="flagYo"))
                          ),
                 fluidRow(column(2, conditionalPanel(condition="output.gliderExists",
+                                                    uiOutput(outputId="trimOutliers"))),
+                         column(2, conditionalPanel(condition="output.gliderExists",
                                                     uiOutput(outputId="hideInitialYos"))),
                          column(2, conditionalPanel(condition="output.gliderExists",
                                                     uiOutput(outputId="hideTop"))),
                          column(2, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="hideAfterPowerOn"))),
-                         column(3, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="trimOutliers")))
+                                                    uiOutput(outputId="hideAfterPowerOn")))
                          ),
                 ## fluidRow(#column(3,
                 ##          #       conditionalPanel(condition="output.gliderExists",
@@ -237,39 +237,44 @@ server <- function(input, output, session) {
 
   saveYoAtMouse <- function(xmouse, ymouse)
   {
-    if (plotExists && !is.null(xmouse) && !grepl("^hist", input$plotChoice)) {
+    if (plotExists && !is.null(xmouse) && !grepl("histogram", input$plotChoice)) {
       ## BOOKMARK_plot_type_3_of_4: note that 1, 2 and 4 must align with this
-      if (input$plotChoice == "p(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "C(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["conductivity"]]
-      } else if (input$plotChoice == "S(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["SA"]]
-      } else if (input$plotChoice == "T(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["CT"]]
-      } else if (input$plotChoice == "tSincePowerOn(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- x - g[["tSincePowerOn"]]
-      } else if (input$plotChoice == "TS") {
+      if (input$plotChoice == "TS") {
         x <- g[["SA"]]
         y <- g[["CT"]]
-      } else if (input$plotChoice == "S profile") {
-        x <- g[["SA"]]
+      } else if (grepl("time-series$", input$plotChoice)) {
+        x <- as.numeric(g[["time"]])
+        if (input$plotChoice == "conductivity time-series") {
+          y <- g[["conductivity"]]
+        } else if (input$plotChoice == "pressure time-series") {
+          y <- g[["pressure"]]
+        } else if (input$plotChoice == "salinity time-series") {
+          y <- g[["SA"]]
+        } else if (input$plotChoice == "spiciness time-series") {
+          y <- g[["spiciness0"]]
+        } else if (input$plotChoice == "temperature time-series") {
+          y <- g[["CT"]]
+        } else if (input$plotChoice == "tSincePowerOn time-series") {
+          y <- x - g[["tSincePowerOn"]]
+        } else {
+          stop("coding error: cannot saveYoAtMouse unknown time-series type '", input$plotChoice, "'", sep="")
+        }
+      } else if (grepl("profile$", input$plotChoice)) {
         y <- g[["pressure"]]
-      } else if (input$plotChoice == "T profile") {
-        x <- g[["CT"]]
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "density profile") {
-        x <- g[["sigma0"]]
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "C profile") {
-        x <- g[["conductivity"]]
-        y <- g[["pressure"]]
-      } else if (length(grep("^hist", input$plotChoice))) {
+        if (input$plotChoice == "conductivity profile") {
+          x <- g[["conductivity"]]
+        } else if (input$plotChoice == "density profile") {
+          x <- g[["sigma0"]]
+        } else if (input$plotChoice == "salinity profile") {
+          x <- g[["SA"]]
+        } else if (input$plotChoice == "spiciness profile") {
+          x <- g[["spiciness0"]]
+        } else if (input$plotChoice == "temperature profile") {
+          x <- g[["CT"]]
+        } else {
+          stop("coding error: cannot saveYoAtMouse unknown profile type '", input$plotChoice, "'", sep="")
+        }
+      } else if (length(grep("histogram$", input$plotChoice))) {
         return()
       }
       dist <- sqrt(((xmouse-x)/(state$usr[2]-state$usr[1]))^2 + ((ymouse-y)/(state$usr[4]-state$usr[3]))^2)
@@ -544,28 +549,30 @@ server <- function(input, output, session) {
     selectInput(inputId="focus",
                 label=h6("Focus"),
                 choices=c("mission"="mission", "yo"="yo"),
-                selected=c("mission"))
+                selected="mission")
   })
 
   output$plotChoice <- renderUI({
     selectInput(inputId="plotChoice",
                 label=h6("Plot"),
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("TS",
-                          "C(t)",
-                          "p(t)",
-                          "S(t)",
-                          "T(t)",
-                          "tSincePowerOn(t)",
-                          "C profile",
-                          "density profile",
-                          "S profile",
-                          "T profile",
-                          "hist(C)",
-                          "hist(p)",
-                          "hist(S)",
-                          "hist(T)"),
-                selected="p(t)")
+                choices=c("TS"="TS",
+                          "C(t)"="conductivity time-series",
+                          "p(t)"="pressure time-series",
+                          "S(t)"="salinity time-series",
+                          "spiciness(t)"="spiciness time-series",
+                          "T(t)"="temperature time-series",
+                          "tSincePowerOn(t)"="tSincePowerOn time-series",
+                          "C(p)"="conductivity profile",
+                          "density(p)"="density profile",
+                          "S(p)"="salinity profile",
+                          "spiciness(p)"="spiciness profile",
+                          "T(p)"="temperature profile",
+                          "hist(C)"="conductivity histogram",
+                          "hist(p)"="pressure histogram",
+                          "hist(S)"="salinity histogram",
+                          "hist(T)"="temperature histogram"),
+                selected="pressure time-series")
   })
 
   output$plotType <- renderUI({
@@ -575,7 +582,19 @@ server <- function(input, output, session) {
   output$colorBy <- renderUI({
     selectInput(inputId="colorBy",
                 label=h6("Colour by"),
-                choices=c("distance", "latitude", "longitude", "pressure", "temperature", "salinity", "N2", "N2 extremes", "navState", "tSincePowerOn", "(none)"),
+                choices=c("distance"="distance",
+                          "latitude"="latitude",
+                          "longitude"="longitude",
+                          "p"="pressure",
+                          "density"="sigma0",
+                          "T"="temperature",
+                          "S"="salinity",
+                          "N2"="N2",
+                          "N2 extremes"="N2 extremes",
+                          "navState"="navState",
+                          "tSincePowerOn"="tSincePowerOn",
+                          "spiciness"="spiciness0",
+                          "(none)"="(none)"),
                 selected="distance")
   })
 
@@ -610,9 +629,9 @@ server <- function(input, output, session) {
                  }
                } else if (input$keypress == 115) { # "s" only works if focus is 'mission'
                  ##msg("before: yoSelected=", state$yoSelected, "\n")
-                 ##msg(" 's' pressed (x=", hoverx, ", y=", hovery, ")\n")
+                 msg(" 's' pressed (input$hover$x=", input$hover$x, ", input$hover$y=", input$hover$y, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
-                 ##msg("after: yoSelected=", state$yoSelected, "\n")
+                 msg("after interpreting 's' keypress, state$yoSelected=", state$yoSelected, "\n")
                } else if (input$keypress == 63) { # "?" gives help
                  showModal(modalDialog(title="Key-stroke commands",
         HTML("
@@ -695,7 +714,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
   ###old })
 
   output$hideInitialYos <- renderUI({
-    sliderInput("hideInitialYos", h6("Hide initial yos"), min=0, max=10, value=1)
+    sliderInput("hideInitialYos", h6("Hide initial yos"), min=0, max=10, value=0)
   })
 
   output$hideTop <- renderUI({
@@ -711,7 +730,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
   ## })
 
   output$trimOutliers <- renderUI({
-    checkboxInput(inputId="trimOutliers", label=h6("Hide S & T outliers"))
+    checkboxInput(inputId="trimOutliers", label=h6("Hide T,S outliers"))
   })
 
   output$navState <- renderUI({
@@ -727,38 +746,45 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
     res <- "(Move mouse into plot window to see properties)"
     if (!is.null(hoverx) && plotExists) {
       ## BOOKMARK_plot_type_2_of_4: note that 1, 3 and 4 must align with this
-      if (input$plotChoice == "p(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "C(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["conductivity"]]
-      } else if (input$plotChoice == "S(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["SA"]]
-      } else if (input$plotChoice == "T(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- g[["CT"]]
-      } else if (input$plotChoice == "tSincePowerOn(t)") {
-        x <- as.numeric(g[["time"]])
-        y <- x - g[["tSincePowerOn"]]
-      } else if (input$plotChoice == "TS") {
+      if (input$plotChoice == "TS") {
         x <- g[["SA"]]
         y <- g[["CT"]]
-      } else if (input$plotChoice == "S profile") {
-        x <- g[["SA"]]
+      } else if (grepl("time-series$", input$plotChoice)) {
+        x <- as.numeric(g[["time"]])
+        if (input$plotChoice == "conductivity time-series") {
+          y <- g[["conductivity"]]
+        } else if (input$plotChoice == "pressure time-series") {
+          y <- g[["pressure"]]
+        } else if (input$plotChoice == "salinity time-series") {
+          y <- g[["SA"]]
+        } else if (input$plotChoice == "spiciness time-series") {
+          y <- x - g[["spiciness0"]]
+        } else if (input$plotChoice == "temperature time-series") {
+          y <- g[["CT"]]
+        } else if (input$plotChoice == "tSincePowerOn time-series)") {
+          y <- x - g[["tSincePowerOn"]]
+        } else {
+          msg("coding error: cannot determine status for unknown time-series type '", input$plotChoice, "'", sep="")
+          return()
+        }
+      } else if (grepl("profile$", input$plotChoice)) {
         y <- g[["pressure"]]
-      } else if (input$plotChoice == "T profile") {
-        x <- g[["CT"]]
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "density profile") {
-        x <- g[["sigma0"]]
-        y <- g[["pressure"]]
-      } else if (input$plotChoice == "C profile") {
-        x <- g[["conductivity"]]
-        y <- g[["pressure"]]
-      } else if (length(grep("^hist", input$plotChoice))) {
-        return("(Status line is unavailable for histogram plots.)")
+        if (input$plotChoice == "conductivity profile") {
+          x <- g[["conductivity"]]
+        } else if (input$plotChoice == "density profile") {
+          x <- g[["sigma0"]]
+        } else if (input$plotChoice == "salinity profile") {
+          x <- g[["SA"]]
+        } else if (input$plotChoice == "spiciness profile") {
+          x <- g[["spiciness0"]]
+        } else if (input$plotChoice == "temperature profile") {
+          x <- g[["CT"]]
+        } else {
+          msg("coding error: cannot determine status for unknown profile type '", input$plotChoice, "'", sep="")
+          return()
+        }
+      } else if (grepl("histogram$", input$plotChoice)) {
+        return()
       }
       dist <- sqrt(((hoverx-x)/(state$usr[2]-state$usr[1]))^2 + ((hovery-y)/(state$usr[4]-state$usr[3]))^2)
       visible <- visibleIndices()
@@ -770,7 +796,8 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
       ##res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
       ##res <- paste0(res, "[hide top ", input$hideTop, "m] ")
-      res <- paste0(res, "[dblclicked yo=", state$yoSelected, "]")
+      if (!is.null(state$yoSelected))
+        res <- paste0(res, "[selected yo=", state$yoSelected, "]")
     }
     res
   })
@@ -792,65 +819,78 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                xmax <- input$brush$xmax
                ymin <- input$brush$ymin
                ymax <- input$brush$ymax
-               ## msg("  xmin=", xmin, ", xmax=", xmax, "\n", sep="")
-               ## msg("  ymin=", ymin, ", ymax=", ymax, "\n", sep="")
                bad <- state$flag == 3
                msg("  sum(bad)=", sum(bad), " of ", length(bad), " [based on present state$flag]\n", sep="")
                ## BOOKMARK_plot_type_4_of_4: note that 1, 2 and 3 must align with this
-               if (input$plotChoice == "p(t)") {
-                 x <- as.numeric(g[["time"]])
-                 y <- g[["pressure"]]
-               } else if (input$plotChoice == "C(t)") {
-                 x <- as.numeric(g[["time"]])
-                 y <- g[["conductivity"]]
-               } else if (input$plotChoice == "S(t)") {
-                 x <- as.numeric(g[["time"]])
-                 y <- g[["SA"]]
-                 msg("length(x)=", length(x), "\n")
-               } else if (input$plotChoice == "T(t)") {
-                 x <- as.numeric(g[["time"]])
-                 y <- g[["CT"]]
-               } else if (input$plotChoice == "tSincePowerOn(t)") {
-                 x <- as.numeric(g[["time"]])
-                 y <- x - g[["tSincePowerOn"]]
-               } else if (input$plotChoice == "TS") {
+               if (input$plotChoice == "TS") {
                  x <- g[["SA"]]
                  y <- g[["CT"]]
-               } else if (input$plotChoice == "S profile") {
-                 x <- g[["SA"]]
+               } else if (grepl("time-series$", input$plotChoice)) {
+                 x <- as.numeric(g[["time"]])
+                 if (input$plotChoice == "conductivity time-series") {
+                   y <- g[["conductivity"]]
+                 } else if (input$plotChoice == "pressure time-series") {
+                   y <- g[["pressure"]]
+                 } else if (input$plotChoice == "salinity time-series") {
+                   y <- g[["SA"]]
+                 } else if (input$plotChoice == "spiciness time-series") {
+                   y <- g[["spiciness0"]]
+                 } else if (input$plotChoice == "temperature time-series") {
+                   y <- g[["CT"]]
+                 } else if (input$plotChoice == "tSincePowerOn time-series") {
+                   y <- x - g[["tSincePowerOn"]]
+                 } else {
+                   stop("coding error: cannot brush unknown time-series type '", input$plotChoice, "'", sep="")
+                 }
+               } else if (grepl("profile$", input$plotChoice)) {
                  y <- g[["pressure"]]
-               } else if (input$plotChoice == "T profile") {
-                 x <- g[["CT"]]
-                 y <- g[["pressure"]]
-               } else if (input$plotChoice == "density profile") {
-                 x <- g[["sigma0"]]
-                 y <- g[["pressure"]]
-               } else if (input$plotChoice == "C profile") {
-                 x <- g[["conductivity"]]
-                 y <- g[["pressure"]]
-               } else if (input$plotChoice == "hist(C)") {
-                 x <- g[["conductivity"]]
-                 bad <- xmin <= x & x <= xmax
-                 bad[is.na(bad)] <- TRUE
-                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
-                 saveEditEvent("brush hist(C)", bad)
-                 return()
-               } else if (input$plotChoice == "hist(S)") {
-                 x <- g[["SA"]]
-                 bad <- xmin <= x & x <= xmax
-                 bad[is.na(bad)] <- TRUE
-                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
-                 saveEditEvent("brush hist(S)", bad)
-                 return()
-               } else if (input$plotChoice == "hist(p)") {
-                 x <- g[["pressure"]]
-                 bad <- xmin <= x & x <= xmax
-                 bad[is.na(bad)] <- TRUE
-                 bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
-                 saveEditEvent("brush hist(p)", bad)
-                 return()
+                 if (input$plotChoice == "conductivity profile") {
+                   y <- g[["conductivity"]]
+                 } else if (input$plotChoice == "density profile") {
+                   y <- g[["sigma0"]]
+                 } else if (input$plotChoice == "salinity profile") {
+                   x <- g[["SA"]]
+                 } else if (input$plotChoice == "spiciness profile") {
+                   y <- g[["spiciness0"]]
+                 } else if (input$plotChoice == "temperature profile") {
+                   x <- g[["CT"]]
+                 } else {
+                   stop("coding error: cannot brush unknown profile type '", input$plotChoice, "'", sep="")
+                 }
+               } else if (grepl("histogram$", input$plotChoice)) {
+                 if (input$plotChoice == "conductivity histogram") {
+                   x <- g[["conductivity"]]
+                   bad <- xmin <= x & x <= xmax
+                   bad[is.na(bad)] <- TRUE
+                   bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                   saveEditEvent("brush conductivity histogram", bad)
+                   return()
+                 } else if (input$plotChoice == "pressure histogram") {
+                   x <- g[["pressure"]]
+                   bad <- xmin <= x & x <= xmax
+                   bad[is.na(bad)] <- TRUE
+                   bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                   saveEditEvent("brush pressure histogram", bad)
+                   return()
+                 } else if (input$plotChoice == "salinity histogram") {
+                   x <- g[["SA"]]
+                   bad <- xmin <= x & x <= xmax
+                   bad[is.na(bad)] <- TRUE
+                   bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                   saveEditEvent("brush salinity histogram", bad)
+                   return()
+                 } else if (input$plotChoice == "temperature histogram") {
+                   x <- g[["CT"]]
+                   bad <- xmin <= x & x <= xmax
+                   bad[is.na(bad)] <- TRUE
+                   bad <- bad & visibleIndices() # we do not invalidate data not in the present view.
+                   saveEditEvent("brush temperature histogram", bad)
+                   return()
+                  } else {
+                   stop("coding error: cannot brush unknown histogram type")
+                 }
                } else {
-                 stop("programming error: brushing for plot type '", input$plotChoice, "' is not coded yet")
+                 stop("coding error: brushing for plot type '", input$plotChoice, "' is not coded yet")
                }
                bad <- ifelse(is.na(x) | is.na(y), TRUE, xmin <= x & x <= xmax & ymin <= y & y <= ymax)
                msg("  sum(bad)=", sum(bad), ", length(bad)=", length(bad), " [after in-box test]\n")
@@ -1022,32 +1062,35 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
       msg("input$plotChoice: '", input$plotChoice, "'\n", sep="")
       ##msg("** sum(look)=", sum(look))
       if (sum(look)) {
-        if (length(grep("\\(t\\)$", input$plotChoice))) {
+        if (grepl("time-series$", input$plotChoice)) {
           msg("* a time-series plot (input$plotChoice is '", input$plotChoice, "')\n", sep="")
-          if (input$plotChoice == "p(t)") {
-            dataName <- "pressure"
-            axisName <- "p"
-          } else if (input$plotChoice == "C(t)") {
+          if (input$plotChoice == "conductivity time-series") {
             dataName <- "conductivity"
             axisName <- "conductivity S/m"
-          } else if (input$plotChoice == "S(t)") {
+          } else if (input$plotChoice == "pressure time-series") {
+            dataName <- "pressure"
+            axisName <- "p"
+          } else if (input$plotChoice == "salinity time-series") {
             dataName <- "SA"
             axisName <- "absolute salinity"
-          } else if (input$plotChoice == "T(t)") {
+          } else if (input$plotChoice == "spiciness time-series") {
+            dataName <- "spiciness0"
+            axisName <- "spiciness"
+          } else if (input$plotChoice == "temperature time-series") {
             dataName <- "CT"
             axisName <- "conservative temperature"
-          } else if (input$plotChoice == "tSincePowerOn(t)") {
+          } else if (input$plotChoice == "tSincePowerOn time-series") {
             dataName <- "tSincePowerOn"
             axisName <- "Time since powerup"
           } else {
-            stop("programmer error: unhandled time-series name '", input$plotChoice, "'")
+            stop("programmer error: cannot plot time-series name '", input$plotChoice, "'")
           }
           x <- g@data$payload1[look, "time"]
           y <- g@data$payload1[look, dataName]
           msg("time-series plot. x (time) range:", paste(range(x, na.rm=TRUE), collapse=" to "),
               ", y range:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
           ylim <- range(y, na.rm=TRUE)
-          if (input$plotChoice == "p(t)")
+          if (input$plotChoice == "pressure time-series")
             ylim <- rev(ylim)
           ylab <- resizableLabel(axisName)
           if (input$colorBy != "(none)") {
@@ -1057,7 +1100,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                             type=input$plotType,
                             col=gg[["navStateColor"]],
                             mar=marTimeseries,
-                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
+                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
               })
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
@@ -1066,8 +1109,8 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                           type=input$plotType,
                           col=ifelse(g@data$payload1[look, "N2"] > 0, "forestgreen", "red"),
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
-             } else {
+                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
+            } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
               drawPalette(colormap=cm, zlab=input$colorBy)
@@ -1078,7 +1121,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                             type=input$plotType,
                             col=cm$zcol,
                             mar=marTimeseries,
-                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
+                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
               })
               msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
             }
@@ -1087,7 +1130,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               oce.plot.ts(x, y,
                           type=input$plotType,
                           mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="p(t)")
+                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
             })
             msg(dataName, " time-series plot (not coloured) took elapsed time ", timing[3], "s\n", sep="")
           }
@@ -1137,21 +1180,24 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
             msg("plotTS (with no colours) took elapsed time ", timing[3], "s\n", sep="")
           }
           plotExists <<- TRUE
-        } else if (length(grep(" profile$", input$plotChoice))) {
-          if ("S profile" == input$plotChoice) {
-            dataName <- "SA"
-            axisName <- "absolute salinity"
-          } else if ("T profile" == input$plotChoice) {
-            dataName <- "CT"
-            axisName <- "conservative temperature"
+        } else if (length(grep("profile$", input$plotChoice))) {
+          if ("conductivity profile" == input$plotChoice) {
+            dataName <- "conductivity"
+            axisName <- "conductivity S/m"
           } else if ("density profile" == input$plotChoice) {
             dataName <- "sigma0"
             axisName <- "sigma0"
-          } else if ("C profile" == input$plotChoice) {
-            dataName <- "conductivity"
-            axisName <- "conductivity S/m"
+          } else if ("salinity profile" == input$plotChoice) {
+            dataName <- "SA"
+            axisName <- "absolute salinity"
+          } else if ("spiciness profile" == input$plotChoice) {
+            dataName <- "spiciness0"
+            axisName <- "spiciness0"
+          } else if ("temperature profile" == input$plotChoice) {
+            dataName <- "CT"
+            axisName <- "conservative temperature"
           } else {
-            stop("programmer error: unhandled profile name '", input$plotChoice, "'")
+            stop("coding error: cannot plot unrecognized profile name '", input$plotChoice, "'")
           }
           x <- g@data$payload1[look, dataName]
           y <- g@data$payload1[look, "pressure"]
@@ -1184,32 +1230,36 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
           axis(3)
           mtext(resizableLabel(axisName), side=3, line=2)
           par(mar=omar)
-        } else if (input$plotChoice == "hist(p)") {
-          hist(gg[["pressure"]], breaks=100, main="Histogram of unflagged values", xlab="Pressure [dbar]")
-          abline(v=pmean + psd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD), lwd=1.4)
-          mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
-                at=pmean + psd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
-        } else if (input$plotChoice == "hist(C)") {
-          hist(gg[["conductivity"]], breaks=100, main="Histogram of unflagged values", xlab="Conductivity")
-          abline(v=Cmean + Csd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
-          mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
-                at=Cmean + Csd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
-        } else if (input$plotChoice == "hist(S)") {
-          hist(gg[["SA"]], breaks=100, main="Histogram of unflagged values", xlab="Absolute Salinity")
-          abline(v=SAmean + SAsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
-          mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
-                at=SAmean + SAsd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
-        } else if (input$plotChoice == "hist(T)") {
-          hist(gg[["CT"]], breaks=100, main="Histogram of unflagged values", xlab="Conservative Temperature")
-          abline(v=CTmean + CTsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
-          mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
-                at=CTmean + CTsd * c(-3, 0, 3),
-                col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
+        } else if (grepl("histogram$", input$plotChoice)) {
+          if (input$plotChoice == "pressure histogram") {
+            hist(gg[["pressure"]], breaks=100, main="Histogram of unflagged values", xlab="Pressure [dbar]")
+            abline(v=pmean + psd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD), lwd=1.4)
+            mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
+                  at=pmean + psd * c(-3, 0, 3),
+                  col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
+          } else if (input$plotChoice == "conductivity histogram") {
+            hist(gg[["conductivity"]], breaks=100, main="Histogram of unflagged values", xlab="Conductivity")
+            abline(v=Cmean + Csd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
+            mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
+                  at=Cmean + Csd * c(-3, 0, 3),
+                  col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
+          } else if (input$plotChoice == "salinity histogram") {
+            hist(gg[["SA"]], breaks=100, main="Histogram of unflagged values", xlab="Absolute Salinity")
+            abline(v=SAmean + SAsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
+            mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
+                  at=SAmean + SAsd * c(-3, 0, 3),
+                  col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
+          } else if (input$plotChoice == "temperature histogram") {
+            hist(gg[["CT"]], breaks=100, main="Histogram of unflagged values", xlab="Conservative Temperature")
+            abline(v=CTmean + CTsd * c(-3, 0, 3), col=c(colHist3SD, colHistMean, colHist3SD),lwd=1.4)
+            mtext(text=c(expression(mu-3*sigma), expression(mu), expression(mu+3*sigma)),
+                  at=CTmean + CTsd * c(-3, 0, 3),
+                  col=c(colHist3SD, colHistMean, colHist3SD), side=3, cex=1.2)
+          } else {
+            stop("coding error: cannot plot unrecognized histogram name '", input$plotChoice, "'")
+          }
         } else {
-          stop("unknown plot type (internal coding error)\n")
+            stop("coding error: cannot plot unknown item '", input$plotChoice, "'")
         }
         plotExists <<- TRUE
         state$usr <<- par("usr")
