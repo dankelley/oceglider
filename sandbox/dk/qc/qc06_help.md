@@ -3,7 +3,7 @@
 This app is designed to handle SeaExplorer glider data, in a file format used
 by the Bedford Institute of Oceanography as of July 2019.  Extension to other
 data formats should not be too difficult, but the author is inclined to focus
-first on the SeaExplorer data that is using in his own research program.
+first on the SeaExplorer data that is being used in his own research program.
 
 This tool is being developed during a period of active use, and the goal is to
 make it work well in a practical context, not in some imagined general setting.
