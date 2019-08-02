@@ -648,7 +648,7 @@ server <- function(input, output, session) {
                  ##msg("before: yoSelected=", state$yoSelected, "\n")
                  msg(" 'c' pressed (input$hover$x=", input$hover$x, ", input$hover$y=", input$hover$y, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
-                 ##msg("after interpreting 's' keypress, state$yoSelected=", state$yoSelected, "\n")
+                 ##msg("after interpreting 'c' keypress, state$yoSelected=", state$yoSelected, "\n")
                  msg("after interpreting 'c' keypress, global$yoSelected=", global$yoSelected, "\n")
                } else if (input$keypress == 63) { # "?" gives help
                  showModal(modalDialog(title="Key-stroke commands",
