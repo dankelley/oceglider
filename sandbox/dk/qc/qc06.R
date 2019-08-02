@@ -1,6 +1,7 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
 
-version <- "0.6"
+appName <- "glider QC"
+appVersion <- "0.6"
 debugFlag <- TRUE                      # a button lets user set this on and off
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
@@ -160,9 +161,10 @@ ui <- fluidPage(shinythemes::themeSelector(),
                 tags$script('$(document).on("keypress",
                             function (e) {
                               Shiny.onInputChange("keypress", e.which);
-                              Shiny.onInputChange("keypresstrigger", Math.random());
+                              Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
-                fluidRow(column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
+                fluidRow(column(1, h6(paste(appName, appVersion))),
+                         column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE))),
                 conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc06_help.md"))),
                 fluidRow(column(2,
@@ -227,12 +229,13 @@ ui <- fluidPage(shinythemes::themeSelector(),
 
 server <- function(input, output, session) {
 
+  global <- reactiveValues(yoSelected=NULL) # status line updats with this but not plots
   state <- reactiveValues(rda="",
                           flag=NULL,
                           focusYo=1,
                           gliderExists=FALSE,
                           usr=NULL,
-                          yoSelected=NULL,
+                          ##yoSelected=NULL,
                           hideAfterPowerOn=0)
 
   saveYoAtMouse <- function(xmouse, ymouse)
@@ -283,7 +286,8 @@ server <- function(input, output, session) {
       disti <- which.min(dist)
       d <- g[["payload1"]][disti,]
       msg("yo=", d$yoNumber, "\n")
-      state$yoSelected <<- d$yoNumber
+      ##state$yoSelected <<- d$yoNumber
+      global$yoSelected <<- d$yoNumber
     }
   }
 
@@ -320,7 +324,9 @@ server <- function(input, output, session) {
       cat(file=stderr(), ...)
   }
 
-  #' suport function for plotting and brushing, used in several spots
+  #' Suport function for plotting and brushing, used in several spots.
+  #' This takes about 0.17s to compute (negigible compared with plotting), so
+  #" no attempted is made to set up fancy caching.
   visibleIndices <- function(message="") {
     msg("  visibleIndices(", message, ") {\n", sep="")
     msg("    input$focus='", input$focus,"', input$focusYo=", input$focusYo, "\n", sep="")
@@ -548,7 +554,7 @@ server <- function(input, output, session) {
     ##msg("output$focus\n")
     selectInput(inputId="focus",
                 label=h6("Focus"),
-                choices=c("mission"="mission", "yo"="yo"),
+                choices=c("mission <m>"="mission", "yo <y>"="yo"),
                 selected="mission")
   })
 
@@ -556,10 +562,10 @@ server <- function(input, output, session) {
     selectInput(inputId="plotChoice",
                 label=h6("Plot"),
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("TS"="TS",
+                choices=c("TS <t>"="TS",
                           "C(t)"="conductivity time-series",
-                          "p(t)"="pressure time-series",
-                          "S(t)"="salinity time-series",
+                          "p(t) <p>"="pressure time-series",
+                          "S(t) <s>"="salinity time-series",
                           "spiciness(t)"="spiciness time-series",
                           "T(t)"="temperature time-series",
                           "tSincePowerOn(t)"="tSincePowerOn time-series",
@@ -602,11 +608,12 @@ server <- function(input, output, session) {
     numericInput("focusYo",
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
                  if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
-                 value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
+                 value=if (is.null(global$yoSelected)) "1" else global$yoSelected)
+                 ##value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
 
-  observeEvent(input$keypresstrigger, {
-               ##msg("keypress '", input$keypress, "'\n", sep="")
+  observeEvent(input$keypressTrigger, {
+               msg("keypress '", input$keypress, "'\n", sep="")
                if (input$keypress == 109) { # "m" only works if focus is 'yo'
                  ##msg("  m=mission-focus\n")
                  if (input$focus == "yo")
@@ -627,11 +634,22 @@ server <- function(input, output, session) {
                    if (input$focusYo > (input$hideInitialYos+1))
                      updateNumericInput(session, "focusYo", value=input$focusYo-1)
                  }
-               } else if (input$keypress == 115) { # "s" only works if focus is 'mission'
+               } else if (input$keypress %in% c(80, 112)) { # "p" or "P"
+                 ## switch plotType to "pressure time-series"
+                 updateTextInput(session, "plotChoice", value="pressure time-series")
+               } else if (input$keypress %in% c(83, 115)) { # "s" or "S"
+                 ## switch plotType to "S(t)"
+                 updateTextInput(session, "plotChoice", value="salinity time-series")
+               } else if (input$keypress %in% c(84, 116)) { # "t" or "T"
+                 ## switch plotType to "TS"
+                 updateTextInput(session, "plotChoice", value="TS")
+               } else if (input$keypress %in% c(67, 99)) { # "c"  or "C"
+                 ## should only work if focus is 'mission'
                  ##msg("before: yoSelected=", state$yoSelected, "\n")
-                 msg(" 's' pressed (input$hover$x=", input$hover$x, ", input$hover$y=", input$hover$y, ")\n")
+                 msg(" 'c' pressed (input$hover$x=", input$hover$x, ", input$hover$y=", input$hover$y, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
-                 msg("after interpreting 's' keypress, state$yoSelected=", state$yoSelected, "\n")
+                 ##msg("after interpreting 's' keypress, state$yoSelected=", state$yoSelected, "\n")
+                 msg("after interpreting 'c' keypress, global$yoSelected=", global$yoSelected, "\n")
                } else if (input$keypress == 63) { # "?" gives help
                  showModal(modalDialog(title="Key-stroke commands",
         HTML("
@@ -643,6 +661,13 @@ server <- function(input, output, session) {
 <li> '<b>s</b>': in mission-focus, select the yo number under the mouse, so that
 the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
   mission-focus.)
+<li> '<b>c</b>': in mission-focus, copy yo number nearest the mouse to an internal
+  buffer, so next '<b>y</b>' key-press will graph that yo.  (Ignored in
+  mission-focus.)
+<li> <b>'p'</b>: switch plot type to <i>p(t)</i>
+<li> <b>'s'</b>: switch plot type to <i>S(t)</i>
+<li> <b>'t'</b>: switch plot type to <i>TS</i>
+<li> '<b>?</b>': show this summary
 </ul>"),
         easyClose = TRUE
         ))
@@ -652,7 +677,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
   observeEvent(focusYo, {
                msg("observeEvent(focusYo) ...\n")
                ## fy <- throttle(focusYoRaw, 5000)()
-               fy <- debounce(focusYo, 5000)()
+               fy <- debounce(focusYo, 1000)()
                state$focusYo <<- fy
                msg("  fy=", fy, ",  maxYo=", maxYo, "\n")
                if (!is.null(fy) && !is.null(maxYo)) {
@@ -794,10 +819,10 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
       res <- sprintf("yo=%d p=%.1f SA=%.4f CT=%.4f navState=%d %.3fE %.3fN %s\n",
                      d$yoNumber, d$pressure, d$SA, d$CT, d$navState,
                      d$longitude, d$latitude, format(d$time, "%Y-%m-%dT%H:%M:%S"))
-      ##res <- paste0(res, "[hide initial ", input$hideInitialYos, " yos] ")
-      ##res <- paste0(res, "[hide top ", input$hideTop, "m] ")
-      if (!is.null(state$yoSelected))
-        res <- paste0(res, "[selected yo=", state$yoSelected, "]")
+      ## if (!is.null(state$yoSelected))
+      ##   res <- paste0(res, "[selected yo=", state$yoSelected, "]")
+      if (!is.null(global$yoSelected))
+        res <- paste0(res, "[selected yo=", global$yoSelected, "]")
     }
     res
   })
@@ -927,7 +952,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                g@data$payload1[["CT"]] <<- g[["CT"]]
                sigma0 <-  g[["sigma0"]]
                g@data$payload1[["sigma0"]] <<- sigma0
-               g@data$payload1[["spiciness"]] <<- g[["spiciness"]]
+               g@data$payload1[["spiciness0"]] <<- g[["spiciness"]]
                g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                ## It's a bit tricky to calculate N^2, because it will be defined
@@ -1159,11 +1184,9 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               ##TESTING }
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              timing <- system.time({
-                plotTS(gg, pch=pch, cex=cex,
-                       col=ifelse(gg[["N2"]]>0, "forestgreen", "red"),
-                       mar=marTS, type=input$plotType)
-              })
+              ## gray for whole dataset, then coloured for the narrowed dataset
+              plotTS(g, pch=pch, cex=cex, col="lightgray", mar=marTS)
+              points(gg[["SA"]], gg[["CT"]], pch=pch, cex=cex, col=ifelse(gg[["N2"]]>0, "forestgreen", "red"))
             } else {
               cm <- colormap(gg[[input$colorBy]])
               par(mar=marPaletteTS, mgp=mgp)

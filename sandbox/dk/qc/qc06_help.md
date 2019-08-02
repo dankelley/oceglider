@@ -1,4 +1,4 @@
-**Overview**
+**Overview of qc (version 0.6)**
 
 This app is designed to handle SeaExplorer glider data, in a file format used
 by the Bedford Institute of Oceanography as of July 2019.  Extension to other
@@ -67,10 +67,13 @@ The following key-press events provide a quick way to navigate graphical views.
 * `p`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
 * `m`: in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
 * `y`: in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
-* `s`: in mission-focus, select the yo number under the mouse, so that
-the next `y` operation will open a graph for that yo.  (Ignored in
+* `c`: in mission-focus, copy yo number nearest the mouse to an internal
+  buffer, so next `y` key-press will graph that yo.  (Ignored in
   mission-focus.)
-* `?`: provides this summary
+* `p`: switch plot type to `p(t)`
+* `s`: switch plot type to `S(t)`
+* `t`: switch plot type to `TS`
+* `?`: shows this summary
 
 *Typical workflow*
 
