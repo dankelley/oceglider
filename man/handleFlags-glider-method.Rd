@@ -6,13 +6,12 @@
 \title{Handle Flags in glider Objects}
 \usage{
 \S4method{handleFlags}{glider}(object, flags = NULL, actions = NULL,
-  debug = getOption("gliderDebug", 0))
+  where = "payload1", debug = getOption("gliderDebug", 0))
 }
 \arguments{
-\item{object}{A \code{glider} object, i.e. an object that inherits
-from \code{\link{glider-class}}.}
+\item{object}{An object of \linkS4class{glider}.}
 
-\item{flags}{A \code{\link{list}} specifying flag values upon which
+\item{flags}{A \code{list} specifying flag values upon which
 actions will be taken. This can take two forms. In the first, the
 list has named elements each containing a vector of integers. For example,
 salinities flagged with values of 3 ("suspect"), 4 ("fail")
@@ -27,7 +26,7 @@ but also to everything else for which flags have been set up. If \code{flags}
 is not provided, then \code{\link{defaultFlags}} is called on
 \code{object}, to try to determine a conservative default.}
 
-\item{actions}{An optional \code{\link{list}} that contains items with
+\item{actions}{An optional \code{list} that contains items with
 names that match those in the \code{flags} argument.  If \code{actions}
 is not supplied, the default will be to set all values identified by
 \code{flags} to \code{NA}; this can also be specified by
@@ -35,6 +34,12 @@ specifying \code{actions=list("NA")}. It is also possible to specify
 functions that calculate replacement values. These are provided
 with \code{object} as the single argument, and must return a
 replacement for the data item in question.}
+
+\item{where}{An optional string that permits data and flags to be stored
+indirectly, e.g. with data in \code{object@data[[where]]} instead of
+in \code{object@data}, and flags in \code{object@metadata$flags[[where]]} instead of in
+\code{object@metadata$flags}. If \code{where} is NULL, the second forms are used. This
+scheme is needed because SeaExplorer data are stored in this manner.}
 
 \item{debug}{An optional integer specifying the degree of debugging, with
 value 0 meaning to skip debugging and 1 or higher meaning to print some
@@ -49,7 +54,7 @@ or some other value, based on the values of corresponding data-quality
 flags.
 }
 \details{
-The flags are stored within the object as a \code{\link{list}}
+The flags are stored within the object as a \link{list}
 named \code{payload1}, which is stored within a list named \code{flags}
 that is stored in the object's \code{metadata} slot. Both
 \code{flags} and \code{flags$payload1} are set up when the object is
@@ -57,7 +62,7 @@ created, but values are inserted into \code{flags$payload1} are
 inserted later, when the data are read by one of the \code{read.glider*}
 functions.
 
-For example, \code{\link{read.glider.seaexplorer.delayed}}
+For example, \code{\link[=read.glider.seaexplorer.delayed]{read.glider.seaexplorer.delayed()}}
 sets \code{flags$payload1$salinity} to be a vector of length
 matching the data stored in \code{data$payload1$salinity}, and
 does the same for temperature and some other things that are typically
@@ -65,12 +70,12 @@ assessed as part of quality-assessment procdures.  When these
 things are set up, they are also assigned numerical values, one for
 each element in the data set.  The initial value is set to
 value 2, which means \code{not_evaluated}
-in the IOOS 2017 quality-control scheme (see [1] table 2).
+in the IOOS 2017 quality-control scheme (see table 2 of reference 1).
 
 These numerical values provide a way to edit a dataset in an
 convenient and traceable way, through the appropriate setting
 of the \code{flags} and \code{actions} arguments. Flag values
-may be altered with \code{\link{setFlags,glider-method}}, as
+may be altered with \code{\link[=setFlags,glider-method]{setFlags,glider-method()}}, as
 illustrated in the \dQuote{Examples} section.
 }
 \examples{

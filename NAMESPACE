@@ -3,7 +3,6 @@
 export(as.glider)
 export(degreeMinute)
 export(gliderDebug)
-export(handleFlagsInternalOceanglider)
 export(navStateCodes)
 export(read.glider)
 export(read.glider.netcdf)

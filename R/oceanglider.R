@@ -33,80 +33,86 @@ setMethod(f="initialize",
               return(.Object)
           })
 
-#' Signal erroneous application to non-oce objects
-#' @param object A vector, which cannot be the case for \code{oce} objects.
-#' @param flags Ignored.
-#' @param actions Ignored.
-#' @param debug Ignored.
-setMethod("handleFlags",
-          signature=c(object="vector", flags="ANY", actions="ANY", debug="ANY"),
-          definition=function(object, flags=list(), actions=list(), debug=getOption("gliderDebug", 0)) {
-              stop("handleFlags() can only be applied to objects inheriting from \"glider\"")
-          })
+## OLD #' Signal erroneous application to non-oce objects
+## OLD #' @param object A vector, which cannot be the case for \code{oce} objects.
+## OLD #' @param flags Ignored.
+## OLD #' @param actions Ignored.
+## OLD #' @param where Ignored.
+## OLD #' @param debug Ignored.
+## OLD setMethod("handleFlags",
+## OLD           signature=c(object="vector", flags="ANY", actions="ANY", where="ANY", debug="ANY"),
+## OLD           definition=function(object, flags=list(), actions=list(), where=list(), debug=getOption("gliderDebug", 0)) {
+## OLD               stop("handleFlags() can only be applied to objects inheriting from \"glider\"")
+## OLD           })
 
 #' Handle Flags in glider Objects
 #'
-#' This function may be used to set suspicious data to \code{NA},
+#' This function may be used to set suspicious data to `NA`,
 #' or some other value, based on the values of corresponding data-quality
 #' flags.
 #'
-#' The flags are stored within the object as a \code{\link{list}}
-#' named \code{payload1}, which is stored within a list named \code{flags}
-#' that is stored in the object's \code{metadata} slot. Both
-#' \code{flags} and \code{flags$payload1} are set up when the object is
-#' created, but values are inserted into \code{flags$payload1} are
-#' inserted later, when the data are read by one of the \code{read.glider*}
+#' The flags are stored within the object as a [list]
+#' named `payload1`, which is stored within a list named `flags`
+#' that is stored in the object's `metadata` slot. Both
+#' `flags` and `flags$payload1` are set up when the object is
+#' created, but values are inserted into `flags$payload1` are
+#' inserted later, when the data are read by one of the `read.glider*`
 #' functions.
 #'
-#' For example, \code{\link{read.glider.seaexplorer.delayed}}
-#' sets \code{flags$payload1$salinity} to be a vector of length
-#' matching the data stored in \code{data$payload1$salinity}, and
+#' For example, [read.glider.seaexplorer.delayed()]
+#' sets `flags$payload1$salinity` to be a vector of length
+#' matching the data stored in `data$payload1$salinity`, and
 #' does the same for temperature and some other things that are typically
 #' assessed as part of quality-assessment procdures.  When these
 #' things are set up, they are also assigned numerical values, one for
 #' each element in the data set.  The initial value is set to
-#' value 2, which means \code{not_evaluated}
-#' in the IOOS 2017 quality-control scheme (see [1] table 2).
+#' value 2, which means `not_evaluated`
+#' in the IOOS 2017 quality-control scheme (see table 2 of reference 1).
 #'
 #' These numerical values provide a way to edit a dataset in an
 #' convenient and traceable way, through the appropriate setting
-#' of the \code{flags} and \code{actions} arguments. Flag values
-#' may be altered with \code{\link{setFlags,glider-method}}, as
+#' of the `flags` and `actions` arguments. Flag values
+#' may be altered with [setFlags,glider-method()], as
 #' illustrated in the \dQuote{Examples} section.
 #'
-#' @param object A \code{glider} object, i.e. an object that inherits
-#' from \code{\link{glider-class}}.
+#' @param object An object of [glider-class].
 #'
-#' @param flags A \code{\link{list}} specifying flag values upon which
+#' @param flags A `list` specifying flag values upon which
 #' actions will be taken. This can take two forms. In the first, the
 #' list has named elements each containing a vector of integers. For example,
 #' salinities flagged with values of 3 ("suspect"), 4 ("fail")
-#' or 9 ("missing") would be specified by \code{flags=list(salinity=c(3,4,9))}.
+#' or 9 ("missing") would be specified by `flags=list(salinity=c(3,4,9))`.
 #' Several data items can be specified,
-#' e.g. \code{flags=list(salinity=c(3,4,9),temperature=c(3,4,9))} indicates
+#' e.g. `flags=list(salinity=c(3,4,9),temperature=c(3,4,9))` indicates
 #' that the actions are to take place for both salinity and temperature.
-#' In the second form, \code{flags} is a list with unnamed vectors, and
+#' In the second form, `flags` is a list with unnamed vectors, and
 #' this means to apply the actions to all the data entries; thus,
-#' \code{flags=list(c(3,4,9))} means to apply not just to salinity and temperature,
-#' but also to everything else for which flags have been set up. If \code{flags}
-#' is not provided, then \code{\link{defaultFlags}} is called on
-#' \code{object}, to try to determine a conservative default.
+#' `flags=list(c(3,4,9))` means to apply not just to salinity and temperature,
+#' but also to everything else for which flags have been set up. If `flags`
+#' is not provided, then `\link{defaultFlags}` is called on
+#' `object`, to try to determine a conservative default.
 #'
-#' @param actions An optional \code{\link{list}} that contains items with
-#' names that match those in the \code{flags} argument.  If \code{actions}
+#' @param actions An optional `list` that contains items with
+#' names that match those in the `flags` argument.  If `actions`
 #' is not supplied, the default will be to set all values identified by
-#' \code{flags} to \code{NA}; this can also be specified by
-#' specifying \code{actions=list("NA")}. It is also possible to specify
+#' `flags` to `NA`; this can also be specified by
+#' specifying `actions=list("NA")`. It is also possible to specify
 #' functions that calculate replacement values. These are provided
-#' with \code{object} as the single argument, and must return a
+#' with `object` as the single argument, and must return a
 #' replacement for the data item in question.
+#'
+#' @param where An optional string that permits data and flags to be stored
+#' indirectly, e.g. with data in `object@data[[where]]` instead of
+#' in `object@data`, and flags in `object@metadata$flags[[where]]` instead of in
+#' `object@metadata$flags`. If `where` is NULL, the second forms are used. This
+#' scheme is needed because SeaExplorer data are stored in this manner.
 #'
 #' @param debug An optional integer specifying the degree of debugging, with
 #' value 0 meaning to skip debugging and 1 or higher meaning to print some
 #' information about the arguments and the data. It is usually a good idea to set
 #' this to 1 for initial work with a dataset, to see which flags are being
 #' handled for each data item. If not supplied, this defaults to the value of
-#' \code{\link{getOption}("gliderDebug", 0)}.
+#' `\link{getOption}("gliderDebug", 0)`.
 #'
 #' @examples
 #' library(oceanglider)
@@ -135,9 +141,10 @@ setMethod("handleFlags",
 #'
 #' @family functions relating to data-quality flags
 #' @export
+#' @md
 setMethod("handleFlags",
-          signature=c(object="glider", flags="ANY", actions="ANY", debug="ANY"),
-          definition=function(object, flags=NULL, actions=NULL, debug=getOption("gliderDebug", 0)) {
+          signature=c(object="glider", flags="ANY", actions="ANY", where="ANY", debug="ANY"),
+          definition=function(object, flags=NULL, actions=NULL, where="payload1", debug=getOption("gliderDebug", 0)) {
               ## DEVELOPER 1: alter the next comment to explain your setup
               if (is.null(flags)) {
                   flags <- c(3, 4, 9)
@@ -150,33 +157,41 @@ setMethod("handleFlags",
               }
               if (any(names(actions)!=names(flags)))
                   stop("names of flags and actions must match")
-              handleFlagsInternalOceanglider(object, flags, actions, debug)
+              ##handleFlags(object=object, flags=flags, actions=actions, where=where, debug=debug)
+              handleFlagsInternal(object=object, flags=flags, actions=actions, where=where, debug=debug)
           })
 
-#' Low-level function to handle flags (temporary code)
-#'
-#' **Important note.** This function is provided only because the CRAN version
-#' of the oce package does not export \code{handleFlagsInternal}. Once a
-#' the CRAN oce is updated, this function will be removed.
-#'
-#' @param object An \code{oceanglider} object, i.e. an object inheriting
-#' from \code{\link{oceanglider-class}}.
-#'
-#' @param flags A \code{\link{list}} that associates integer values
-#" with names, e.g. \code{list(good=1, bad=2)}.
-#'
-#' @param actions A character vector, which is lengthened to match
-#' the length of \code{flags}. The most common value is \code{"NA"},
-#' which means to set flaggd values to the missing-value cod, \code{NA}.
-#'
-#' @param debug An integer specifying the debugging level, with value
-#' \code{0} meaning to act silently, and higher values meaning to print
-#' some debugginf information.
-#'
-#' @author Dan Kelley
-#'
-#' @export
-handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
+
+## NOT EXPORTED #' Low-level function to handle flags
+## NOT EXPORTED #'
+## NOT EXPORTED #' @param object An `oceanglider` object, i.e. an object inheriting
+## NOT EXPORTED #' from [oceanglider-class].
+## NOT EXPORTED #'
+## NOT EXPORTED #' @param flags A `list` that associates integer values
+## NOT EXPORTED #" with names, e.g. `list(good=1, bad=2)`.
+## NOT EXPORTED #'
+## NOT EXPORTED #' @param actions A character vector, which is lengthened to match
+## NOT EXPORTED #' the length of `flags`. The most common value is `"NA"`,
+## NOT EXPORTED #' which means to set flaggd values to the missing-value code, `NA`.
+## NOT EXPORTED #'
+## NOT EXPORTED #' @param where An optional string that allows the user to over-ride
+## NOT EXPORTED #' the automated detection of where data and flags exist, within
+## NOT EXPORTED #' `object`.  If `object[["type"]]` is `"seaexplorer"`, this will
+## NOT EXPORTED #' default to `payload1`; otherwise, it defaults to `NULL`. Users
+## NOT EXPORTED #' are advised *not* to set `where`, and it is only included here
+## NOT EXPORTED #' so that `handleFlagsOceanglider` behaves like [oce::handleFlags()].
+## NOT EXPORTED #'
+## NOT EXPORTED #' @param debug An integer specifying the debugging level, with value
+## NOT EXPORTED #' `0` meaning to act silently, and higher values meaning to print
+## NOT EXPORTED #' some debugging information.
+## NOT EXPORTED #'
+## NOT EXPORTED #' @author Dan Kelley
+## NOT EXPORTED #'
+## NOT EXPORTED #' @export
+## NOT EXPORTED #' @md
+handleFlagsInternal <- function(object, flags, actions, where, debug) {
+    if (missing(debug))
+        debug <- 0
     gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
     if (missing(flags)) {
         warning("no flags supplied (internal error; report to developer)")
@@ -185,92 +200,140 @@ handleFlagsInternalOceanglider <- function(object, flags, actions, debug) {
     ## Permit e.g. flags=c(1,3)
     if (!is.list(flags))
         flags <- list(flags)
-    if (missing(actions)) {
-        warning("no actions supplied (internal error; report to developer)")
-        return(object)
-    }
-    if (missing(debug))
-        debug <- 0
-    if (any(names(flags) != names(actions)))
-        stop("names of flags must match those of actions")
-    ##> schemeMappingNames <- names(object@metadata$flagScheme$mapping)
-    ##> if (is.character(flags[[1]])) {
-    ##>     for (f in flags[[1]]) {
-    ##>         if (!(f %in% schemeMappingNames))
-    ##>             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
-    ##>                  paste(schemeMappingNames, collapse="\", \""), "\"")
-    ##>     }
-    ##>     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
-    ##>     browser()
-    ##> }
-    gliderDebug(debug, "flags=", paste(as.vector(flags), collapse=","), "\n")
-    if (length(object@metadata$flags)) {
-        all <- is.null(names(flags[1])) # "ALL" %in% names(flags)
-        gliderDebug(debug, "all=", all, "\n")
-        ## if (all && length(flags) > 1)
-        ##    stop("if first flag is unnamed, no other flags can be specified")
-        if (all && (length(actions) > 1 || !is.null(names(actions)))) {
-            stop("if flags is a list of a single unnamed item, actions must be similar")
-        }
-        where <- "payload1"
-        for (name in names(object@data[[where]])) {
-            flagsObject <- object@metadata$flags[[where]]
-            gliderDebug(debug, "unique(flagsObject) for ", name, ":\n")
-            if (debug > 0)
-                print(table(flagsObject))
-            if (!is.null(flagsObject)) {
-                dataItemLength <- length(object@data[[where]][[name]])
-                ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
-                flagsThis <- if (all) flags[[1]] else flags[[name]]
-                ##> message("flagsThis:");print(flagsThis)
-                gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n", sep="")
-                actionsThis <- if (all) actions[[1]] else actions[[name]]
-                ## FIXME: document this singleFlag behaviour
-                singleFlag <- length(object@metadata$flags[[where]]) == 1 && (is.null(names(object@metadata$flags[[where]])) || names(object@metadata$flags[[where]]) == "overall")
-                gliderDebug(debug, "singleFlag=", singleFlag, "\n", sep="")
-                if (name %in% names(object@metadata$flags[[where]]) || singleFlag) {
-                    gliderDebug(debug, "name: \"", name, "\"\n", sep="")
-                    if (singleFlag) {
-                        actionNeeded <- object@metadata$flags[[where]][[1]] %in% flagsThis
-                    } else {
-                        actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
-                    }
-                    gliderDebug(debug, vectorShow(actionNeeded))
-                    ##> if (name == "salinity") browser()
-                    ##gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
-                    if (any(actionNeeded)) {
-                        gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
-                                    sum(actionNeeded), " are flagged\n", sep="")
-                        gliderDebug(debug, vectorShow(actionsThis))
-                        if (is.function(actionsThis)) {
-                            object@data[[where]][[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
-                        } else if (is.character(actionsThis)) {
-                            if (actionsThis == "NA") {
-                                object@data[[where]][[name]][actionNeeded] <- NA
-                            } else {
-                                stop("the only permitted character action is 'NA'")
-                            }
-                        } else {
-                            stop("action must be a character string or a function")
-                        }
-                    } else {
-                        gliderDebug(debug, "  no action needed, since no \"", name, "\" data are flagged as stated\n", sep="")
-                    }
-                }
-            } else {
-                gliderDebug(debug, "\"", name, "\" is not the subject of flags\n", sep="")
-            }
-        }
-    }
-    object@processingLog <- processingLogAppend(object@processingLog,
-                                                paste("handleFlags(flags=",
-                                                      substitute(flags, parent.frame()),
-                                                      ", actions=",
-                                                      substitute(actions, parent.frame()),
-                                                      ")", collapse=" ", sep=""))
-    gliderDebug(debug, "} # handleFlagsInternalOceanglider()\n", sep="", unindent=1)
-    object
+    if (missing(actions))
+        actions <- "NA"
+    if (missing(where))
+       if (object[["type"]] == "seaexplorer") "payload1" else NULL
+    oce::handleFlagsInternal(object=object, flags=flags, actions=actions, where=where, debug=debug)
 }
+
+
+##OLD #' Low-level function to handle flags (temporary code)
+##OLD #'
+##OLD #' **Important note.** This function is provided only because the CRAN version
+##OLD #' of the oce package does not export \code{handleFlagsInternal}. Once a
+##OLD #' the CRAN oce is updated, this function will be removed.
+##OLD #'
+##OLD #' @param object An `oceanglider` object, i.e. an object inheriting
+##OLD #' from [oceanglider-class].
+##OLD #'
+##OLD #' @param flags A `list` that associates integer values
+##OLD #" with names, e.g. `list(good=1, bad=2)`.
+##OLD #'
+##OLD #' @param actions A character vector, which is lengthened to match
+##OLD #' the length of `flags`. The most common value is `"NA"`,
+##OLD #' which means to set flaggd values to the missing-value code, `NA`.
+##OLD #'
+##OLD #' @param where An optional string that permits data and flags to be stored
+##OLD #' indirectly, e.g. with data in `object@data[[where]]` instead of
+##OLD #' in `object@data`, and flags in `object@metadata$flags[[where]]` instead of in
+##OLD #' `object@metadata$flags`. If `where` is NULL, the second forms are used. This
+##OLD #' scheme is needed because SeaExplorer data are stored in this manner.
+##OLD #'
+##OLD #' @param debug An integer specifying the debugging level, with value
+##OLD #' `0` meaning to act silently, and higher values meaning to print
+##OLD #' some debugging information.
+##OLD #'
+##OLD #' @author Dan Kelley
+##OLD #'
+##OLD #' @export
+##OLD #' @md
+##OLD handleFlagsInternalOceanglider <- function(object, flags, actions, where, debug) {
+##OLD     gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
+##OLD     if (missing(flags)) {
+##OLD         warning("no flags supplied (internal error; report to developer)")
+##OLD         return(object)
+##OLD     }
+##OLD     ## Permit e.g. flags=c(1,3)
+##OLD     if (!is.list(flags))
+##OLD         flags <- list(flags)
+##OLD     if (missing(actions)) {
+##OLD         warning("no actions supplied (internal error; report to developer)")
+##OLD         return(object)
+##OLD     }
+##OLD     if (missing(debug))
+##OLD         debug <- 0
+##OLD     if (any(names(flags) != names(actions)))
+##OLD         stop("names of flags must match those of actions")
+##OLD     if (missing(where))
+##OLD         where <- "payload1" # FIXME: check whether seaexplorer or other
+##OLD     ##> schemeMappingNames <- names(object@metadata$flagScheme$mapping)
+##OLD     ##> if (is.character(flags[[1]])) {
+##OLD     ##>     for (f in flags[[1]]) {
+##OLD     ##>         if (!(f %in% schemeMappingNames))
+##OLD     ##>             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
+##OLD     ##>                  paste(schemeMappingNames, collapse="\", \""), "\"")
+##OLD     ##>     }
+##OLD     ##>     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
+##OLD     ##>     browser()
+##OLD     ##> }
+##OLD     gliderDebug(debug, "flags=", paste(as.vector(flags), collapse=","), "\n")
+##OLD     if (length(object@metadata$flags)) {
+##OLD         all <- is.null(names(flags[1])) # "ALL" %in% names(flags)
+##OLD         gliderDebug(debug, "all=", all, "\n")
+##OLD         ## if (all && length(flags) > 1)
+##OLD         ##    stop("if first flag is unnamed, no other flags can be specified")
+##OLD         if (all && (length(actions) > 1 || !is.null(names(actions)))) {
+##OLD             stop("if flags is a list of a single unnamed item, actions must be similar")
+##OLD         }
+##OLD         for (name in names(object@data[[where]])) {
+##OLD             flagsObject <- object@metadata$flags[[where]]
+##OLD             gliderDebug(debug, "unique(flagsObject) for ", name, ":\n")
+##OLD             if (debug > 0)
+##OLD                 print(table(flagsObject))
+##OLD             if (!is.null(flagsObject)) {
+##OLD                 dataItemLength <- length(object@data[[where]][[name]])
+##OLD                 ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
+##OLD                 flagsThis <- if (all) flags[[1]] else flags[[name]]
+##OLD                 ##> message("flagsThis:");print(flagsThis)
+##OLD                 gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n", sep="")
+##OLD                 actionsThis <- if (all) actions[[1]] else actions[[name]]
+##OLD                 ## FIXME: document this singleFlag behaviour
+##OLD                 singleFlag <- length(object@metadata$flags[[where]]) == 1 && (is.null(names(object@metadata$flags[[where]])) || names(object@metadata$flags[[where]]) == "overall")
+##OLD                 gliderDebug(debug, "singleFlag=", singleFlag, "\n", sep="")
+##OLD                 if (name %in% names(object@metadata$flags[[where]]) || singleFlag) {
+##OLD                     gliderDebug(debug, "name: \"", name, "\"\n", sep="")
+##OLD                     if (singleFlag) {
+##OLD                         actionNeeded <- object@metadata$flags[[where]][[1]] %in% flagsThis
+##OLD                     } else {
+##OLD                         actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
+##OLD                     }
+##OLD                     gliderDebug(debug, vectorShow(actionNeeded))
+##OLD                     ##> if (name == "salinity") browser()
+##OLD                     ##gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
+##OLD                     if (any(actionNeeded)) {
+##OLD                         gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
+##OLD                                     sum(actionNeeded), " are flagged\n", sep="")
+##OLD                         gliderDebug(debug, vectorShow(actionsThis))
+##OLD                         if (is.function(actionsThis)) {
+##OLD                             object@data[[where]][[name]][actionNeeded] <- actionsThis(object)[actionNeeded]
+##OLD                         } else if (is.character(actionsThis)) {
+##OLD                             if (actionsThis == "NA") {
+##OLD                                 object@data[[where]][[name]][actionNeeded] <- NA
+##OLD                             } else {
+##OLD                                 stop("the only permitted character action is 'NA'")
+##OLD                             }
+##OLD                         } else {
+##OLD                             stop("action must be a character string or a function")
+##OLD                         }
+##OLD                     } else {
+##OLD                         gliderDebug(debug, "  no action needed, since no \"", name, "\" data are flagged as stated\n", sep="")
+##OLD                     }
+##OLD                 }
+##OLD             } else {
+##OLD                 gliderDebug(debug, "\"", name, "\" is not the subject of flags\n", sep="")
+##OLD             }
+##OLD         }
+##OLD     }
+##OLD     object@processingLog <- processingLogAppend(object@processingLog,
+##OLD                                                 paste("handleFlags(flags=",
+##OLD                                                       substitute(flags, parent.frame()),
+##OLD                                                       ", actions=",
+##OLD                                                       substitute(actions, parent.frame()),
+##OLD                                                       ")", collapse=" ", sep=""))
+##OLD     gliderDebug(debug, "} # handleFlagsInternalOceanglider()\n", sep="", unindent=1)
+##OLD     object
+##OLD }
 
 
 #' Set data-quality flags within a glider object
