@@ -378,12 +378,12 @@ server <- function(input, output, session) {
     }
     ## 6. for input$plotChoice=="N2 extremes", only show extreme data,
     ##    to avoid missing important data by over-plotting.
-    if (input$colorBy == "N2 extremes") {
-      N2 <- g[["N2"]]
-      visible <- visible & ((N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd)))
-      visible[is.na(visible)] <- FALSE
-      msg("    after isolating to high positive or negative N2: sum(!visible) =", sum(!visible), "\n")
-    }
+    ##TEST if (input$colorBy == "N2 extremes") {
+    ##TEST   N2 <- g[["N2"]]
+    ##TEST   visible <- visible & ((N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd)))
+    ##TEST   visible[is.na(visible)] <- FALSE
+    ##TEST   msg("    after isolating to high positive or negative N2: sum(!visible) =", sum(!visible), "\n")
+    ##TEST }
     ## 7. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
     msg("    after accounting for already-flagged data:       sum(!visible) =", sum(!visible), "\n")
@@ -870,13 +870,13 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                } else if (grepl("profile$", input$plotChoice)) {
                  y <- g[["pressure"]]
                  if (input$plotChoice == "conductivity profile") {
-                   y <- g[["conductivity"]]
+                   x <- g[["conductivity"]]
                  } else if (input$plotChoice == "density profile") {
-                   y <- g[["sigma0"]]
+                   x <- g[["sigma0"]]
                  } else if (input$plotChoice == "salinity profile") {
                    x <- g[["SA"]]
                  } else if (input$plotChoice == "spiciness profile") {
-                   y <- g[["spiciness0"]]
+                   x <- g[["spiciness0"]]
                  } else if (input$plotChoice == "temperature profile") {
                    x <- g[["CT"]]
                  } else {
@@ -1112,9 +1112,10 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
           }
           x <- g@data$payload1[look, "time"]
           y <- g@data$payload1[look, dataName]
-          msg("time-series plot. x (time) range:", paste(range(x, na.rm=TRUE), collapse=" to "),
-              ", y range:", paste(range(y, na.rm=TRUE), collapse=" to "), "\n")
+          msg("time-series plot\n")
+          msg("  time range: ", paste(range(x, na.rm=TRUE), collapse=" to "), "; length=", length(x), "\n", sep="")
           ylim <- range(y, na.rm=TRUE)
+          msg("  '", dataName, "' range: ", paste(ylim, collapse=" to "), "; length=", length(y), "\n", sep="")
           if (input$plotChoice == "pressure time-series")
             ylim <- rev(ylim)
           ylab <- resizableLabel(axisName)
@@ -1130,11 +1131,19 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
-              oce.plot.ts(x, y, ylim=ylim,
-                          type=input$plotType,
-                          col=ifelse(g@data$payload1[look, "N2"] > 0, "forestgreen", "red"),
-                          mar=marTimeseries,
-                          ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
+              timing <- system.time({
+                oce.plot.ts(x, y, ylim=ylim,
+                            type=input$plotType,
+                            col="lightgray",
+                            mar=marTimeseries,
+                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
+                N2 <- g@data$payload1[look, "N2"]
+                highlight <- (N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd))
+                highlight[is.na(highlight)] <- FALSE
+                points(x[highlight], y[highlight], cex=cex, pch=pch, col=ifelse(N2[highlight] > 0, "forestgreen", "red"))
+              })
+              msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+
             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
@@ -1185,8 +1194,12 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
               navStateLegend()
             } else if (input$colorBy == "N2 extremes") {
               ## gray for whole dataset, then coloured for the narrowed dataset
-              plotTS(g, pch=pch, cex=cex, col="lightgray", mar=marTS)
-              points(gg[["SA"]], gg[["CT"]], pch=pch, cex=cex, col=ifelse(gg[["N2"]]>0, "forestgreen", "red"))
+              plotTS(gg, pch=pch, cex=cex, col="lightgray", mar=marTS)
+              N2 <- gg[["N2"]]
+              highlight <- (N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd))
+              highlight[is.na(highlight)] <- FALSE
+              points(gg[["SA"]][highlight], gg[["CT"]][highlight], pch=pch, cex=cex,
+                     col=ifelse(N2[highlight]>0, "forestgreen", "red"))
             } else {
               cm <- colormap(gg[[input$colorBy]])
               par(mar=marPaletteTS, mgp=mgp)
@@ -1234,13 +1247,24 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
               navStateLegend() # FIXME: put on RHS
             } else {
-              cm <- colormap(g@data$payload1[look, input$colorBy])
-              par(mar=marPaletteProfile, mgp=mgp)
-              drawPalette(colormap=cm, zlab=input$colorBy)
-              par(mar=marProfile, mgp=mgp)
-              plot(x, y, ylim=ylim,
-                   type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
-                   xlab="", ylab=resizableLabel("p"), axes=FALSE)
+              if (input$colorBy == "N2 extremes") {
+                par(mar=marProfile, mgp=mgp)
+                plot(x, y, ylim=ylim, col="gray", type=input$plotType, pch=pch, cex=cex,
+                     xlab="", ylab=resizableLabel("p"), axes=FALSE)
+                N2 <- g@data$payload1[look, "N2"]
+                highlight <- (N2 > 10^(N2plmean + 3*N2plsd)) | (N2 < -10^(N2nlmean + 3*N2nlsd))
+                highlight[is.na(highlight)] <- FALSE
+                points(x[highlight], y[highlight], pch=pch, cex=cex,
+                       col=ifelse(N2[highlight] > 0, "forestgreen", "red"))
+              } else {
+                cm <- colormap(g@data$payload1[look, input$colorBy])
+                par(mar=marPaletteProfile, mgp=mgp)
+                drawPalette(colormap=cm, zlab=input$colorBy)
+                par(mar=marProfile, mgp=mgp)
+                plot(x, y, ylim=ylim,
+                     type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
+                     xlab="", ylab=resizableLabel("p"), axes=FALSE)
+              }
             }
           } else {
             par(mar=marProfile, mgp=mgp)
