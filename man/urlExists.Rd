@@ -18,8 +18,11 @@ A logical value indicating whether the website indicated
 by \code{url} exists.
 }
 \description{
-This uses \code{[RCurl]{url.exits}} to see if the indicated URL exists.
+This uses \code{\link[RCurl:url.exits]{RCurl::url.exits()}} to see if the indicated URL exists.
 If not, an attempt is made to find a lower-level URL that does exist.
 This is done by progressively removing items separated by \code{"/"}
 in \code{url}
+}
+\author{
+Dan Kelley
 }

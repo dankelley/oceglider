@@ -8,7 +8,7 @@
 \S4method{summary}{glider}(object, ...)
 }
 \arguments{
-\item{object}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
+\item{object}{A \code{glider} object, i.e. one inheriting from `\link{glider-class`}.}
 
 \item{...}{Further arguments passed to or from other methods.}
 }

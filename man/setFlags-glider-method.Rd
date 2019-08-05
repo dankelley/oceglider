@@ -9,7 +9,7 @@
   value = NULL, debug = 0)
 }
 \arguments{
-\item{object}{A glider object, i.e. an object inheriting from \code{\link{glider-class}}.}
+\item{object}{A glider object, i.e. an object inheriting from \code{glider-class}.}
 
 \item{name}{Character string indicating the name of the variable to be flagged. If
 this variable is not contained in the object's \code{data} slot, an error is reported.}
@@ -35,7 +35,7 @@ a list named \code{flags$payload1} that resides in the \code{metadata}
 slot.
 }
 \seealso{
-See \code{\link{handleFlags,glider-method}} for an example of use.
+See \code{\link[=handleFlags,glider-method]{handleFlags,glider-method()}} for an example of use.
 
 Other functions relating to data-quality flags: \code{\link{handleFlags,glider-method}}
 }

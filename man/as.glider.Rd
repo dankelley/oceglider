@@ -45,3 +45,6 @@ plot(g, which="p")
 plot(gg, which="p")
 
 }
+\author{
+Dan Kelley
+}

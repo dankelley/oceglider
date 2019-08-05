@@ -8,7 +8,7 @@
 \S4method{[[}{glider}(x, i, j, ...)
 }
 \arguments{
-\item{x}{A glider object, i.e. one inheriting from \code{\link{glider-class}}.}
+\item{x}{A glider object, i.e. one inheriting from \linkS4class{glider}.}
 
 \item{i}{Character value that names the item to be retrieved.}
 
@@ -27,15 +27,15 @@ with name given by \code{i}. If this is true, then that value is returned.
 Otherwise, the item is sought somewhere within the \code{data} slot.
 The procedure is somewhat subtle, and depends on the data type.
 
-For objects read by \code{\link{read.glider.slocum}} ...
-\emph{FIXME: write more here, but only when we handle the slocum data
+For objects read by \code{\link[=read.glider.slocum]{read.glider.slocum()}} ...
+\strong{FIXME: write more here, but only when we handle the slocum data
 in the form it has as of 2019; the code is 2 years old and the data file
 format used in local laboratories seems to have changed, possibly twice,
 in the meantime.}
 
 For objects of type \code{seaexplorer}, i.e. as read by
-\code{\link{read.glider.seaexplorer.realtime}} and
-\code{\link{read.glider.seaexplorer.delayed}}. the \code{data} slot
+\code{\link[=read.glider.seaexplorer.realtime]{read.glider.seaexplorer.realtime()}} and
+\code{\link[=read.glider.seaexplorer.delayed]{read.glider.seaexplorer.delayed()}}. the \code{data} slot
 may contain multiple items.  In some cases, there will be an item
 named \code{glider} and another named \code{payload1}. In others,
 the first of these may be missing.  (Also, it seems likely that
@@ -67,38 +67,45 @@ return the following.
 
 \item the Absolute Salinity is returned with e.g.
 \code{x[["SA"]]}. This is computed with
-\code{\link[gsw]{gsw_SA_from_SP}}, based on the water properties
-stoed in the object. (See also the item for Conservative Temperature)
+\code{\link[gsw:gsw_SA_from_SP]{gsw::gsw_SA_from_SP()}}, based on the water properties
+stored in the object. (See also the item for Conservative Temperature)
 
 \item the sigma-theta density anomaly calculated using
-\code{\link[oce]{swSigmaTheta}} on the water properties stored in the object,
+\code{\link[oce:swSigmaTheta]{oce::swSigmaTheta()}} on the water properties stored in the object,
 with e.g. \code{x[["sigmaTheta"]]}. This obeys the setting of the
-equation of state, set up \code{\link{options}(oceEOS="gsw")} for the
-TEOS-10/GSW variant or \code{\link{options}(oceEOS="unesco")} for the
+equation of state, established with e.g. \code{options(oceEOS="gsw")} for the
+TEOS-10/GSW variant or \code{options(oceEOS="unesco")} for the
 older UNESCO variant.
 
-\item the Conservative Temperatuer is returned with e.g.
+\item the Conservative Temperature is returned with e.g.
 \code{x[["CT"]]}. This is computed with
-\code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
+\code{\link[gsw:gsw_CT_from_t]{gsw::gsw_CT_from_t()}}, based on the water properties
 stoed in the object. (See also the item for Absolute Salinity.)
 
 \item the sigma0 density anomaly is returned with e.g.
 \code{x[["sigma0"]]}. This is computed with
-\code{\link[oce]{swSigma0}}  based on the water properties
+\code{\link[oce:swSigma0]{oce::swSigma0()}}  based on the water properties
 stored in the object.
 Note that the computation depends on the setting of the equation of state,
-set up \code{\link{options}(oceEOS="gsw")} for the TEOS-10/GSW variant
-or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
+set up with \code{options(oceEOS="gsw")} for the TEOS-10/GSW variant
+or with \code{options(oceEOS="unesco")} for the older UNESCO variant.
 
 \item the spiciness0 water property is returned with e.g.
 \code{x[["spiciness0"]]}. This is computed with
-\code{\link[gsw]{gsw_spiciness0}}, based on the water properties
-stoed in the object. (Note that this is the TEOS-10/GSW variant.)
+\code{\link[gsw:gsw_spiciness0]{gsw::gsw_spiciness0()}}, based on the water properties
+stored in the object. (Note that this is the TEOS-10/GSW variant.)
 
 \item glider object containing just the data for a particular yo,
 e.g. \code{x[["yo",1]]} yields the first yo.
 
 }
+}
+\examples{
+library(oceanglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+g <- read.glider.seaexplorer.delayed(directory)
+hist(g[["salinity"]])
+
 }
 \author{
 Dan Kelley

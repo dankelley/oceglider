@@ -19,3 +19,6 @@ Convert a string from snake_case to camelCase
 expect_equal("profileDirection", toCamelCase("profile_direction"))
 
 }
+\author{
+Dan Kelley
+}

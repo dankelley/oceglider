@@ -140,7 +140,9 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @family functions relating to data-quality flags
+#'
 #' @export
+#'
 #' @md
 setMethod("handleFlags",
           signature=c(object="glider", flags="ANY", actions="ANY", where="ANY", debug="ANY"),
@@ -339,21 +341,21 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 #' Set data-quality flags within a glider object
 #'
 #' This function changes specified entries in the data-quality
-#' flags of \code{glider} objects. Those flags are stored within
-#' a list named \code{flags$payload1} that resides in the \code{metadata}
+#' flags of `glider` objects. Those flags are stored within
+#' a list named `flags$payload1` that resides in the `metadata`
 #' slot.
 #'
-#' @param object A glider object, i.e. an object inheriting from \code{\link{glider-class}}.
+#' @param object A glider object, i.e. an object inheriting from `glider-class`.
 #'
 #' @param name Character string indicating the name of the variable to be flagged. If
-#' this variable is not contained in the object's \code{data} slot, an error is reported.
+#' this variable is not contained in the object's `data` slot, an error is reported.
 #'
-#' @param i There are three choices for \code{i}. First, if
-#' \code{i=="all"}, then any existing flags for the named item are discarded, and
-#' replaced with the new \code{value}.  Second, if \code{i} is a vector of
-#' integers, then flags are set to \code{value} at indices given by \code{i}.
+#' @param i There are three choices for `i`. First, if
+#' `i=="all"`, then any existing flags for the named item are discarded, and
+#' replaced with the new `value`.  Second, if `i` is a vector of
+#' integers, then flags are set to `value` at indices given by `i`.
 #' Third, if it is a logical vector of the same length as the data, then just
-#' those indices that match \code{TRUE} values in \code{i} are set to \code{value}.
+#' those indices that match `TRUE` values in `i` are set to `value`.
 #'
 #' @param value The value to be inserted in the flag.
 #'
@@ -363,10 +365,13 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 #'
 #' @family functions relating to data-quality flags
 #'
-#' @seealso See \code{\link{handleFlags,glider-method}} for an example of use.
+#' @seealso See [handleFlags,glider-method()] for an example of use.
 #'
 #' @author Dan Kelley
+#'
 #' @export
+#'
+#' @md
 setMethod("setFlags",
           c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
           function(object, name=NULL, i=NULL, value=NULL, debug=0) {
@@ -430,38 +435,38 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
 #'
 #' Select a portion of an glider object, specified according to one
 #' of several possible schemes, based on the form of the argument named
-#' \code{subset}. Note that the schemes cannot be combined, so
+#' `subset`. Note that the schemes cannot be combined, so
 #' nested calls must be used to accomplish combinations.
 #'
-#' Scheme 1: if \code{subset} is a logical expression written
+#' Scheme 1: if `subset` is a logical expression written
 #' in terms of data that are stored in the yos, then this expression is applied
-#' to the \code{payload1} item in the \code{data} slot of the object
+#' to the `payload1` item in the `data` slot of the object
 #' (see Example 1).
 #'
-#' Scheme 2: if \code{subset} is a logical expression containing
-#' the word \code{"yolength"}, then the expression is used as a filter
+#' Scheme 2: if `subset` is a logical expression containing
+#' the word `"yolength"`, then the expression is used as a filter
 #' to select yos based on the number of samples they
 #' contain (see Example 2). Typically, this might be used to avoid
 #' very short yos that might have been inferred erroneously
 #' by the glider instrumentation.
 #'
-#' Scheme 3: If \code{subset} is the string \code{"ascending"}, then
+#' Scheme 3: If `subset` is the string `"ascending"`, then
 #' only ascending segments of yos are retained. This is done
-#' by selecting for \code{navState==117} in both the \code{glider}
-#' and \code{payload1} streams of the \code{data} slot of the object.
+#' by selecting for `navState==117` in both the `glider`
+#' and `payload1` streams of the `data` slot of the object.
 #'
-#' Scheme 4: If \code{subset} is the string \code{"descending"}, then
+#' Scheme 4: If `subset` is the string `"descending"`, then
 #' only descending segments of yos are retained. This is done
-#' by selecting for \code{navState==100} in both the \code{glider}
-#' and \code{payload1} streams of the \code{data} slot of the object.
+#' by selecting for `navState==100` in both the `glider`
+#' and `payload1` streams of the `data` slot of the object.
 #'
-#' @param x an oceanglider object, i.e. one inheriting from the \code{\link{glider-class}}.
+#' @param x an oceanglider object, i.e. one inheriting from the [glider-class].
 #'
 #' @param subset a logical expression or a character string that indicates
 #' how to take the subset. See \dQuote{Details}.
 #'
 #' @param ... Additional arguments, of which the only one permitted at the
-#' moment is \code{debug}, an integer indicating the level of debugging information
+#' moment is `debug`, an integer indicating the level of debugging information
 #' to be permitted.
 #'
 #' @return An oceanglider object.
@@ -490,11 +495,15 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
 #' @author Dan Kelley
 #'
 #' @export
+#'
 #' @aliases subset,glider-method
+#'
 #' @section Bugs:
 #' The 'ascending' and 'descending' methods do not work. This seems
 #' to be a problem of exporting classes using roxygen2 tags. I am looking
 #' into this.  DK 2019-03-28.
+#'
+#' @md
 setMethod(f="subset",
           signature="glider",
           definition=function(x, subset, ...) {
@@ -578,85 +587,85 @@ setMethod(f="subset",
 #' be computed from what is contained there.
 #'
 #' First, a check is done to see if the object's metadata contains an item
-#' with name given by \code{i}. If this is true, then that value is returned.
+#' with name given by `i`. If this is true, then that value is returned.
 #'
-#' Otherwise, the item is sought somewhere within the \code{data} slot.
+#' Otherwise, the item is sought somewhere within the `data` slot.
 #' The procedure is somewhat subtle, and depends on the data type.
 #'
-#' For objects read by \code{\link{read.glider.slocum}} ...
-#' \emph{FIXME: write more here, but only when we handle the slocum data
+#' For objects read by [read.glider.slocum()] ...
+#' **FIXME: write more here, but only when we handle the slocum data
 #' in the form it has as of 2019; the code is 2 years old and the data file
 #' format used in local laboratories seems to have changed, possibly twice,
-#' in the meantime.}
+#' in the meantime.**
 #'
-#' For objects of type \code{seaexplorer}, i.e. as read by
-#' \code{\link{read.glider.seaexplorer.realtime}} and
-#' \code{\link{read.glider.seaexplorer.delayed}}. the \code{data} slot
+#' For objects of type `seaexplorer`, i.e. as read by
+#' [read.glider.seaexplorer.realtime()] and
+#' [read.glider.seaexplorer.delayed()]. the `data` slot
 #' may contain multiple items.  In some cases, there will be an item
-#' named \code{glider} and another named \code{payload1}. In others,
+#' named `glider` and another named `payload1`. In others,
 #' the first of these may be missing.  (Also, it seems likely that
 #' the package will be updated to include multiple payloads, when
 #' users start deploying such gliders.)
 #'
-#' If \code{j} is not specified, then
-#' \code{i} is sought first in \code{payload1}, with
-#' \code{glider} being checked thereafter. For example, this means that a
+#' If `j` is not specified, then
+#' `i` is sought first in `payload1`, with
+#' `glider` being checked thereafter. For example, this means that a
 #' thermometer within the payload will be preferred to one attached to
 #' the body of the glider. This selection
-#' process can be controlled by setting \code{j} to either \code{"glider"}
-#' or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
-#' \code{x[["temperature","payload1"]]} retrieve values from
-#' the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
+#' process can be controlled by setting `j` to either `"glider"`
+#' or `"payload1"`.  For example, both `x[["temperature"]]` and
+#' `x[["temperature","payload1"]]` retrieve values from
+#' the payload thermistor, while `x[["temperature","glider"]]` retrieves
 #' values from the glider thermister. For clarity of code, it might make
-#' sense to always specify \code{j}.
+#' sense to always specify `j`.
 #'
-#' In addition to retrieving data stored in the object, \code{\[\[} can also
+#' In addition to retrieving data stored in the object, `\[\[` can also
 #' return the following.
 #'
 #'\itemize{
 #'
-#' \item the full \code{data} slot, with e.g. \code{x[["data"]]}
+#' \item the full `data` slot, with e.g. `x[["data"]]`
 #'
-#' \item the \code{glider} item in \code{data} slot, with e.g. \code{x[["glider"]]}
+#' \item the `glider` item in `data` slot, with e.g. `x[["glider"]]`
 #'
-#' \item the \code{payload1} item in \code{data} slot, with e.g. \code{x[["payload1"]]}
+#' \item the `payload1` item in `data` slot, with e.g. `x[["payload1"]]`
 #'
 #' \item the Absolute Salinity is returned with e.g.
-#' \code{x[["SA"]]}. This is computed with
-#' \code{\link[gsw]{gsw_SA_from_SP}}, based on the water properties
-#' stoed in the object. (See also the item for Conservative Temperature)
+#' `x[["SA"]]`. This is computed with
+#' [gsw::gsw_SA_from_SP()], based on the water properties
+#' stored in the object. (See also the item for Conservative Temperature)
 #'
 #' \item the sigma-theta density anomaly calculated using
-#' \code{\link[oce]{swSigmaTheta}} on the water properties stored in the object,
-#' with e.g. \code{x[["sigmaTheta"]]}. This obeys the setting of the
-#' equation of state, set up \code{\link{options}(oceEOS="gsw")} for the
-#' TEOS-10/GSW variant or \code{\link{options}(oceEOS="unesco")} for the
+#' [oce::swSigmaTheta()] on the water properties stored in the object,
+#' with e.g. `x[["sigmaTheta"]]`. This obeys the setting of the
+#' equation of state, established with e.g. `options(oceEOS="gsw")` for the
+#' TEOS-10/GSW variant or `options(oceEOS="unesco")` for the
 #' older UNESCO variant.
 #'
-#' \item the Conservative Temperatuer is returned with e.g.
-#' \code{x[["CT"]]}. This is computed with
-#' \code{\link[gsw]{gsw_CT_from_t}}, based on the water properties
+#' \item the Conservative Temperature is returned with e.g.
+#' `x[["CT"]]`. This is computed with
+#' [gsw::gsw_CT_from_t()], based on the water properties
 #' stoed in the object. (See also the item for Absolute Salinity.)
 #'
 #' \item the sigma0 density anomaly is returned with e.g.
-#' \code{x[["sigma0"]]}. This is computed with
-#' \code{\link[oce]{swSigma0}}  based on the water properties
+#' `x[["sigma0"]]`. This is computed with
+#' [oce::swSigma0()]  based on the water properties
 #' stored in the object.
 #' Note that the computation depends on the setting of the equation of state,
-#' set up \code{\link{options}(oceEOS="gsw")} for the TEOS-10/GSW variant
-#' or \code{\link{options}(oceEOS="unesco")} for the older UNESCO variant.
+#' set up with `options(oceEOS="gsw")` for the TEOS-10/GSW variant
+#' or with `options(oceEOS="unesco")` for the older UNESCO variant.
 #'
 #' \item the spiciness0 water property is returned with e.g.
-#' \code{x[["spiciness0"]]}. This is computed with
-#' \code{\link[gsw]{gsw_spiciness0}}, based on the water properties
-#' stoed in the object. (Note that this is the TEOS-10/GSW variant.)
+#' `x[["spiciness0"]]`. This is computed with
+#' [gsw::gsw_spiciness0()], based on the water properties
+#' stored in the object. (Note that this is the TEOS-10/GSW variant.)
 #'
 #' \item glider object containing just the data for a particular yo,
-#' e.g. \code{x[["yo",1]]} yields the first yo.
+#' e.g. `x[["yo",1]]` yields the first yo.
 #'
 #'}
 #'
-#' @param x A glider object, i.e. one inheriting from \code{\link{glider-class}}.
+#' @param x A glider object, i.e. one inheriting from [glider-class].
 #'
 #' @param i Character value that names the item to be retrieved.
 #'
@@ -666,9 +675,18 @@ setMethod(f="subset",
 #'
 #' @author Dan Kelley
 #'
+#' @examples
+#' library(oceanglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' g <- read.glider.seaexplorer.delayed(directory)
+#' hist(g[["salinity"]])
+#'
 #' @importFrom oce swSigmaTheta swSigma0 swSpice
 #' @importFrom gsw gsw_CT_from_t gsw_SA_from_SP gsw_spiciness0
+#'
 #' @export
+#'
+#' @md
 setMethod(f="[[",
           signature(x="glider", i="ANY", j="ANY"),
           definition=function(x, i, j, ...) {
@@ -780,77 +798,76 @@ setMethod(f="[[",
 #' More serious analysis is best done by extracting data and using whatever
 #' graphical methods work well for the task at hand.
 #'
-#' The form of the plot is set by the \code{which} argument, as follows.
+#' The form of the plot is set by the `which` argument, as follows.
 #'
 #'\itemize{
 #'
-#'\item \code{which=0} or \code{which="map"}: plot a map of sampling locations. This
+#' \item `which=0` or `which="map"`: plot a map of sampling locations. This
 #' can be quite slow with the default plot type, so try e.g.
-#' \code{plot(g, type="l")} to speed things up for a quick look at the data.
+#' `plot(g, type="l")` to speed things up for a quick look at the data.
 #' In many cases, that quick look might be followed by the drawing of
 #' a larger view, including a coastline, with functions provided for
-#' \code{coastline} objects in the \CRANpkg{oce} package.
+#' `coastline` objects in the \CRANpkg{oce} package.
 #'
-#'\item \code{which=1} or \code{which="p"}: time-series plot
+#' \item `which=1` or `which="p"`: time-series plot
 #' of pressure versus time. This
-#' is done using \code{\link[oce]{oce.plot.ts}} in the \CRANpkg{oce} package,
+#' is done using [oce::oce.plot.ts()],
 #' which also makes the other time-series plots listed below.
 #'
-#'\item \code{which=2} or \code{which="T"}: time-series temperature plot
+#'\item `which=2` or `which="T"`: time-series temperature plot
 #'
-#'\item \code{which=3} or \code{which="S"}: time-series salinity plot
+#'\item `which=3` or `which="S"`: time-series salinity plot
 #'
-#'\item \code{which=4} or \code{which="TS"}: temperature-salinity diagram,
+#'\item `which=4` or `which="TS"`: temperature-salinity diagram,
 #' with dots for data and labels indicating density anomaly; see
-#' \code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
-#' details.
+#' [oce::plotTS()] for details.
 #'
-#' \item \code{which=5} or \code{which="navState"}: time-series of the
-#' navigation state, stored as the \code{navState} item within
-#' the \code{payload1} element of the \code{data} slot. The meanings
-#' of the \code{navState} values for \code{seaexplorer} data
+#' \item `which=5` or `which="navState"`: time-series of the
+#' navigation state, stored as the `navState` item within
+#' the `payload1` element of the `data` slot. The meanings
+#' of the `navState` values for `seaexplorer` data
 #' are:
 #'
 #' \itemize{
 #'
-#' \item \code{105}: glider is not navigating yet
+#' \item `105`: glider is not navigating yet
 #'
-#' \item \code{115}: glider is surfacing, with ballast and
+#' \item `115`: glider is surfacing, with ballast and
 #' centre of gravity being adjusted to put antenna out
 #' of the water
 #'
-#' \item \code{116}: glider is at the surface,
+#' \item `116`: glider is at the surface,
 #' acquiring a GPS signal, and communicating
 #'
-#' \item \code{110}: ballast and centre of mass are
+#' \item `110`: ballast and centre of mass are
 #' adjusted to cause glider to inflect downward
 #'
-#' \item \code{100}: ballast is in diving position; adjustments
+#' \item `100`: ballast is in diving position; adjustments
 #' may be made to adjust pitch and heading
 #'
-#' \item \code{118}: target depth or altitude has been achieved,
+#' \item `118`: target depth or altitude has been achieved,
 #' so ballast and centre of mass are adjusted to inflect glider
 #' upwards
 #'
-#' \item \code{117}: glider is ascending, with controls being
+#' \item `117`: glider is ascending, with controls being
 #' adjusted for desired pitch and heading
 #'
 #'}
 #'
 #' Lines and notes in the plot border indicate these states, both
 #' numerically and with phrases, as inferred by
-#' \code{\link{navStateCodes}}.
+#' [navStateCodes()].
 #'
 #'}
 #'
-#' @param x A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#' @param x A `glider` object, i.e. one inheriting from [glider-class].
 #'
 #' @param which Integer or character value specifying which style is
 #' to be used; see \dQuote{Details}.
 #'
-#' @param type Type of plot, as defined in \code{\link{par}}, e.g. \code{"p"} (the
-#' default) for points, \code{"l"} for connected line segments, or \code{"o"}
-#' for an overlay of points and lines, etc. The default is \code{"o"}, which is
+#' @param type Type of plot, as defined in [par()], e.g. `"p"` (the
+#' default) for points, `"l"` for connected line segments, or `"o"`
+#' for an overlay of points and lines, etc. The default is `"o"`, which is
 #' perhaps the best for short sequences.
 #'
 #' @template debug
@@ -888,6 +905,8 @@ setMethod(f="[[",
 #' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
 #'
 #' @export
+#'
+#' @md
 setMethod(f="plot",
           signature="glider",
           definition=function(x, which, type="o", debug, ...) {
@@ -938,7 +957,8 @@ setMethod(f="plot",
           })
 
 #' Summarize a glider Object
-#' @param object A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#'
+#' @param object A `glider` object, i.e. one inheriting from `\link{glider-class`}.
 #'
 #' @param ... Further arguments passed to or from other methods.
 #'
@@ -946,6 +966,8 @@ setMethod(f="plot",
 #' @importFrom methods callNextMethod
 #'
 #' @export
+#'
+#' @md
 setMethod(f="summary",
           signature="glider",
           definition=function(object, ...) {
@@ -979,71 +1001,97 @@ setMethod(f="summary",
               ##44 else if (nyo > 1)
               ##44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
               ##44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
-              for (streamName in names(object@data)) {
-                  stream <- object@data[[streamName]]
-                  ## order names alphabetically (easier with long lists of unfamiliar names)
-                  o <- names(stream)
-                  stream <- stream[, o]
-                  ## Make a list, so following code looks more like oce code.
-                  if (is.data.frame(stream))
-                      stream <- as.list(stream)
-                  ndata <- length(stream)
-                  threes <- matrix(nrow=ndata, ncol=4)
-                  for (i in 1:ndata)
-                      threes[i, ] <- oce::threenum(stream[[i]])
-                  if ("units" %in% metadataNames) {
-                      units <- object@metadata$units[[streamName]]
-                      unitsNames <- names(object@metadata$units[[streamName]])
-                      units <- unlist(lapply(seq_along(object@metadata$units[[streamName]]),
-                                             function(i) {
-                                                 u <- object@metadata$units[[streamName]][[i]]
-                                                 if (0 == length(u[1][[1]])) {
-                                                     if (2 == length(u)) return(u[2]) else return("")
-                                                 }
-                                                 if (length(u) == 1) {
-                                                     res <- if (is.expression(u)) as.character(u) else u
-                                                 } else if (length(u) == 2) {
-                                                     res <- if (nchar(u[2])) paste(u[[1]], u[[2]], sep=", ") else u[[1]]
-                                                 } else {
-                                                     res <- ""
-                                                 }
-                                                 res <- as.character(res)[1] # the [1] is in case the unit is mixed up
-                                                 ## Clean up notation, by stages. (The order may matter.)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+C", "\u00B0C", res)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+F", "\u00B0F", res)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+E", "\u00B0E", res)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+W", "\u00B0W", res)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+N", "\u00B0N", res)
-                                                 if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+S", "\u00B0S", res)
-                                                 if (nchar(res)) res <- gsub("percent", "%", res)
-                                                 if (nchar(res)) res <- gsub("degree", "\u00B0", res)
-                                                 if (nchar(res)) res <- gsub("^,[ ]*", "", res)
-                                                 if (nchar(res)) res <- gsub("mu . ", "\u03BC", res)
-                                                 if (nchar(res)) res <- gsub("per . mil", "\u2030", res)
-                                                 if (nchar(res)) res <- gsub("10\\^\\(-8\\)[ ]*\\*", "10\u207B\u2078", res)
-                                                 if (nchar(res)) res <- gsub("\\^2", "\u00B2", res)
-                                                 if (nchar(res)) res <- gsub("\\^3", "\u00B3", res)
-                                                 res
-                                             }))
-                      names(units) <- unitsNames
-                      rownames(threes) <- paste("    ", oce::dataLabel(names(stream), units), sep="")
-                  } else {
-                      rownames(threes) <- paste("    ", names(stream), sep="")
-                  }
-                  if (!is.null(threes)) {
-                      OriginalName <- unlist(lapply(names(stream), function(n)
-                                                    if (n %in% names(object@metadata$dataNamesOriginal[[streamName]]))
-                                                        object@metadata$dataNamesOriginal[[streamName]][[n]] else "-"))
-                      threes <- cbind(threes, OriginalName)
-                      colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                      cat("* Data within the \"", streamName, "\" stream:\n", sep="")
-                      owidth <- options('width')
-                      options(width=150) # make wide to avoid line breaks
-                      print(threes, quote=FALSE)
-                      options(width=owidth$width)
-                      cat("\n")
-                  }
+              stream <- if (object[["type"]] == "seaexplorer") object@data$payload1 else object@data
+              if (object[["type"]] == "seaexplorer") {
+                  odataName <- "payload1"
+                  odata <- object@data[[odataName]]
+              } else {
+                  odataName <- ""
+                  odata <- object@data
               }
+              ## order names alphabetically (easier with long lists of unfamiliar names)
+              o <- order(names(odata))
+              odata <- odata[, o]
+              ## Make a list, so following code looks more like oce code.
+              if (is.data.frame(odata))
+                  odata <- as.list(odata)
+              ndata <- length(odata)
+              threes <- matrix(nrow=ndata, ncol=3)
+              for (i in 1:ndata)
+                  threes[i, ] <- oce::threenum(odata[[i]])
+              if ("units" %in% metadataNames) {
+                  if (object[["type"]] == "seaexplorer") {
+                      units <- object@metadata$units$payload1[o]
+                      unitsNames <- names(object@metadata$units$payload1[o])
+                  } else {
+                      units <- object@metadata$units[o]
+                      unitsNames <- names(object@metadata$units[o])
+                  }
+                  units <- unlist(lapply(seq_along(units),
+                                         function(i) {
+                                             u <- units[[i]]
+                                             if (0 == length(u[1][[1]])) {
+                                                 if (2 == length(u)) return(u[2]) else return("")
+                                             }
+                                             if (length(u) == 1) {
+                                                 res <- if (is.expression(u)) as.character(u) else u
+                                             } else if (length(u) == 2) {
+                                                 res <- if (nchar(u[2])) paste(u[[1]], u[[2]], sep=", ") else u[[1]]
+                                             } else {
+                                                 res <- ""
+                                             }
+                                             res <- as.character(res)[1] # the [1] is in case the unit is mixed up
+                                             ## Clean up notation, by stages. (The order may matter.)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+C", "\u00B0C", res)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+F", "\u00B0F", res)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+E", "\u00B0E", res)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+W", "\u00B0W", res)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+N", "\u00B0N", res)
+                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+S", "\u00B0S", res)
+                                             if (nchar(res)) res <- gsub("percent", "%", res)
+                                             if (nchar(res)) res <- gsub("degree", "\u00B0", res)
+                                             if (nchar(res)) res <- gsub("^,[ ]*", "", res)
+                                             if (nchar(res)) res <- gsub("mu . ", "\u03BC", res)
+                                             if (nchar(res)) res <- gsub("per . mil", "\u2030", res)
+                                             if (nchar(res)) res <- gsub("10\\^\\(-8\\)[ ]*\\*", "10\u207B\u2078", res)
+                                             if (nchar(res)) res <- gsub("\\^2", "\u00B2", res)
+                                             if (nchar(res)) res <- gsub("\\^3", "\u00B3", res)
+                                             res
+                                         }))
+                  names(units) <- unitsNames
+                  rownames(threes) <- paste("    ", oce::dataLabel(names(odata), units), sep="")
+              } else {
+                  rownames(threes) <- paste("    ", names(odata), sep="")
+              }
+              if (!is.null(threes)) {
+                  dim <- if (object[["type"]] == "seaexplorer") {
+                      as.vector(lapply(object@data$payload1, function(x) length(x)))
+                  } else {
+                      as.vector(lapply(object@data, function(x) length(x)))
+                  }
+                  if (object[["type"]] == "seaexplorer") {
+                      OriginalName <- unlist(lapply(names(odata), function(n)
+                                                    if (n %in% names(object@metadata$dataNamesOriginal$payload1))
+                                                        object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
+                  } else {
+                      OriginalName <- unlist(lapply(names(odata), function(n)
+                                                    if (n %in% names(object@metadata$dataNamesOriginal))
+                                                        object@metadata$dataNamesOriginal[[n]] else "-"))
+                  }
+                  threes <- cbind(threes, dim, OriginalName)
+                  colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+                  if (object[["type"]] == "seaexplorer") {
+                      cat("* Data Overview (of the \"payload1\" stream):\n", sep="")
+                  } else {
+                      cat("* Data Overview:\n", sep="")
+                  }
+                  owidth <- options('width')
+                  options(width=150) # make wide to avoid line breaks
+                  print(as.data.frame(threes), digits=5)
+                  options(width=owidth$width)
+                  cat("\n")
+              }
+
               ## Get flags specifically from metadata; using [["flags"]] could extract
               ## it from data, if present there and not in metadata (as e.g. with
               ## the data("glider") that is provided with oce).
@@ -1081,12 +1129,16 @@ setMethod(f="summary",
 #'
 #' @param s Character value
 #'
-#' @return CamelCase version of \code{s}
+#' @return CamelCase version of `s`
 #'
 #' @examples
 #' expect_equal("profileDirection", toCamelCase("profile_direction"))
 #'
+#' @author Dan Kelley
+#'
 #' @export
+#'
+#' @md
 toCamelCase <- function(s)
 {
     s <- strsplit(s, "")[[1]]
@@ -1123,7 +1175,11 @@ toCamelCase <- function(s)
 #' @examples
 #' expect_equal(45+30.100/60, degreeMinute(4530.100))
 #'
+#' @author Dan Kelley
+#'
 #' @export
+#'
+#' @md
 degreeMinute <- function(x)
 {
     s <- sign(x)
@@ -1137,20 +1193,27 @@ degreeMinute <- function(x)
 
 #' Print a debugging message
 #'
-#' Many glider functions decrease the \code{debug} level by 1 when they call other
+#' Many glider functions decrease the `debug` level by 1 when they call other
 #' functions, so the effect is a nesting, with more space for deeper function
 #' level.
 #'
 #' @param debug an integer, less than or equal to zero for no message, and
 #' greater than zero for increasing levels of debugging.  Values greater than 4
 #' are treated like 4.
-#' @param \dots items to be supplied to \code{\link{cat}}, which does the
+#'
+#' @param \dots items to be supplied to [cat()], which does the
 #' printing.  Almost always, this should include a trailing newline.
+#'
 #' @param unindent Number of levels to un-indent, e.g. for start and end lines
 #' from a called function.
+#'
 #' @author Dan Kelley
+#'
 #' @importFrom utils flush.console
+#'
 #' @export
+#'
+#' @md
 gliderDebug <- function(debug=0, ..., unindent=0)
 {
     debug <- if (debug > 4) 4 else max(0, floor(debug + 0.5))
@@ -1166,22 +1229,26 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 
 #' Check whether a URL exists, backtracing by separators, if not
 #'
-#' This uses \code{[RCurl]{url.exits}} to see if the indicated URL exists.
+#' This uses [RCurl::url.exits()] to see if the indicated URL exists.
 #' If not, an attempt is made to find a lower-level URL that does exist.
-#' This is done by progressively removing items separated by \code{"/"}
-#' in \code{url}
+#' This is done by progressively removing items separated by `"/"`
+#' in `url`
 #'
-#' @param url Character value specifying the URL. If no \code{/} is present
+#' @param url Character value specifying the URL. If no `/` is present
 #' at the end of this string, then it is added before checks are done.
 #'
 #' @param quiet Logical value indicating whether to print a suggestion
-#' for an alternative website, in the case where \code{url} does not exist.
+#' for an alternative website, in the case where `url` does not exist.
 #'
 #' @return A logical value indicating whether the website indicated
-#' by \code{url} exists.
+#' by `url` exists.
+#'
+#' @author Dan Kelley
 #'
 #' @importFrom RCurl getURL
 #' @export
+#'
+#' @md
 urlExists <- function(url, quiet=FALSE)
 {
     ## tack a '/' on the end, if not there already
@@ -1227,21 +1294,21 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #' \strong{This is a provisional function, written to handle some
 #' particular files available to the author.}
 #'
-#' The data are copied directly from the file, except that \code{time}
+#' The data are copied directly from the file, except that `time`
 #' is converted from an integer to a POSIX time. Variable names containing
-#' underscores are renamed as e.g. \code{profile_direction}
-#' to \code{profileDirection}, although the \code{\link{[[,glider-method}}
-#' mechanism works with either name, e.g. if \code{g} is a glider object, then
-#' \code{g[["profileDirection"]]} and
-#' \code{g[["profile_direction"]]} give the same result.
+#' underscores are renamed as e.g. `profile_direction`
+#' to `profileDirection`, although the \code{\link{[[,glider-method}}
+#' mechanism works with either name, e.g. if `g` is a glider object, then
+#' `g[["profileDirection"]]` and
+#' `g[["profile_direction"]]` give the same result.
 #'
 #' @param file Name of a netcdf file.
 #'
 #' @template debug
 #'
-#' @return A glider object, i.e. one inheriting from \code{\link{glider-class}}.
-#' (This class inherits from \code{\link[oce]{oce-class}} in the
-#' \code{oce} package.)
+#' @return A glider object, i.e. one inheriting from [glider-class].
+#' (This class inherits from [oce::oce-class] in the
+#' \CRANpkg{oce} package.)
 #'
 #' @author Dan Kelley
 #'
@@ -1277,6 +1344,8 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get
 #' @export
+#'
+#' @md
 read.glider.netcdf <- function(file, debug)
 {
     if (missing(debug))
@@ -1331,21 +1400,26 @@ read.glider.netcdf <- function(file, debug)
 
 #' Read a glider data file
 #'
-#' This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
-#' if the first argument is a string ending with \code{".nc"}, to
-#' \code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
-#' of which contains the text \code{"pld1.sub."} followed by one or more digits, or to
-#' \code{\link{read.glider.seaexplorer.delayed}} if it is a vector of strings, any
-#' contains the text \code{"pld1.raw."} followed by one or more digits.
+#' This is a high-level function that passes control to [read.glider.netcdf()]
+#' if the first argument is a string ending with `".nc"`, to
+#' [read.glider.seaexplorer.realtime()] if it is a vector of strings, any
+#' of which contains the text `"pld1.sub."` followed by one or more digits, or to
+#' [read.glider.seaexplorer.delayed()] if it is a vector of strings, any
+#' contains the text `"pld1.raw."` followed by one or more digits.
 #'
 #' @param file Character value giving the name of the file.
 #'
-#' @param ... Extra parameters passed to more specific \code{read.*} functions.
+#' @param ... Extra parameters passed to more specific `read.*` functions.
 #'
 #' @template debug
 #'
-#' @return A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+#' @author Dan Kelley
+#'
+#' @return A `glider` object, i.e. one inheriting from [glider-class].
+#'
 #' @export
+#'
+#' @md
 read.glider <- function(file, debug, ...)
 {
     if (missing(debug))
@@ -1369,24 +1443,24 @@ read.glider <- function(file, debug, ...)
 #' Convert data to glider format
 #'
 #' This function returns a glider object that holds data as provided
-#' in the \code{data} argument, with units as provided by the \code{units}
-#' argument. The \code{units} argument is optional, making the function
+#' in the `data` argument, with units as provided by the `units`
+#' argument. The `units` argument is optional, making the function
 #' easy to use in interactive sessions, but production code ought to
 #' be written with units fully specified.
 #'
 #' @param type Character value giving the type of glider, e.g.
-#' be either \code{seaexplorer} or \code{slocum}.
+#' be either `seaexplorer` or `slocum`.
 #'
 #' @param data A data frame containing the data. This is copied straight into
-#' the \code{payload1} item in the \code{data} slot of the returned value,
+#' the `payload1` item in the `data` slot of the returned value,
 #' \emph{without} name translation. For most functions in this package to work,
-#' \code{data} ought to have items named \code{longitude},
-#' \code{latitude}, \code{salinity}, \code{temperature} and
-#' \code{pressure}.
+#' `data` ought to have items named `longitude`,
+#' `latitude`, `salinity`, `temperature` and
+#' `pressure`.
 #'
 #' @param units A list holding units, with names corresponding to the
 #' names in the data. See the example for the format to be used
-#' for \code{units}, but note that there are several items in this
+#' for `units`, but note that there are several items in this
 #' dataset that are not given units, in this example.
 #'
 #' @examples
@@ -1404,7 +1478,11 @@ read.glider <- function(file, debug, ...)
 #' plot(g, which="p")
 #' plot(gg, which="p")
 #'
+#' @author Dan Kelley
+#'
 #' @export
+#'
+#' @md
 as.glider <- function(type, data, units)
 {
     if (missing(type))

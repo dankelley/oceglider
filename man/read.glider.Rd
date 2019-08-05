@@ -23,13 +23,16 @@ of debugging, but also the depth.}
 \item{...}{Extra parameters passed to more specific \code{read.*} functions.}
 }
 \value{
-A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.
+A \code{glider} object, i.e. one inheriting from \linkS4class{glider}.
 }
 \description{
-This is a high-level function that passes control to \code{\link{read.glider.netcdf}}
+This is a high-level function that passes control to \code{\link[=read.glider.netcdf]{read.glider.netcdf()}}
 if the first argument is a string ending with \code{".nc"}, to
-\code{\link{read.glider.seaexplorer.realtime}} if it is a vector of strings, any
+\code{\link[=read.glider.seaexplorer.realtime]{read.glider.seaexplorer.realtime()}} if it is a vector of strings, any
 of which contains the text \code{"pld1.sub."} followed by one or more digits, or to
-\code{\link{read.glider.seaexplorer.delayed}} if it is a vector of strings, any
+\code{\link[=read.glider.seaexplorer.delayed]{read.glider.seaexplorer.delayed()}} if it is a vector of strings, any
 contains the text \code{"pld1.raw."} followed by one or more digits.
+}
+\author{
+Dan Kelley
 }

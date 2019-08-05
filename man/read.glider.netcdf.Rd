@@ -21,9 +21,9 @@ that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
 }
 \value{
-A glider object, i.e. one inheriting from \code{\link{glider-class}}.
-(This class inherits from \code{\link[oce]{oce-class}} in the
-\code{oce} package.)
+A glider object, i.e. one inheriting from \linkS4class{glider}.
+(This class inherits from \link[oce:oce-class]{oce::oce} in the
+\CRANpkg{oce} package.)
 }
 \description{
 \strong{This is a provisional function, written to handle some

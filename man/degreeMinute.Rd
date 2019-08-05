@@ -21,3 +21,6 @@ illustrated in the example.
 expect_equal(45+30.100/60, degreeMinute(4530.100))
 
 }
+\author{
+Dan Kelley
+}

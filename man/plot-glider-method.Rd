@@ -8,12 +8,12 @@
 \S4method{plot}{glider}(x, which, type = "o", debug, ...)
 }
 \arguments{
-\item{x}{A \code{glider} object, i.e. one inheriting from \code{\link{glider-class}}.}
+\item{x}{A \code{glider} object, i.e. one inheriting from \linkS4class{glider}.}
 
 \item{which}{Integer or character value specifying which style is
 to be used; see \dQuote{Details}.}
 
-\item{type}{Type of plot, as defined in \code{\link{par}}, e.g. \code{"p"} (the
+\item{type}{Type of plot, as defined in \code{\link[=par]{par()}}, e.g. \code{"p"} (the
 default) for points, \code{"l"} for connected line segments, or \code{"o"}
 for an overlay of points and lines, etc. The default is \code{"o"}, which is
 perhaps the best for short sequences.}
@@ -50,7 +50,7 @@ a larger view, including a coastline, with functions provided for
 
 \item \code{which=1} or \code{which="p"}: time-series plot
 of pressure versus time. This
-is done using \code{\link[oce]{oce.plot.ts}} in the \CRANpkg{oce} package,
+is done using \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}},
 which also makes the other time-series plots listed below.
 
 \item \code{which=2} or \code{which="T"}: time-series temperature plot
@@ -59,8 +59,7 @@ which also makes the other time-series plots listed below.
 
 \item \code{which=4} or \code{which="TS"}: temperature-salinity diagram,
 with dots for data and labels indicating density anomaly; see
-\code{\link[oce]{plotTS}} in the \CRANpkg{oce} package for
-details.
+\code{\link[oce:plotTS]{oce::plotTS()}} for details.
 
 \item \code{which=5} or \code{which="navState"}: time-series of the
 navigation state, stored as the \code{navState} item within
@@ -96,7 +95,7 @@ adjusted for desired pitch and heading
 
 Lines and notes in the plot border indicate these states, both
 numerically and with phrases, as inferred by
-\code{\link{navStateCodes}}.
+\code{\link[=navStateCodes]{navStateCodes()}}.
 
 }
 }
