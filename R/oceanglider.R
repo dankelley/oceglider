@@ -89,7 +89,7 @@ setMethod(f="initialize",
 #' this means to apply the actions to all the data entries; thus,
 #' `flags=list(c(3,4,9))` means to apply not just to salinity and temperature,
 #' but also to everything else for which flags have been set up. If `flags`
-#' is not provided, then `\link{defaultFlags}` is called on
+#' is not provided, then [defaultFlags()] is called on
 #' `object`, to try to determine a conservative default.
 #'
 #' @param actions An optional `list` that contains items with
@@ -112,7 +112,7 @@ setMethod(f="initialize",
 #' information about the arguments and the data. It is usually a good idea to set
 #' this to 1 for initial work with a dataset, to see which flags are being
 #' handled for each data item. If not supplied, this defaults to the value of
-#' `\link{getOption}("gliderDebug", 0)`.
+#' `\link{getOption}("gliderDebug",0)`.
 #'
 #' @examples
 #' library(oceanglider)
@@ -958,7 +958,7 @@ setMethod(f="plot",
 
 #' Summarize a glider Object
 #'
-#' @param object A `glider` object, i.e. one inheriting from `\link{glider-class`}.
+#' @param object A `glider` object, i.e. one inheriting from `glider-class`.
 #'
 #' @param ... Further arguments passed to or from other methods.
 #'
@@ -1001,8 +1001,9 @@ setMethod(f="summary",
               ##44 else if (nyo > 1)
               ##44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
               ##44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
+              payload1Exists <- "payload1" %in% names(object@data)
               stream <- if (object[["type"]] == "seaexplorer") object@data$payload1 else object@data
-              if (object[["type"]] == "seaexplorer") {
+              if (payload1Exists) {
                   odataName <- "payload1"
                   odata <- object@data[[odataName]]
               } else {
@@ -1020,7 +1021,7 @@ setMethod(f="summary",
               for (i in 1:ndata)
                   threes[i, ] <- oce::threenum(odata[[i]])
               if ("units" %in% metadataNames) {
-                  if (object[["type"]] == "seaexplorer") {
+                  if (payload1Exists) {
                       units <- object@metadata$units$payload1[o]
                       unitsNames <- names(object@metadata$units$payload1[o])
                   } else {
@@ -1064,12 +1065,12 @@ setMethod(f="summary",
                   rownames(threes) <- paste("    ", names(odata), sep="")
               }
               if (!is.null(threes)) {
-                  dim <- if (object[["type"]] == "seaexplorer") {
+                  dim <- if (payload1Exists) {
                       as.vector(lapply(object@data$payload1, function(x) length(x)))
                   } else {
                       as.vector(lapply(object@data, function(x) length(x)))
                   }
-                  if (object[["type"]] == "seaexplorer") {
+                  if (payload1Exists) {
                       OriginalName <- unlist(lapply(names(odata), function(n)
                                                     if (n %in% names(object@metadata$dataNamesOriginal$payload1))
                                                         object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
@@ -1229,7 +1230,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 
 #' Check whether a URL exists, backtracing by separators, if not
 #'
-#' This uses [RCurl::url.exits()] to see if the indicated URL exists.
+#' This uses [RCurl::url.exists()] to see if the indicated URL exists.
 #' If not, an attempt is made to find a lower-level URL that does exist.
 #' This is done by progressively removing items separated by `"/"`
 #' in `url`
@@ -1245,7 +1246,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #'
 #' @author Dan Kelley
 #'
-#' @importFrom RCurl getURL
+#' @importFrom RCurl url.exists
 #' @export
 #'
 #' @md

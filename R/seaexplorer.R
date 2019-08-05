@@ -2,45 +2,46 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceangl
 
 #' Possible navState values of a glider object
 #'
-#' This function provides names for the numerical \code{navState} codes
+#' This function provides names for the numerical `navState` codes
 #' used by various gliders, with the aim of making it easier to
 #' write self-explantory code (see \dQuote{Examples}).
 #'
-#' The numerical values for \code{seaexplorer} are as follows.
+#' The numerical values for `seaexplorer` are as follows.
 #' \tabular{lll}{
-#' \strong{Name} \tab \strong{Value} \tab \strong{Description}\cr
-#' \code{not_navigating}       \tab 105 \tab glider is being set up\cr
-#' \code{surfacing}            \tab 115 \tab nearing the surface\cr
-#' \code{at_surface}           \tab 116 \tab at the surface, acquiring GPS and transmitting data\cr
-#' \code{inflecting_downwards} \tab 110 \tab ballast being adjusted to cause descent\cr
-#' \code{descending}           \tab 100 \tab ballast causing descent\cr
-#' \code{inflecting_upwards}   \tab 118 \tab ballast being adjusted to cause ascent\cr
-#' \code{ascending}            \tab 117 \tab ballast causing ascent\cr
+#' **Name** \tab **Value** \tab **Description**\cr
+#' `not_navigating`       \tab 105 \tab glider is being set up\cr
+#' `surfacing`            \tab 115 \tab nearing the surface\cr
+#' `at_surface`           \tab 116 \tab at the surface, acquiring GPS and transmitting data\cr
+#' `inflecting_downwards` \tab 110 \tab ballast being adjusted to cause descent\cr
+#' `descending`           \tab 100 \tab ballast causing descent\cr
+#' `inflecting_upwards`   \tab 118 \tab ballast being adjusted to cause ascent\cr
+#' `ascending`            \tab 117 \tab ballast causing ascent\cr
 #'}
 #' Note that the downward portions of profiles are roughly signalled by several
-#' \code{inflecting_downwards} codes followed by \code{descending}
-#' codes, while the upward portions have \code{inflecting_upwards} codes
-#" followed by \code{ascending} codes.
+#' `inflecting_downwards` codes followed by `descending`
+#' codes, while the upward portions have `inflecting_upwards` codes
+#" followed by `ascending` codes.
 #'
-#' The numerical values for type \code{slocum} (defined as \code{m_depth_state}
-#' in their documentation [1 page 1-24]) are as follows.
+#' The numerical values for type `slocum` are as follows. (These
+#' are(defined as `m_depth_state` in the `slocum` documentation;
+#' see pages 1-24 of reference 1.)
 #' \tabular{lll}{
-#' \strong{Name}   \tab \strong{Value} \tab \strong{Description}\cr
-#' \code{ignore}   \tab 99 \tab - \cr
-#' \code{hover}    \tab  3 \tab - \cr
-#' \code{climbing} \tab  2 \tab - \cr
-#' \code{diving}   \tab  1 \tab - \cr
-#' \code{surface}  \tab  0 \tab - \cr
-#' \code{none}     \tab -1 \tab - \cr
+#' **Name**   \tab **Value** \tab **Description**\cr
+#' `ignore`   \tab        99 \tab              - \cr
+#' `hover`    \tab         3 \tab              - \cr
+#' `climbing` \tab         2 \tab              - \cr
+#' `diving`   \tab         1 \tab              - \cr
+#' `surface`  \tab         0 \tab              - \cr
+#' `none`     \tab        -1 \tab              - \cr
 #'}
 #'
 #' @param g Either a character string or glider object. If it is a string,
 #' then it is the type of glider, which in the present version of the
-#' function must be \code{"seaexplorer"}. If it is
-#' a glider object, then the value of \code{navStateCodes} in the \code{metadata}
-#' slot of that object is returned, if that exists, or else the \code{type}
-#' item in the \code{metadata} slot is used to determine the type, as
-#' in the case with \code{g} being a character string.
+#' function must be `"seaexplorer"`. If it is
+#' a glider object, then the value of `navStateCodes` in the `metadata`
+#' slot of that object is returned, if that exists, or else the `type`
+#' item in the `metadata` slot is used to determine the type, as
+#' in the case with `g` being a character string.
 #'
 #' @return A list of integers defining the navigation state, each
 #' given a brief name as indicated in the \dQuote{Details} section.
@@ -62,6 +63,10 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceangl
 #' \url{https://gliderfs2.coas.oregonstate.edu/gliderweb/docs/slocum_manuals/Slocum_G2_Glider_Operators_Manual.pdf}.
 #'
 #' @export
+#'
+#' @author Dan Kelley
+#'
+#' @md
 navStateCodes <- function(g)
 {
     type <- if (is.character(g)) g else g@metadata$type
@@ -81,24 +86,24 @@ navStateCodes <- function(g)
 #' Read real-time SeaExplorer glider data
 #'
 #' Reads real-time CSV files produced by a SeaExplorer glider, as
-#' detected by the presence of \code{".sub."} in their names.
+#' detected by the presence of `".sub."` in their names.
 #' Such real-time data are decimated before transmission, and thus do not
 #' represent the full data collected by the glider sensors.
-#' (Use \code{\link{read.glider.seaexplorer.delayed}} instead of
+#' (Use [read.glider.seaexplorer.delayed)] instead of
 #' this, to read delayed-mode data, as downloaded from the glider
 #' after recovery.)
 #'
 #' @section Flag Scheme:
 #' A flag scheme is set up according to the IOOS classification system (see
-#' Table 2 of [1]), as follows.
+#' Table 2 of reference 1), as follows.
 #'
 #' \tabular{llll}{
 #' \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
-#' \code{pass}           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
-#' \code{not_evaluated}  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
-#' \code{suspect}        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
-#' \code{fail}           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
-#' \code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+#' `pass`           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
+#' `not_evaluated`  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
+#' `suspect`        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
+#' `fail`           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
+#' `missing`        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
 #' }
 #'
 #' @references
@@ -108,12 +113,12 @@ navStateCodes <- function(g)
 #' @param directory The directory in which the realtime SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
-#'     read. If this is not provided, \code{read.glider.seaexplorer.delayed}
-#'     will read all yo numbers for which files are present in \code{dir}.
+#'     read. If this is not provided, [read.glider.seaexplorer.delayed()]
+#'     will read all yo numbers for which files are present in `dir`.
 #'
-#' @param level Ignored by \code{read.glider.seaexplorer.realtime} and
+#' @param level Ignored by [read.glider.seaexplorer.realtime] and
 #'     only included for similarity with
-#'     \code{\link{read.glider.seaexplorer.delayed}}.
+#'     [read.glider.seaexplorer.delayed()].
 #'
 #' @param progressBar A logical indicating whether to show progress
 #'     bars while reading the data, which can be useful when reading full
@@ -121,13 +126,11 @@ navStateCodes <- function(g)
 #'     only in interactive mode.
 #'
 #' @param missingValue A value that indicates missing data; all
-#'     values that match this are set to \code{NA}.
+#'     values that match this are set to `NA`.
 #'
 #' @template debug
 #'
 #' @template seaexplorer_names
-#'
-#' @author Dan Kelley and Clark Richards
 #'
 #' @examples
 #' library(oceanglider)
@@ -147,10 +150,16 @@ navStateCodes <- function(g)
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data
+#'
 #' @importFrom utils read.delim
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend initializeFlagScheme
+#'
 #' @export
+#'
+#' @author Dan Kelley and Clark Richards
+#'
+#' @md
 read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive(), missingValue=9999, debug)
 {
     if (missing(debug))
@@ -493,10 +502,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' Read delayed-mode SeaExplorer glider data
 #'
 #' Reads delayed-mode CSV files produced by a SeaExplorer glider,
-#' as detected by the presence of \code{".raw."} in their names.
+#' as detected by the presence of `".raw."` in their names.
 #' Such delayed-mode data are the full resolution data stored on
 #' the glider and downloaded after recovery.
-#' (Use \code{\link{read.glider.seaexplorer.realtime}} instead
+#' (Use [read.glider.seaexplorer.realtime()] instead
 #' of this, to read data as transmitted by the glider while
 #' it is in the field.)
 #'
@@ -516,10 +525,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' subsurface location and should be taken only as a first guess.
 #'
 #' \item Removal of the first few sensor values from when the glider
-#' is in \code{navState=118} (inflecting up) or \code{navState=110}
+#' is in `navState=118` (inflecting up) or `navState=110`
 #' (inflecting down). The reason for this is that when the glider is
 #' set to sample on alternating profiles, when the CTD is powered up
-#' the first sample output to the payload computer is the \emph{last}
+#' the first sample output to the payload computer is the *last*
 #' sample recorded before power down.
 #'
 #' \item NAs for all the sensors are interpolated to a common
@@ -533,28 +542,28 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' rows with duplicated times are removed.
 #'
 #' \item Calculate Practical salinity from conductivity, temperature
-#' and pressure using \code{swSCTp()}.
+#' and pressure using `swSCTp()`.
 #'
 #' }
 #'
 #' @section Flag Scheme:
 #' A flag scheme is set up according to the IOOS classification system (see
-#' Table 2 of [1]), as follows.
+#' Table 2 of reference 1), as follows.
 #'
 #' \tabular{llll}{
 #' \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
-#' \code{pass}           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
-#' \code{not_evaluated}  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
-#' \code{suspect}        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
-#' \code{fail}           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
-#' \code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+#' `pass`           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
+#' `not_evaluated`  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
+#' `suspect`        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
+#' `fail`           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
+#' `missing`        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
 #' }
 #'
 #' @param directory The directory in which the delayed-mode SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
-#'     read. If this is not provided, \code{read.glider.seaexplorer.delayed}
-#'     will read all yo numbers for which files are present in \code{dir}.
+#'     read. If this is not provided, `read.glider.seaexplorer.delayed`
+#'     will read all yo numbers for which files are present in `dir`.
 #'
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
@@ -566,8 +575,6 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @template debug
 #'
 #' @template seaexplorer_names
-#'
-#' @author Clark Richards and Dan Kelley
 #'
 #' @examples
 #' library(oceanglider)
@@ -582,7 +589,12 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @importFrom oce swSCTp processingLogAppend
 #' @importFrom stats approx
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
+#'
 #' @export
+#'
+#' @author Clark Richards and Dan Kelley
+#'
+#' @md
 read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=interactive(), debug)
 {
     if (missing(debug))

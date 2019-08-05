@@ -28,7 +28,7 @@ of debugging, but also the depth.}
 \value{
 An oce object holding the data, with variables renamed as
 described in \dQuote{Details}, and with \code{salinity} added,
-as calculated by \code{oce::\link[oce]{swSCTp}} which uses the UNESCO
+as calculated by \code{\link[oce:swSCTp]{oce::swSCTp()}} which uses the UNESCO
 algorithm and assumes that the conductivity values are stored in S/m
 units.
 }
@@ -70,6 +70,7 @@ if (file.exists("~/slocum.csv")) {
          col=cm$zcol, cex=1/2, pch=20)
     mtext(paste("Temperature, from", t[1]), cex=3/4)
 }
+
 }
 \seealso{
 Other functions to read glider data: \code{\link{read.glider.netcdf}},

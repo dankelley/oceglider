@@ -11,12 +11,12 @@ read.glider.seaexplorer.realtime(directory, yo, level = 1,
 \item{directory}{The directory in which the realtime SeaExplorer files are located.}
 
 \item{yo}{A numeric value (or vector) specifying the yo numbers to
-read. If this is not provided, \code{read.glider.seaexplorer.delayed}
+read. If this is not provided, \code{\link[=read.glider.seaexplorer.delayed]{read.glider.seaexplorer.delayed()}}
 will read all yo numbers for which files are present in \code{dir}.}
 
-\item{level}{Ignored by \code{read.glider.seaexplorer.realtime} and
+\item{level}{Ignored by \link{read.glider.seaexplorer.realtime} and
 only included for similarity with
-\code{\link{read.glider.seaexplorer.delayed}}.}
+\code{\link[=read.glider.seaexplorer.delayed]{read.glider.seaexplorer.delayed()}}.}
 
 \item{progressBar}{A logical indicating whether to show progress
 bars while reading the data, which can be useful when reading full
@@ -42,14 +42,16 @@ Reads real-time CSV files produced by a SeaExplorer glider, as
 detected by the presence of \code{".sub."} in their names.
 Such real-time data are decimated before transmission, and thus do not
 represent the full data collected by the glider sensors.
-(Use \code{\link{read.glider.seaexplorer.delayed}} instead of
+(Use [read.glider.seaexplorer.delayed)] instead of
 this, to read delayed-mode data, as downloaded from the glider
 after recovery.)
+
+[read.glider.seaexplorer.delayed)]: R:read.glider.seaexplorer.delayed)
 }
 \section{Flag Scheme}{
 
 A flag scheme is set up according to the IOOS classification system (see
-Table 2 of [1]), as follows.
+Table 2 of reference 1), as follows.
 
 \tabular{llll}{
 \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
@@ -144,8 +146,10 @@ plot(g, which="T")
 
 }
 \references{
-1. IOOS. “Manual for Real-Time Oceanographic Data Quality Control Flags,” May 2017.
+\enumerate{
+\item IOOS. “Manual for Real-Time Oceanographic Data Quality Control Flags,” May 2017.
 https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.1.pdf.
+}
 }
 \seealso{
 Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.delayed}}

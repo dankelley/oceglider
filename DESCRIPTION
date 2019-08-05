@@ -7,7 +7,7 @@ Authors@R: c(person(given="Dan", family="Kelley", email="dan.kelley@dal.ca", rol
 Maintainer: Dan Kelley <dan.kelley@dal.ca>
 Depends: R (>= 2.15), utils, knitr, oce, gsw
 Suggests: testthat
-Imports: methods, RCurl, ncdf4
+Imports: methods, ncdf4, RCurl
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)
 Encoding: UTF-8

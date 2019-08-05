@@ -23,7 +23,7 @@ In the second form, \code{flags} is a list with unnamed vectors, and
 this means to apply the actions to all the data entries; thus,
 \code{flags=list(c(3,4,9))} means to apply not just to salinity and temperature,
 but also to everything else for which flags have been set up. If \code{flags}
-is not provided, then \code{\link{defaultFlags}} is called on
+is not provided, then \code{\link[=defaultFlags]{defaultFlags()}} is called on
 \code{object}, to try to determine a conservative default.}
 
 \item{actions}{An optional \code{list} that contains items with
@@ -46,7 +46,7 @@ value 0 meaning to skip debugging and 1 or higher meaning to print some
 information about the arguments and the data. It is usually a good idea to set
 this to 1 for initial work with a dataset, to see which flags are being
 handled for each data item. If not supplied, this defaults to the value of
-\code{\link{getOption}("gliderDebug", 0)}.}
+\code{\link{getOption}("gliderDebug",0)}.}
 }
 \description{
 This function may be used to set suspicious data to \code{NA},

@@ -37,7 +37,7 @@ Reads delayed-mode CSV files produced by a SeaExplorer glider,
 as detected by the presence of \code{".raw."} in their names.
 Such delayed-mode data are the full resolution data stored on
 the glider and downloaded after recovery.
-(Use \code{\link{read.glider.seaexplorer.realtime}} instead
+(Use \code{\link[=read.glider.seaexplorer.realtime]{read.glider.seaexplorer.realtime()}} instead
 of this, to read data as transmitted by the glider while
 it is in the field.)
 }
@@ -82,7 +82,7 @@ and pressure using \code{swSCTp()}.
 \section{Flag Scheme}{
 
 A flag scheme is set up according to the IOOS classification system (see
-Table 2 of [1]), as follows.
+Table 2 of reference 1), as follows.
 
 \tabular{llll}{
 \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr

@@ -40,16 +40,17 @@ Note that the downward portions of profiles are roughly signalled by several
 \code{inflecting_downwards} codes followed by \code{descending}
 codes, while the upward portions have \code{inflecting_upwards} codes
 
-The numerical values for type \code{slocum} (defined as \code{m_depth_state}
-in their documentation [1 page 1-24]) are as follows.
+The numerical values for type \code{slocum} are as follows. (These
+are(defined as \code{m_depth_state} in the \code{slocum} documentation;
+see pages 1-24 of reference 1.)
 \tabular{lll}{
 \strong{Name}   \tab \strong{Value} \tab \strong{Description}\cr
-\code{ignore}   \tab 99 \tab - \cr
-\code{hover}    \tab  3 \tab - \cr
-\code{climbing} \tab  2 \tab - \cr
-\code{diving}   \tab  1 \tab - \cr
-\code{surface}  \tab  0 \tab - \cr
-\code{none}     \tab -1 \tab - \cr
+\code{ignore}   \tab        99 \tab              - \cr
+\code{hover}    \tab         3 \tab              - \cr
+\code{climbing} \tab         2 \tab              - \cr
+\code{diving}   \tab         1 \tab              - \cr
+\code{surface}  \tab         0 \tab              - \cr
+\code{none}     \tab        -1 \tab              - \cr
 }
 }
 \examples{
@@ -68,4 +69,7 @@ mtext(" red=inflecting_upwards; green=ascending", side=3, line=-1, adj=0)
 \references{
 1.Teledyne Webb Research. \emph{Slocum G2 Glider Operators Manual}, January 2012.
 \url{https://gliderfs2.coas.oregonstate.edu/gliderweb/docs/slocum_manuals/Slocum_G2_Glider_Operators_Manual.pdf}.
+}
+\author{
+Dan Kelley
 }

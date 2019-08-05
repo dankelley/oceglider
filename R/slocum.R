@@ -3,15 +3,15 @@
 #' Read a Slocum Glider file
 #'
 #' These files do not use standard names for variables, but
-#' the \code{nameMap} argument facilitates renaming for storage
+#' the `nameMap` argument facilitates renaming for storage
 #' in the returned object. (Renaming simplifies later analysis, e.g.
-#' permitting direct use of algorithms in the \code{oce} package,
-#' which assume that salinity is named \code{"salinity"}, etc.)
+#' permitting direct use of algorithms in the `oce` package,
+#' which assume that salinity is named `"salinity"`, etc.)
 #' The original names of data items are retained in the metadata
-#' of the returned object, so that the \code{[[} operator in the \code{oce}
+#' of the returned object, so that the `[[` operator in the `oce`
 #' package can retrieve the data using either the original name
-#' (e.g. \code{x[["sci_water_temp"]]}) or the more standard
-#' name (e.g. \code{x[["temperature"]]}).
+#' (e.g. `x[["sci_water_temp"]]`) or the more standard
+#' name (e.g. `x[["temperature"]]`).
 #'
 #' @param file A connection or a character string giving the name of the file to load.
 #'
@@ -20,12 +20,10 @@
 #' @param nameMap List used to rename data columns. See \dQuote{Details}.
 #'
 #' @return An oce object holding the data, with variables renamed as
-#' described in \dQuote{Details}, and with \code{salinity} added,
-#' as calculated by \code{oce::\link[oce]{swSCTp}} which uses the UNESCO
+#' described in \dQuote{Details}, and with `salinity` added,
+#' as calculated by [oce::swSCTp()] which uses the UNESCO
 #' algorithm and assumes that the conductivity values are stored in S/m
 #' units.
-#'
-#' @author Dan Kelley
 #'
 #' @examples
 #' library(oceanglider)
@@ -53,12 +51,19 @@
 #'          col=cm$zcol, cex=1/2, pch=20)
 #'     mtext(paste("Temperature, from", t[1]), cex=3/4)
 #'}
+#'
 #' @family functions for slocum gliders
 #' @family functions to read glider data
+#'
 #' @importFrom utils read.csv
 #' @importFrom methods new
 #' @importFrom oce numberAsPOSIXct swSCTp
+#'
 #' @export
+#'
+#' @author Dan Kelley
+#'
+#' @md
 read.glider.slocum <- function(file, debug,
                                nameMap=list(conductivity="sci_water_cond",
                                             temperature="sci_water_temp",
