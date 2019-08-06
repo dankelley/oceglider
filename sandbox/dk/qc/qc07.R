@@ -120,13 +120,6 @@ for (glider in gliders) {
 }
 
 ## use str(navStateCodes("seaexplorer")) to see codes
-## descending          : num 100
-## not_navigating      : num 105
-## inflecting_downwards: num 110
-## surfacing           : num 115
-## at_surface          : num 116
-## ascending           : num 117
-## inflecting_upwards  : num 118
 navStateColors <- function(navState)
 {
   n <- length(navState)
@@ -185,65 +178,37 @@ ui <- fluidPage(shinythemes::themeSelector(),
                 fluidRow(column(1, h6(paste(appName, appVersion))),
                          column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE))),
-                conditionalPanel(condition="input.instructions", fluidRow(includeMarkdown("qc06_help.md"))),
-                fluidRow(conditionalPanel(condition="!output.gliderExists",
-                                          column(2,
-                                                 uiOutput(outputId="glider"),
-                                                 uiOutput(outputId="mission"),
-                                                 uiOutput(outputId="read")
-                                                 )
-                                          ),
-                         conditionalPanel(condition="!output.gliderExists",
-                                          column(2,
-                                                 uiOutput(outputId="listRda"),
-                                                 uiOutput(outputId="loadRda")
-                                                 )
-                                          ),
-                         conditionalPanel(condition="output.gliderExists",
-                                          column(2,
-                                                 uiOutput(outputId="comment"),
-                                                 uiOutput(outputId="saveRda")
-                                                 )
-                                          ),
-                         column(2,
-                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="plotChoice")),
-                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="colorBy")),
-                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="plotType"))),
-                         column(2,
-                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="focus")),
-                                conditionalPanel(condition="input.focus == 'yo'", uiOutput(outputId="focusYo")))
-                                ## conditionalPanel(condition="input.focus == 'yo'",
-                                ##                  uiOutput(outputId="flagYo"))
-                         ),
-                fluidRow(column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="trimOutliers"))),
-                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideInitialYos"))),
-                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideTop"))),
-                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideAfterPowerOn")))
-                         ),
-                ## fluidRow(#column(3,
-                ##          #       conditionalPanel(condition="output.gliderExists",
-                ##          #                        uiOutput(outputId="despikePressure"))),
-                ##          column(3,
-                ##                 conditionalPanel(condition="output.gliderExists",
-                ##                                  uiOutput(outputId="trimOutliers")))
-                ##          ),
-                fluidRow(conditionalPanel(condition="output.gliderExists", uiOutput(outputId="navState"))
-                ),
-                fluidRow(conditionalPanel(condition="output.gliderExists", uiOutput(outputId="status"))
-                ),
-                fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          plotOutput("plot",
+                conditionalPanel(condition="input.instructions",
+                                 fluidRow(includeMarkdown("qc06_help.md"))),
+                conditionalPanel(condition="!output.gliderExists",
+                                 fluidRow(uiOutput(outputId="glider"),
+                                          uiOutput(outputId="mission"),
+                                          uiOutput(outputId="listRda")),
+                                 fluidRow(column(2, uiOutput(outputId="read")),
+                                          column(2, uiOutput(outputId="loadRda")))),
+                conditionalPanel(condition="output.gliderExists",
+                                 fluidRow(uiOutput(outputId="comment"),
+                                          uiOutput(outputId="saveRda")),
+                                 fluidRow(uiOutput(outputId="plotChoice"),
+                                          uiOutput(outputId="colorBy"),
+                                          uiOutput(outputId="plotType"),
+                                          uiOutput(outputId="focus"),
+                                          uiOutput(outputId="focusYo")),
+                                 fluidRow(uiOutput(outputId="trimOutliers"),
+                                          uiOutput(outputId="hideInitialYos"),
+                                          uiOutput(outputId="hideTop"),
+                                          uiOutput(outputId="hideAfterPowerOn")),
+                                 fluidRow(uiOutput(outputId="navState"),
+                                          uiOutput(outputId="status")),
+                                 fluidRow(plotOutput("plot",
                                                      hover="hover",
-                                                     ##click="click",
                                                      dblclick="dblclick",
                                                      width="100%",
                                                      height="500px",
                                                      brush=brushOpts(id="brush",
                                                                      delay=2000,
                                                                      delayType="debounce",
-                                                                     resetOnNew=TRUE)))
-                )
-                )
+                                                                     resetOnNew=TRUE)))))
 
 server <- function(input, output, session) {
 
@@ -528,7 +493,7 @@ server <- function(input, output, session) {
   output$glider <- renderUI({
     state$gliderExists <- FALSE
     selectInput(inputId="glider",
-                label=h6("Read raw data"),
+                label=h6("Select a glider and then a mission"),
                 choices=gliders,
                 selected=gliders[1])
   })
@@ -542,7 +507,7 @@ server <- function(input, output, session) {
   })
 
   output$read <- renderUI({
-    actionButton(inputId="readData", label="Read")
+    actionButton(inputId="readData", label=h6("Read original data"))
   })
 
   output$listRda <- renderUI({
@@ -551,7 +516,7 @@ server <- function(input, output, session) {
     if (length(files)) {
       ##fileTimes <- gsub("([a-z0-9]*)_([0-9]+)_([0-9]+).rda", "\\2\\3", files)
       fileNames <- gsub("^(sea.*).rda$", "\\1", files)
-      selectInput(inputId="rdaInputFile", label=h6("Continue"), choices=fileNames, selected=fileNames[1])
+      selectInput(inputId="rdaInputFile", label=h6("Previous Analyses"), choices=fileNames, selected=fileNames[1])
     }
   })
 
