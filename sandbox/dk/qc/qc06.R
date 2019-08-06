@@ -395,7 +395,7 @@ server <- function(input, output, session) {
 
   relevantRdaFiles <- function(glider=NULL, mission=NULL)
   {
-    Sys.glob(paste(tolower(glider), tolower(mission), "*.rda", sep=""))
+    Sys.glob(paste(tolower(glider), tolower(mission), "_*.rda", sep=""))
   }
 
   edits <- list()
@@ -531,8 +531,9 @@ server <- function(input, output, session) {
     ##msg("output$listRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
     if (length(files)) {
-      fileTimes <- gsub("([a-z0-9]*)_([0-9]+)_([0-9]+).rda", "\\2\\3", files)
-      selectInput(inputId="rdaInputFile", label=h6("Continue"), choices=fileTimes, selected=fileTimes[1])
+      ##fileTimes <- gsub("([a-z0-9]*)_([0-9]+)_([0-9]+).rda", "\\2\\3", files)
+      fileNames <- gsub("^(sea.*).rda$", "\\1", files)
+      selectInput(inputId="rdaInputFile", label=h6("Continue"), choices=fileNames, selected=fileNames[1])
     }
   })
 
@@ -1015,6 +1016,7 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                                  "_", substr(input$rdaInputFile, 1, 8),
                                  "_", substr(input$rdaInputFile, 9, 12), ".rda", sep="")
                ###msg("  load from '", filename, "' ..", sep="")
+               filename <- paste(input$rdaInputFile, ".rda", sep="")
                withProgress(message=paste0("Loading '", filename, "'"), value=0,
                             {
                               load(filename)
