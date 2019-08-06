@@ -181,9 +181,9 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                 conditionalPanel(condition="input.instructions",
                                  fluidRow(includeMarkdown("qc07_help.md"))),
                 conditionalPanel(condition="!output.gliderExists",
-                                 fluidRow(uiOutput(outputId="glider"),
-                                          uiOutput(outputId="mission"),
-                                          uiOutput(outputId="listRda")),
+                                 fluidRow(column(2, uiOutput(outputId="glider")),
+                                          column(2, uiOutput(outputId="mission")),
+                                          column(3, uiOutput(outputId="listRda"))),
                                  fluidRow(column(2, uiOutput(outputId="read")),
                                           column(2, uiOutput(outputId="loadRda")))),
                 conditionalPanel(condition="output.gliderExists",
@@ -198,7 +198,6 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="hideAfterPowerOn"))),
                                  fluidRow(uiOutput(outputId="navState")),
                                  fluidRow(uiOutput(outputId="status")),
-                                 ## FIXME: add a second status line
                                  fluidRow(plotOutput("plot",
                                                      hover="hover",
                                                      dblclick="dblclick",
@@ -207,7 +206,9 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                                      brush=brushOpts(id="brush",
                                                                      delay=2000,
                                                                      delayType="debounce",
-                                                                     resetOnNew=TRUE)))))
+                                                                     resetOnNew=TRUE))),
+                                 fluidRow(uiOutput(outputId="info")))
+                )
 
 server <- function(input, output, session) {
 
@@ -491,17 +492,15 @@ server <- function(input, output, session) {
   })
 
   output$glider <- renderUI({
-    ##state$gliderExists <- FALSE
     selectInput(inputId="glider",
-                label=h6("Select a glider and then a mission"),
+                label=h6("Select a glider"),
                 choices=gliders,
                 selected=gliders[1])
   })
 
   output$mission <- renderUI({
-    ##state$gliderExists <- FALSE
     selectInput(inputId="mission",
-                label="",
+                label=h6("Select a mission"),
                 choices=missions[input$glider],
                 selected=missions[input$glider][1])
   })
@@ -532,15 +531,17 @@ server <- function(input, output, session) {
     actionButton(inputId="commentButton", label=h6(paste("Add Comment #", 1+length(state$comments), sep="")))
   })
 
-
   output$saveRda <- renderUI({
     ##msg("output$saveRda\n")
-    ## hr()
     actionButton(inputId="saveRda", label=h6("Save Work"))
   })
 
+  output$info <- renderText({
+    msg("output$info\n")
+    paste("state$rda=", state$rda, sep="")
+  })
+
   output$focus <- renderUI({
-    ##msg("output$focus\n")
     selectInput(inputId="focus", label=h6("Focus"), choices=c("mission <m>"="mission", "yo <y>"="yo"), selected="mission")
   })
 
