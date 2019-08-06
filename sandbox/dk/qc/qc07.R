@@ -35,7 +35,6 @@ marPaletteTS <- c(fullmar, 1, 1, 1)
 marTS <- c(fullmar, fullmar, 1, fullmar+2.5)
 colHistMean <- "forestgreen"
 colHist3SD <- "red"
-comments <- NULL
 
 keypressHelp <- "
 <ul>
@@ -213,7 +212,8 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
 server <- function(input, output, session) {
 
   global <- reactiveValues(yoSelected=NULL) # status line updats with this but not plots
-  state <- reactiveValues(rda="",
+  state <- reactiveValues(comments=NULL,
+                          rda="",
                           flag=NULL,
                           focusYo=1,
                           gliderExists=FALSE,
@@ -335,13 +335,13 @@ server <- function(input, output, session) {
     ##. }
     ##. msg("    after despikePressure:                           sum(!visible) =", sum(!visible), "\n")
     ## 4. remove pressures less than a specified limit
-    if (input$hideTop > 0) {
+    if (!is.null(input$hideTop) && input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
     msg("    after hideTop:                                   sum(!visible) =", sum(!visible), "\n")
     ## 5. hide initial yos
-    if (input$hideInitialYos > 0)
+    if (!is.null(input$hideInitialYos) && input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
     msg("    after hideInitialYos:                            sum(!visible) =", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
@@ -529,7 +529,7 @@ server <- function(input, output, session) {
   })
 
   output$comment <- renderUI({
-    actionButton(inputId="commentButton", label=h6("Add Comment"))
+    actionButton(inputId="commentButton", label=h6(paste("Add Comment #", 1+length(state$comments), sep="")))
   })
 
 
@@ -791,10 +791,10 @@ server <- function(input, output, session) {
       ##   res <- paste0(res, "[selected yo=", state$yoSelected, "]")
       if (!is.null(global$yoSelected))
         res <- paste0(res, "[selected yo=", global$yoSelected, "]")
-      res <- paste0(res, "[", length(comments), " comments]")
-      msg("comments:\n")
-      for (com in comments)
-        msg(com, "\n")
+      ## res <- paste0(res, "[", length(state$comments), " state$comments]")
+      ## msg("comments:\n")
+      ## for (com in comments)
+      ##   msg(com, "\n")
     }
     res
   })
@@ -1039,7 +1039,7 @@ server <- function(input, output, session) {
   observeEvent(input$commentOK,
                {
                  if (!is.null(input$comment)) {
-                   comments <<- c(comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
+                   state$comments <<- c(state$comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
                    removeModal()
                    HIDE <<- FALSE
                  }
@@ -1064,9 +1064,9 @@ server <- function(input, output, session) {
                  ## changes?  Besides, a human would be able to just look at the flags, to tell.
 
                  ## Save user-supplied comments in the processing log
-                 if (length(comments) > 0) {
+                 if (length(state$comments) > 0) {
                    pl <- g@processingLog
-                   for (comment in comments)
+                   for (comment in state$comments)
                      pl <- processingLogAppend(pl, comment)
                    g@processingLog <- pl
                  }
@@ -1075,8 +1075,7 @@ server <- function(input, output, session) {
                  withProgress(message=paste0("Saving '", rda, "'"),
                               value=0,
                               {
-                                save(g, glider, mission, sourceDirectory, edits, comments,
-                                     file=rda)
+                                save(g, glider, mission, sourceDirectory, edits, file=rda)
                               }
                               )
                  msg("  ... finished saving to file '", rda, "'\n", sep="")
