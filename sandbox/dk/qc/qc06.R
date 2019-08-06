@@ -34,6 +34,24 @@ marPaletteTS <- c(fullmar, 1, 1, 1)
 marTS <- c(fullmar, fullmar, 1, fullmar+2.5)
 colHistMean <- "forestgreen"
 colHist3SD <- "red"
+comments <- NULL
+
+keypressHelp <- "
+<ul>
+<li> '<b>n</b>': in yo-focus, go to the next yo. (Ignored in mission-focus.)
+<li> '<b>p</b>`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
+<li> '<b>m</b>': in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
+<li> '<b>y</b>': in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
+<li> '<b>s</b>': in mission-focus, select the yo number under the mouse, so that
+the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in mission-focus.)
+<li> '<b>c</b>': in mission-focus, copy yo number nearest the mouse to an internal
+buffer, so next '<b>y</b>' key-press will graph that yo.  (Ignored in mission-focus.)
+<li> <b>'p'</b>: switch plot type to <i>p(t)</i>
+<li> <b>'s'</b>: switch plot type to <i>S(t)</i>
+<li> <b>'t'</b>: switch plot type to <i>TS</i>
+<li> '<b>?</b>': show this summary
+</ul>"
+
 
 library(shiny)
 library(shinythemes)
@@ -174,31 +192,22 @@ ui <- fluidPage(shinythemes::themeSelector(),
                          column(2,
                                 uiOutput(outputId="listRda"),
                                 uiOutput(outputId="loadRda"),
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="saveRda"))),
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="comment")),
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="saveRda"))),
                          column(2,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="plotChoice")),
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="colorBy")),
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="plotType"))),
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="plotChoice")),
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="colorBy")),
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="plotType"))),
                          column(2,
-                                conditionalPanel(condition="output.gliderExists",
-                                                 uiOutput(outputId="focus")),
-                                conditionalPanel(condition="input.focus == 'yo'",
-                                                 uiOutput(outputId="focusYo")))
+                                conditionalPanel(condition="output.gliderExists", uiOutput(outputId="focus")),
+                                conditionalPanel(condition="input.focus == 'yo'", uiOutput(outputId="focusYo")))
                                 ## conditionalPanel(condition="input.focus == 'yo'",
                                 ##                  uiOutput(outputId="flagYo"))
                          ),
-                fluidRow(column(2, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="trimOutliers"))),
-                         column(2, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="hideInitialYos"))),
-                         column(2, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="hideTop"))),
-                         column(2, conditionalPanel(condition="output.gliderExists",
-                                                    uiOutput(outputId="hideAfterPowerOn")))
+                fluidRow(column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="trimOutliers"))),
+                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideInitialYos"))),
+                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideTop"))),
+                         column(2, conditionalPanel(condition="output.gliderExists", uiOutput(outputId="hideAfterPowerOn")))
                          ),
                 ## fluidRow(#column(3,
                 ##          #       conditionalPanel(condition="output.gliderExists",
@@ -207,11 +216,9 @@ ui <- fluidPage(shinythemes::themeSelector(),
                 ##                 conditionalPanel(condition="output.gliderExists",
                 ##                                  uiOutput(outputId="trimOutliers")))
                 ##          ),
-                fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="navState"))
+                fluidRow(conditionalPanel(condition="output.gliderExists", uiOutput(outputId="navState"))
                 ),
-                fluidRow(conditionalPanel(condition="output.gliderExists",
-                                          uiOutput(outputId="status"))
+                fluidRow(conditionalPanel(condition="output.gliderExists", uiOutput(outputId="status"))
                 ),
                 fluidRow(conditionalPanel(condition="output.gliderExists",
                                           plotOutput("plot",
@@ -545,18 +552,20 @@ server <- function(input, output, session) {
     }
   })
 
+  output$comment <- renderUI({
+    actionButton(inputId="commentButton", label=h6("Add Comment"))
+  })
+
+
   output$saveRda <- renderUI({
     ##msg("output$saveRda\n")
     ## hr()
-    actionButton(inputId="saveRda", label="Save")
+    actionButton(inputId="saveRda", label=h6("Save Work"))
   })
 
   output$focus <- renderUI({
     ##msg("output$focus\n")
-    selectInput(inputId="focus",
-                label=h6("Focus"),
-                choices=c("mission <m>"="mission", "yo <y>"="yo"),
-                selected="mission")
+    selectInput(inputId="focus", label=h6("Focus"), choices=c("mission <m>"="mission", "yo <y>"="yo"), selected="mission")
   })
 
   output$plotChoice <- renderUI({
@@ -614,15 +623,17 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$keypressTrigger, {
+               if (input$commentButton)
+                 return()
                msg("keypress '", input$keypress, "'\n", sep="")
                if (input$keypress == 109) { # "m" only works if focus is 'yo'
                  ##msg("  m=mission-focus\n")
                  if (input$focus == "yo")
-                     updateTextInput(session, "focus", value="mission")
+                   updateTextInput(session, "focus", value="mission")
                } else if (input$keypress == 121) { # "y" only works if focus is 'mission'
                  ##msg("  y=yo-focus\n")
                  if (input$focus == "mission")
-                     updateTextInput(session, "focus", value="yo")
+                   updateTextInput(session, "focus", value="yo")
                } else if (input$keypress == 110) { # "n" only works if focus is 'yo'
                  ##msg("  n=next yo\n")
                  if (input$focus == "yo") {
@@ -652,26 +663,7 @@ server <- function(input, output, session) {
                  ##msg("after interpreting 'c' keypress, state$yoSelected=", state$yoSelected, "\n")
                  msg("after interpreting 'c' keypress, global$yoSelected=", global$yoSelected, "\n")
                } else if (input$keypress == 63) { # "?" gives help
-                 showModal(modalDialog(title="Key-stroke commands",
-        HTML("
-<ul>
-<li> '<b>n</b>': in yo-focus, go to the next yo. (Ignored in mission-focus.)
-<li> '<b>p</b>`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
-<li> '<b>m</b>': in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
-<li> '<b>y</b>': in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
-<li> '<b>s</b>': in mission-focus, select the yo number under the mouse, so that
-the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
-  mission-focus.)
-<li> '<b>c</b>': in mission-focus, copy yo number nearest the mouse to an internal
-  buffer, so next '<b>y</b>' key-press will graph that yo.  (Ignored in
-  mission-focus.)
-<li> <b>'p'</b>: switch plot type to <i>p(t)</i>
-<li> <b>'s'</b>: switch plot type to <i>S(t)</i>
-<li> <b>'t'</b>: switch plot type to <i>TS</i>
-<li> '<b>?</b>': show this summary
-</ul>"),
-        easyClose = TRUE
-        ))
+                 showModal(modalDialog(title="Key-stroke commands", HTML(keypressHelp), easyClose=TRUE))
                }
   })
 
@@ -824,6 +816,10 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
       ##   res <- paste0(res, "[selected yo=", state$yoSelected, "]")
       if (!is.null(global$yoSelected))
         res <- paste0(res, "[selected yo=", global$yoSelected, "]")
+      res <- paste0(res, "[", length(comments), " comments]")
+      msg("comments:\n")
+      for (com in comments)
+        msg(com, "\n")
     }
     res
   })
@@ -1047,30 +1043,52 @@ the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in
                state$gliderExists <<- TRUE
   })
 
-  observeEvent(input$saveRda, {
-               ###msg("saveRda...\n")
-               rda <- rdaName()
-               ###msg("  save 'g' and 'edits' to '", rda, "' ...\n", sep="")
-               visible <- g[["navState"]] %in% input$navState
-               g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
-               saveEditEvent("on file save, ignoring hidden navState", !visible)
-               ###msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
-               mission <- input$mission
-               glider <- input$glider
-               sourceDirectory <- dataName()
-               ## Will use a single flag
-               g@metadata$flags$payload1 <<- list(overall=state$flag)
-               msg("saving with sum(2==g@metadata$flags$payload1$overall)/length(same) = ",
-                   sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
-               withProgress(message=paste0("Saving '", rda, "'"),
-                            value=0,
-                            {
-                              save(g, glider, mission, sourceDirectory, edits,
-                                   file=rda)
-                            }
-                            )
-               msg("  ... finished saving to file '", rda, "'\n", sep="")
-  })
+  commentDialog <- function(failed=FALSE)
+  {
+    modalDialog(textInput("comment", "Processing Notes", placeholder='(Optional)'),
+                footer=tagList(modalButton("Cancel"), actionButton("commentOK", "OK")))
+  }
+
+  observeEvent(input$commentButton,
+               {
+                 showModal(commentDialog())
+               }
+  )
+
+  observeEvent(input$commentOK,
+               {
+                 if (!is.null(input$comment)) {
+                   comments <<- c(comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
+                   removeModal()
+                 }
+               }
+  )
+
+  observeEvent(input$saveRda,
+               {
+                 ## msg("saveRda...\n")
+                 rda <- rdaName()
+                 visible <- g[["navState"]] %in% input$navState
+                 g@metadata$flags$payload1$pressure <<- ifelse(visible, state$flag, 3)
+                 saveEditEvent("on file save, ignoring hidden navState", !visible)
+                 ## msg("  updated edits; new length is ", length(edits), "; sum(!visible)=", sum(!visible), "\n", sep="")
+                 mission <- input$mission
+                 glider <- input$glider
+                 sourceDirectory <- dataName()
+                 ## Will use a single flag
+                 g@metadata$flags$payload1 <<- list(overall=state$flag)
+                 msg("saving with sum(2==g@metadata$flags$payload1$overall)/length(same) = ",
+                     sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
+                 withProgress(message=paste0("Saving '", rda, "'"),
+                              value=0,
+                              {
+                                save(g, glider, mission, sourceDirectory, edits, comments,
+                                     file=rda)
+                              }
+                              )
+                 msg("  ... finished saving to file '", rda, "'\n", sep="")
+               }
+  )
 
   output$plot <- renderPlot({
     msg("\nplot with input: focus='", input$focus, "'",
