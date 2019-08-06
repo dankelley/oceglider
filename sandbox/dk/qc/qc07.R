@@ -2,7 +2,7 @@
 HIDE <- FALSE
 appName <- "glider QC"
 appVersion <- "0.7"
-debugFlag <- TRUE                      # a button lets user set this on and off
+debugFlag <- !FALSE                     # A button controls this. If on, we get lots of console message + a theme selector.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
 ## * Data-quality Flag Scheme
@@ -39,18 +39,16 @@ comments <- NULL
 
 keypressHelp <- "
 <ul>
-<li> '<b>n</b>': in yo-focus, go to the next yo. (Ignored in mission-focus.)
-<li> '<b>p</b>`: in yo-focus, go to the previous yo. (Ignored in mission-focus.)
-<li> '<b>m</b>': in yo-focus, switch to mission-focus. (Ignored in mission-focus.)
-<li> '<b>y</b>': in mission-focus, switch to yo-focus. (Ignored in yo-focus.)
-<li> '<b>s</b>': in mission-focus, select the yo number under the mouse, so that
-the next '<b>y</b>' operation will open a graph for that yo.  (Ignored in mission-focus.)
-<li> '<b>c</b>': in mission-focus, copy yo number nearest the mouse to an internal
-buffer, so next '<b>y</b>' key-press will graph that yo.  (Ignored in mission-focus.)
-<li> <b>'p'</b>: switch plot type to <i>p(t)</i>
-<li> <b>'s'</b>: switch plot type to <i>S(t)</i>
-<li> <b>'t'</b>: switch plot type to <i>TS</i>
-<li> '<b>?</b>': show this summary
+<li> '<b>N</b>': go to <b>NEXT</b> yo (if in yo-focus).
+<li> '<b>P</b>`: go to <b>PREVIOUS</b> yo (if in yo-focus).
+<li> '<b>M</b>': switch to <b>MISSION</b>-focus.
+<li> '<b>Y</b>': switch to <b>YO</b>-focus.
+<li> '<b>C</b>': in mission-focus, <b>REMEMBER</b> yo near mouse,
+so next yo-focus graph will show it.
+<li> '<b>p</b>': plot a <b>pressure</b> time-series, i.e. <i>p(t)</i>.
+<li> '<b>s</b>': plot a <b>salinity</b> time-series, i.e. <i>S(t)</i>.
+<li> '<b>t</b>': plot a <b>temperature-salinity</b> diagram, i.e. <i>TS</i>.
+<li> '<b>?</b>': show this summary.
 </ul>"
 
 
@@ -60,7 +58,7 @@ library(oce)
 library(oceanglider)
 ##library(shinycssloaders)
 
-options(oceEOS="gsw")
+options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let user choose.
 
 N2profile <- function(pressure, sigma0, g=9.8, L=1, rho0=1025)
 {
@@ -169,17 +167,20 @@ maxYo <- NULL
 powerOnThreshold <- 60 # if no samples during this number of seconds, assume power was off
 powerOffIndex <- NULL
 
-ui <- fluidPage(shinythemes::themeSelector(),
-                tags$script('$(document).on("keypress",
+ui <- fluidPage(tags$script('$(document).on("keypress",
                             function (e) {
                               Shiny.onInputChange("keypress", e.which);
                               Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
+                conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
                 fluidRow(column(1, h6(paste(appName, appVersion))),
-                         column(2, checkboxInput("debug", h6("Debug"), value=TRUE)),
-                         column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE))),
+                         column(1, checkboxInput("debug", h6("Debug"), value=!FALSE)),
+                         column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE)),
+                         conditionalPanel(condition="output.gliderExists",
+                                          column(2, uiOutput(outputId="comment")),
+                                          column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
-                                 fluidRow(includeMarkdown("qc06_help.md"))),
+                                 fluidRow(includeMarkdown("qc07_help.md"))),
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(uiOutput(outputId="glider"),
                                           uiOutput(outputId="mission"),
@@ -187,19 +188,18 @@ ui <- fluidPage(shinythemes::themeSelector(),
                                  fluidRow(column(2, uiOutput(outputId="read")),
                                           column(2, uiOutput(outputId="loadRda")))),
                 conditionalPanel(condition="output.gliderExists",
-                                 fluidRow(uiOutput(outputId="comment"),
-                                          uiOutput(outputId="saveRda")),
-                                 fluidRow(uiOutput(outputId="plotChoice"),
-                                          uiOutput(outputId="colorBy"),
-                                          uiOutput(outputId="plotType"),
-                                          uiOutput(outputId="focus"),
-                                          uiOutput(outputId="focusYo")),
-                                 fluidRow(uiOutput(outputId="trimOutliers"),
-                                          uiOutput(outputId="hideInitialYos"),
-                                          uiOutput(outputId="hideTop"),
-                                          uiOutput(outputId="hideAfterPowerOn")),
-                                 fluidRow(uiOutput(outputId="navState"),
-                                          uiOutput(outputId="status")),
+                                 fluidRow(column(2, uiOutput(outputId="plotChoice")),
+                                          column(2, uiOutput(outputId="colorBy")),
+                                          column(2, uiOutput(outputId="plotType")),
+                                          column(2, uiOutput(outputId="focus")),
+                                          column(2, uiOutput(outputId="focusYo"))),
+                                 fluidRow(column(2, uiOutput(outputId="trimOutliers")),
+                                          column(2, uiOutput(outputId="hideInitialYos")),
+                                          column(2, uiOutput(outputId="hideTop")),
+                                          column(2, uiOutput(outputId="hideAfterPowerOn"))),
+                                 fluidRow(uiOutput(outputId="navState")),
+                                 fluidRow(uiOutput(outputId="status")),
+                                 ## FIXME: add a second status line
                                  fluidRow(plotOutput("plot",
                                                      hover="hover",
                                                      dblclick="dblclick",
@@ -491,7 +491,7 @@ server <- function(input, output, session) {
   })
 
   output$glider <- renderUI({
-    state$gliderExists <- FALSE
+    ##state$gliderExists <- FALSE
     selectInput(inputId="glider",
                 label=h6("Select a glider and then a mission"),
                 choices=gliders,
@@ -499,7 +499,7 @@ server <- function(input, output, session) {
   })
 
   output$mission <- renderUI({
-    state$gliderExists <- FALSE
+    ##state$gliderExists <- FALSE
     selectInput(inputId="mission",
                 label="",
                 choices=missions[input$glider],
@@ -521,8 +521,8 @@ server <- function(input, output, session) {
   })
 
   output$loadRda <- renderUI({
-    ##msg("output$loadRda\n")
     files <- relevantRdaFiles(input$glider, input$mission)
+    msg("output$loadRda with length(files)=", length(files), "\n", sep="")
     if (length(files)) {
       actionButton(inputId="loadRdaAction", label=h6("Load previous"))
     }
@@ -550,7 +550,7 @@ server <- function(input, output, session) {
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
                 choices=c("TS <t>"="TS",
                           "C(t)"="conductivity time-series",
-                          "p(t) <p>"="pressure time-series",
+                          "p(t)"="pressure time-series",
                           "S(t) <s>"="salinity time-series",
                           "spiciness(t)"="spiciness time-series",
                           "T(t)"="temperature time-series",
@@ -593,7 +593,7 @@ server <- function(input, output, session) {
   output$focusYo <- renderUI({
     numericInput("focusYo",
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
-                 if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep=""),
+                 h6(if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep="")),
                  value=if (is.null(global$yoSelected)) "1" else global$yoSelected)
                  ##value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
@@ -603,44 +603,39 @@ server <- function(input, output, session) {
                  ## msg("keypress '", input$keypress, "' ignored, since processing a modalDialog\n", sep="")
                  return()
                }
-               msg("keypress '", input$keypress, "'\n", sep="")
-               if (input$keypress == 109) { # "m" only works if focus is 'yo'
-                 ##msg("  m=mission-focus\n")
+               key <- intToUtf8(input$keypress)
+               msg("keypress numerical value ", input$keypress, ", i.e. key='", key, "'\n", sep="")
+               if (key == 'M' && input$focus == "yo") {
+                 msg("switch to mission-focus\n")
                  if (input$focus == "yo")
                    updateTextInput(session, "focus", value="mission")
-               } else if (input$keypress == 121) { # "y" only works if focus is 'mission'
-                 ##msg("  y=yo-focus\n")
-                 if (input$focus == "mission")
-                   updateTextInput(session, "focus", value="yo")
-               } else if (input$keypress == 110) { # "n" only works if focus is 'yo'
-                 ##msg("  n=next yo\n")
+               } else if (key == 'Y' && input$focus == "mission") {
+                 msg("switch to yo-focus\n")
+                 updateTextInput(session, "focus", value="yo")
+               } else if (key == 'N' && input$focus == "yo") {
+                 msg("go to next yo\n")
                  if (input$focus == "yo") {
                    if (input$focusYo < maxYo)
                      updateNumericInput(session, "focusYo", value=input$focusYo+1)
                  }
-               } else if (input$keypress == 112) { # "p" only works if focus is 'yo'
-                 ##msg("  p=previous yo\n")
-                 if (input$focus == "yo") {
-                   if (input$focusYo > (input$hideInitialYos+1))
-                     updateNumericInput(session, "focusYo", value=input$focusYo-1)
-                 }
-               } else if (input$keypress %in% c(80, 112)) { # "p" or "P"
-                 ## switch plotType to "pressure time-series"
+               } else if (key == 'P' && input$focus == "yo") {
+                 msg("go to previous yo (if possible)\n")
+                 if (input$focusYo > (input$hideInitialYos+1))
+                   updateNumericInput(session, "focusYo", value=input$focusYo-1)
+               } else if (key == 'p') {
+                 msg("switch plotChoice to p(t)\n")
                  updateTextInput(session, "plotChoice", value="pressure time-series")
-               } else if (input$keypress %in% c(83, 115)) { # "s" or "S"
-                 ## switch plotType to "S(t)"
+               } else if (key == 's') {
+                 msg("switch plotChoice to S(t)\n")
                  updateTextInput(session, "plotChoice", value="salinity time-series")
-               } else if (input$keypress %in% c(84, 116)) { # "t" or "T"
-                 ## switch plotType to "TS"
+               } else if (key == 't') {
+                 msg("switch plotChoice to TS\n")
                  updateTextInput(session, "plotChoice", value="TS")
-               } else if (input$keypress %in% c(67, 99)) { # "c"  or "C"
-                 ## should only work if focus is 'mission'
-                 ##msg("before: yoSelected=", state$yoSelected, "\n")
-                 msg(" 'c' pressed (input$hover$x=", input$hover$x, ", input$hover$y=", input$hover$y, ")\n")
+               } else if (key == 'R' && input$focus == "mission") {
+                 msg("remember yo near mouse at (", input$hover$x, ", ", input$hover$y, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
-                 ##msg("after interpreting 'c' keypress, state$yoSelected=", state$yoSelected, "\n")
-                 msg("after interpreting 'c' keypress, global$yoSelected=", global$yoSelected, "\n")
-               } else if (input$keypress == 63) { # "?" gives help
+                 msg("after interpreting 'R' keypress, global$yoSelected=", global$yoSelected, "\n")
+               } else if (key == '?') {
                  showModal(modalDialog(title="Key-stroke commands", HTML(keypressHelp), easyClose=TRUE))
                }
   })
@@ -736,6 +731,7 @@ server <- function(input, output, session) {
   })
 
   output$status <- renderText({
+    msg("**output$status**. state$gliderExists=", state$gliderExists, "\n")
     hoverx <- input$hover$x
     hovery <- input$hover$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
@@ -743,6 +739,7 @@ server <- function(input, output, session) {
     if (!is.null(hoverx) && plotExists) {
       ## BOOKMARK_plot_type_2_of_4: note that 1, 3 and 4 must align with this
       if (input$plotChoice == "TS") {
+        msg("**TS plot**\n")
         x <- g[["SA"]]
         y <- g[["CT"]]
       } else if (grepl("time-series$", input$plotChoice)) {
@@ -803,8 +800,12 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$debug, {
-               if (!is.null(input$debug))
+               ## cat(file=stderr(), ">> input$debug=", input$debug, "\n")
+               ## cat(file=stderr(), ">> debugFlag=", debugFlag, " (before)\n")
+               if (!is.null(input$debug)) {
                  debugFlag <<- input$debug
+               }
+               ##cat(file=stderr(), ">> debugFlag=", debugFlag, " (after)\n")
   })
 
 
@@ -989,12 +990,13 @@ server <- function(input, output, session) {
                filename <- paste(tolower(input$glider), tolower(input$mission),
                                  "_", substr(input$rdaInputFile, 1, 8),
                                  "_", substr(input$rdaInputFile, 9, 12), ".rda", sep="")
-               ###msg("  load from '", filename, "' ..", sep="")
                filename <- paste(input$rdaInputFile, ".rda", sep="")
+               msg("  load from '", filename, "' ..", sep="")
                withProgress(message=paste0("Loading '", filename, "'"), value=0,
                             {
                               load(filename)
                             })
+               msg(".  done\n")
                g <<- g
                p <<- g[["pressure"]]
                pmean <<- mean(p, na.rm=TRUE)
