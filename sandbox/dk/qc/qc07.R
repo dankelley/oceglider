@@ -37,16 +37,20 @@ colHistMean <- "forestgreen"
 colHist3SD <- "red"
 
 keypressHelp <- "
+<i>Lower-case letters for focus shifts.</i>
 <ul>
-<li> '<b>N</b>': go to <b>NEXT</b> yo (if in yo-focus).
-<li> '<b>P</b>`: go to <b>PREVIOUS</b> yo (if in yo-focus).
-<li> '<b>M</b>': switch to <b>MISSION</b>-focus.
-<li> '<b>Y</b>': switch to <b>YO</b>-focus.
-<li> '<b>C</b>': in mission-focus, <b>REMEMBER</b> yo near mouse,
-so next yo-focus graph will show it.
-<li> '<b>p</b>': plot a <b>pressure</b> time-series, i.e. <i>p(t)</i>.
-<li> '<b>s</b>': plot a <b>salinity</b> time-series, i.e. <i>S(t)</i>.
-<li> '<b>t</b>': plot a <b>temperature-salinity</b> diagram, i.e. <i>TS</i>.
+<li> '<b>n</b>': go to <b>n</b>ext yo (if in yo-focus).
+<li> '<b>p</b>`: go to <b>p</b>revious yo (if in yo-focus).
+<li> '<b>m</b>': switch to <b>m</b>ission-focus.
+<li> '<b>y</b>': switch to <b>y</b>o-focus.
+<li> '<b>c</b>': <b>c</b>opy number of yo near mouse, so next yo-focus graph will show it.
+</ul>
+
+<i>Upper-case letters for plot types.</i>
+<ul>
+<li> '<b>P</b>': plot a <b>P</b>ressure time-series, i.e. <i>p(t)</i>.
+<li> '<b>S</b>': plot a <b>S</b>alinity time-series, i.e. <i>S(t)</i>.
+<li> '<b>T</b>': plot a <b>T</b>emperature-Salinity diagram, i.e. <i>TS</i>.
 <li> '<b>?</b>': show this summary.
 </ul>"
 
@@ -185,7 +189,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="mission")),
                                           column(3, uiOutput(outputId="listRda"))),
                                  fluidRow(column(2, uiOutput(outputId="read")),
-                                          column(2, uiOutput(outputId="loadRda")))),
+                                          column(2, uiOutput(outputId="loadRda"), offset=2))),
                 conditionalPanel(condition="output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="plotChoice")),
                                           column(2, uiOutput(outputId="colorBy")),
@@ -212,6 +216,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
 
 server <- function(input, output, session) {
 
+  source <- list(file="?", type="?")
   global <- reactiveValues(yoSelected=NULL) # status line updats with this but not plots
   state <- reactiveValues(comments=NULL,
                           rda="",
@@ -523,7 +528,7 @@ server <- function(input, output, session) {
     files <- relevantRdaFiles(input$glider, input$mission)
     msg("output$loadRda with length(files)=", length(files), "\n", sep="")
     if (length(files)) {
-      actionButton(inputId="loadRdaAction", label=h6("Load previous"))
+      actionButton(inputId="loadRdaAction", label=h6("Load Previous Analysis"))
     }
   })
 
@@ -533,12 +538,14 @@ server <- function(input, output, session) {
 
   output$saveRda <- renderUI({
     ##msg("output$saveRda\n")
-    actionButton(inputId="saveRda", label=h6("Save Work"))
+    actionButton(inputId="saveRda", label=h6("Save Analysis"))
   })
 
   output$info <- renderText({
     msg("output$info\n")
-    paste("state$rda=", state$rda, sep="")
+    paste("glider=", input$glider, ", mission=", input$mission, ", source=", source$file,
+          if (source$type == "rda") " (loaded from previous analysis)" else " (read from raw data)",
+          sep="")
   })
 
   output$focus <- renderUI({
@@ -549,10 +556,10 @@ server <- function(input, output, session) {
     selectInput(inputId="plotChoice",
                 label=h6("Plot"),
                 ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("TS <t>"="TS",
+                choices=c("TS <T>"="TS",
                           "C(t)"="conductivity time-series",
-                          "p(t)"="pressure time-series",
-                          "S(t) <s>"="salinity time-series",
+                          "p(t) <P>"="pressure time-series",
+                          "S(t) <S>"="salinity time-series",
                           "spiciness(t)"="spiciness time-series",
                           "T(t)"="temperature time-series",
                           "tSincePowerOn(t)"="tSincePowerOn time-series",
@@ -606,36 +613,36 @@ server <- function(input, output, session) {
                }
                key <- intToUtf8(input$keypress)
                msg("keypress numerical value ", input$keypress, ", i.e. key='", key, "'\n", sep="")
-               if (key == 'M' && input$focus == "yo") {
+               if (key == 'm' && input$focus == "yo") {
                  msg("switch to mission-focus\n")
                  if (input$focus == "yo")
                    updateTextInput(session, "focus", value="mission")
-               } else if (key == 'Y' && input$focus == "mission") {
+               } else if (key == 'y' && input$focus == "mission") {
                  msg("switch to yo-focus\n")
                  updateTextInput(session, "focus", value="yo")
-               } else if (key == 'N' && input$focus == "yo") {
+               } else if (key == 'n' && input$focus == "yo") {
                  msg("go to next yo\n")
                  if (input$focus == "yo") {
                    if (input$focusYo < maxYo)
                      updateNumericInput(session, "focusYo", value=input$focusYo+1)
                  }
-               } else if (key == 'P' && input$focus == "yo") {
+               } else if (key == 'p' && input$focus == "yo") {
                  msg("go to previous yo (if possible)\n")
                  if (input$focusYo > (input$hideInitialYos+1))
                    updateNumericInput(session, "focusYo", value=input$focusYo-1)
-               } else if (key == 'p') {
+               } else if (key == 'P') {
                  msg("switch plotChoice to p(t)\n")
                  updateTextInput(session, "plotChoice", value="pressure time-series")
-               } else if (key == 's') {
+               } else if (key == 'S') {
                  msg("switch plotChoice to S(t)\n")
                  updateTextInput(session, "plotChoice", value="salinity time-series")
-               } else if (key == 't') {
+               } else if (key == 'T') {
                  msg("switch plotChoice to TS\n")
                  updateTextInput(session, "plotChoice", value="TS")
-               } else if (key == 'R' && input$focus == "mission") {
+               } else if (key == 'c' && input$focus == "mission") {
                  msg("remember yo near mouse at (", input$hover$x, ", ", input$hover$y, ")\n")
                  saveYoAtMouse(input$hover$x, input$hover$y)
-                 msg("after interpreting 'R' keypress, global$yoSelected=", global$yoSelected, "\n")
+                 msg("after interpreting keypress, global$yoSelected=", global$yoSelected, "\n")
                } else if (key == '?') {
                  showModal(modalDialog(title="Key-stroke commands", HTML(keypressHelp), easyClose=TRUE))
                }
@@ -918,6 +925,8 @@ server <- function(input, output, session) {
                  showModal(modalDialog("", paste0("no .pld1. files in directory '", dir, "'")))
                  stop()
                }
+               source$file <<- dir
+               source$type <<- "raw"
                p <<- g[["pressure"]]
                ndata <<- length(p)
                pmean <<- mean(p, na.rm=TRUE)
@@ -997,6 +1006,8 @@ server <- function(input, output, session) {
                             {
                               load(filename)
                             })
+               source$file <<- filename
+               source$type <<- "rda"
                msg(".  done\n")
                g <<- g
                p <<- g[["pressure"]]

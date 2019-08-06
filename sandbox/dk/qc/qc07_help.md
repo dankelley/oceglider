@@ -17,9 +17,7 @@ Please contact the author at kelley.dan@gmail.com if you see ways that the app
 might be altered, to be of more benefit to you and other users.
 
 
-**Working this app**
-
-*Loading data*
+**Loading data**
 
 1. Use the pull-down menus in the leftmost column to select a glider and
    mission.  This menu is constructed from examination of data available on
@@ -37,7 +35,7 @@ is searched. One of these directories must hold data for this app to work.
 analysis.  (These previous analyses are stored in `.rda` files in the present
 directory, when you press the button labeled `Save`.)
 
-*Examining and flagging data*
+**Examining and flagging data**
 
 After the data is loaded, a plot will appear. Above the plot is a status line
 that describes the data nearest the hovering location of the mouse.  Menu items
@@ -58,25 +56,29 @@ near-surface data are often spurious, and are not of interest to the analysis.
 Unlike brushing, which permanently flags data, this is a reversible operation;
 simply click any unchecked boxes to recover hidden data.
 
-*Keyboard shortcuts*
+**Keyboard shortcuts**
 
 The following key-press events provide a quick way to navigate graphical views.
 (Whether a given event has an effect depends on the focus.)
 
-* `N`: go to **NEXT** yo (if in yo-focus).
-* `P`: go to **PREVIOUS** yo (if in yo-focus).
-* `M`: switch to **MISSION**-focus.
-* `Y`: switch to **YO**-focus.
-* `C`: in mission-focus, **REMEMBER** yo near mouse,
-so next yo-focus graph will show it.
-* `p`: plot a **pressure** time-series, i.e. *p(t)*.
-* `s`: plot a **salinity** time-series, i.e. *S(t)*.
-* `t`: plot a **temperature-salinity** diagram, i.e. *TS*.
+*Lower-case letters for focus shifts.*
+
+* `n`: go to **n**ext yo (if in yo-focus).
+* `p`: go to **p**revious yo (if in yo-focus).
+* `m`: switch to **m**ission-focus.
+* `y`: switch to **y**o-focus.
+* `c`: **c**opy number of yo near mouse, so next yo-focus graph will show it.
+
+*Upper-case letters for plot types.*
+
+* `P`: plot a **P**ressure time-series, i.e. *p(t)*.
+* `S`: plot a **Sa**linity time-series, i.e. *S(t)*.
+* `T`: plot a **T**emperature-salinity diagram, i.e. *TS*.
 * `?`: show this summary.
 
-*Typical workflow*
+**Typical workflow**
 
-A typical workflow for editing wild data involves a cycle:
+A typical workflow might involve a cycle:
 
 * Start at mission-focus, with the `Plot` menu set to `p(t)`
   to show a pressure time-series.  Try colourizing by
@@ -100,13 +102,13 @@ A typical workflow for editing wild data involves a cycle:
   interval after power-on.
   2. Another anomalous pattern shows up as red and
   green pairs of horizontal lines in the TS diagram, which indicates
-  salinity anomalies.  Handle these by putting the mouse over one of 
+  salinity anomalies.  Handle these by putting the mouse over one of
   points in `mission` focus, typing `s` to select the relevant
   yo, and then typing `y` to go to focus on that yo. Since bad salinity
   is the culprit, it can help to set `Plot` to `S(t)`, in
   which the odd salinity is likely easily seen.  Drag
   the mouse to create a rectangle that encloses points that appear
-  to be anomalous, and they will be discarded from future analysis. 
+  to be anomalous, and they will be discarded from future analysis.
 * Press `m` to return to mission focus, and continue looking for suspicious
   data. Work back and forth between yo and mission focus views, trying
   whatever combinations of plot types and colourizing schemes seem to
@@ -119,7 +121,7 @@ Use the pull-down menus if you find these more convenient than using the
 keyboard.
 
 
-*Saving data*
+**Saving data**
 
 The `Save` button saves the original glider object, but with the `pressure`
 flag set to 3 for any data that have been flagged as suspicious, whether by
