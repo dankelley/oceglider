@@ -1,5 +1,5 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
-
+HIDE <- FALSE
 appName <- "glider QC"
 appVersion <- "0.6"
 debugFlag <- TRUE                      # a button lets user set this on and off
@@ -623,8 +623,10 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$keypressTrigger, {
-               if (input$commentButton)
+               if (HIDE) {
+                 ## msg("keypress '", input$keypress, "' ignored, since processing a modalDialog\n", sep="")
                  return()
+               }
                msg("keypress '", input$keypress, "'\n", sep="")
                if (input$keypress == 109) { # "m" only works if focus is 'yo'
                  ##msg("  m=mission-focus\n")
@@ -1051,6 +1053,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$commentButton,
                {
+                 HIDE <<- TRUE
                  showModal(commentDialog())
                }
   )
@@ -1060,6 +1063,7 @@ server <- function(input, output, session) {
                  if (!is.null(input$comment)) {
                    comments <<- c(comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
                    removeModal()
+                   HIDE <<- FALSE
                  }
                }
   )
@@ -1077,6 +1081,17 @@ server <- function(input, output, session) {
                  sourceDirectory <- dataName()
                  ## Will use a single flag
                  g@metadata$flags$payload1 <<- list(overall=state$flag)
+                 ## FIXME: decide what editing steps to save in the processing log. We likely do not want the *full* details,
+                 ## because that might end up doubling object size, and what human could make sense of thousands of lines of
+                 ## changes?  Besides, a human would be able to just look at the flags, to tell.
+
+                 ## Save user-supplied comments in the processing log
+                 if (length(comments) > 0) {
+                   pl <- g@processingLog
+                   for (comment in comments)
+                     pl <- processingLogAppend(pl, comment)
+                   g@processingLog <- pl
+                 }
                  msg("saving with sum(2==g@metadata$flags$payload1$overall)/length(same) = ",
                      sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
                  withProgress(message=paste0("Saving '", rda, "'"),
