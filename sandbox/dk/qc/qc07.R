@@ -77,15 +77,13 @@ plotNoValid <- function(msg="No data to plot")
 
 options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let user choose.
 
-N2profile <- function(pressure, sigma0, g=9.8, L=1, rho0=1025)
+N2profile <- function(pressure, sigma0, g=9.8, L=2, rho0=1025)
 {
   z <- swZ(pressure)
   o <- order(z)
   oo <- order(o)
   if (L > 0) {
     m <- runlm(z[o], sigma0[o], L=L)
-    sigma0 <- m$y[o]
-    z <- m$x[o]
     rval <- -g / rho0 * m$dydx
   } else {
     rval <- -g / rho0 * diff(sigma0)/diff(z)
@@ -202,9 +200,9 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="glider")),
                                           column(2, uiOutput(outputId="mission")),
-                                          column(3, uiOutput(outputId="listRda"))),
+                                          column(4, uiOutput(outputId="listRda"))),
                                  fluidRow(column(2, uiOutput(outputId="read")),
-                                          column(2, uiOutput(outputId="loadRda"), offset=2))),
+                                          column(4, uiOutput(outputId="loadRda"), offset=2))),
                 conditionalPanel(condition="output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="plotChoice")),
                                           column(2, uiOutput(outputId="colorBy")),
@@ -604,6 +602,7 @@ server <- function(input, output, session) {
                           "T"="temperature",
                           "S"="salinity",
                           "N2"="N2",
+                          "log10(neg. N2)"="lnN2",
                           "N2 extremes"="N2 extremes",
                           "navState"="navState",
                           "tSincePowerOn"="tSincePowerOn",
@@ -1169,6 +1168,13 @@ server <- function(input, output, session) {
               })
               msg(dataName, " time-series plot (coloured by navState) took elapsed time ", timing[3], "s\n", sep="")
               navStateLegend()
+            } else if (input$colorBy == "laN2") {
+              browser()
+              aN2 <- abs(g[["N2"]])
+              aN2min <- min(aN2[aN2>0], na.rm=TRUE)
+              aN2[aN2 < aN2min] <- aN2min
+              cm <- colormap(log10(aN2))
+
             } else if (input$colorBy == "N2 extremes") {
               timing <- system.time({
                 oce.plot.ts(x, y, ylim=ylim,
@@ -1182,7 +1188,6 @@ server <- function(input, output, session) {
                 points(x[highlight], y[highlight], cex=cex, pch=pch, col=ifelse(N2[highlight] > 0, "forestgreen", "red"))
               })
               msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
-
             } else {
               cm <- colormap(g[[input$colorBy]][look])
               par(mar=marPaletteTimeseries, mgp=mgp)
@@ -1290,7 +1295,18 @@ server <- function(input, output, session) {
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
               navStateLegend() # FIXME: put on RHS
             } else {
-              if (input$colorBy == "N2 extremes") {
+              if (input$colorBy == "lnN2") { # FIXME: get working, then copy to other types
+                N2 <- g[["N2"]][look]
+                N2n <- N2[N2 < 0]
+                zlim <- as.vector(quantile(log10(-N2n), c(0.005, 1-0.005), na.rm=TRUE))
+                cm <- colormap(log10(-N2[N2<0]), zlim=zlim)
+                par(mar=marPaletteProfile, mgp=mgp)
+                drawPalette(colormap=cm, zlab=input$colorBy)
+                par(mar=marProfile, mgp=mgp)
+                plot(x[N2<0], y[N2<0], ylim=ylim,
+                     type=input$plotType, pch=pch, cex=cex, col=cm$zcol,
+                     xlab="", ylab=resizableLabel("p"), axes=FALSE)
+              } else if (input$colorBy == "N2 extremes") {
                 par(mar=marProfile, mgp=mgp)
                 plot(x, y, ylim=ylim, col="gray", type=input$plotType, pch=pch, cex=cex,
                      xlab="", ylab=resizableLabel("p"), axes=FALSE)
