@@ -1018,6 +1018,18 @@ setMethod(f="summary",
                   odata <- as.list(odata)
               ndata <- length(odata)
               threes <- matrix(nrow=ndata, ncol=3)
+              odataNames <- names(odata)
+              if ("time" %in% odataNames) {
+                  from <- min(odata$time, na.rm=TRUE)
+                  to <- max(odata$time, na.rm=TRUE)
+                  nt <- length(odata$time)
+                  deltat <- mean(diff(as.numeric(odata$time)), na.rm=TRUE)
+                  if (is.na(deltat)) {
+                      cat("* Time:               ", format(from), "\n")
+                  } else {
+                      cat("* Time ranges from", format(from), "to", format(to), "with", nt, "samples and mean increment", deltat, "s\n")
+                  }
+              }
               for (i in 1:ndata)
                   threes[i, ] <- oce::threenum(odata[[i]])
               if ("units" %in% metadataNames) {
@@ -1088,6 +1100,8 @@ setMethod(f="summary",
                   }
                   owidth <- options('width')
                   options(width=150) # make wide to avoid line breaks
+                  if ("time" %in% odataNames)
+                      threes <- threes[-which("time" == odataNames), , drop=FALSE]
                   print(as.data.frame(threes), digits=5)
                   options(width=owidth$width)
                   cat("\n")
@@ -1104,18 +1118,31 @@ setMethod(f="summary",
                       cat("    mapping ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$mapping,
                                                                                    width.cutoff=400))), "\n\n", sep="")
                   }
-                  cat("* Data-quality Flags\n\n")
-                  width <- 1 + max(nchar(names(flags)))
-                  for (name in names(flags)) {
-                      padding <- rep(" ", width - nchar(name))
-                      if (!all(is.na(flags[[name]]))) {
-                          cat("    ", name, ":", padding, sep="")
-                          flagTable <- table(flags[[name]])
-                          flagTableLength <- length(flagTable)
-                          if (flagTableLength) {
-                              for (i in seq_len(flagTableLength)) {
-                                  cat("\"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
-                                  if (i != flagTableLength) cat(", ") else cat("\n")
+                  flagNames <- names(flags)
+                  if (is.null(flagNames)) {
+                      cat("* Data-quality Flags (one flag applies to all data)\n\n")
+                      flagTable <- table(flags)
+                      flagTableLength <- length(flagTable)
+                      if (flagTableLength) {
+                          for (i in seq_len(flagTableLength)) {
+                              cat("    \"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
+                              if (i != flagTableLength) cat(", ") else cat("\n")
+                          }
+                      }
+                  } else {
+                      cat("* Data-quality Flags\n\n")
+                      width <- 1 + max(nchar(flagNames))
+                      for (name in flagNames) {
+                          padding <- rep(" ", width - nchar(name))
+                          if (!all(is.na(flags[[name]]))) {
+                              cat("    ", name, ":", padding, sep="")
+                              flagTable <- table(flags[[name]])
+                              flagTableLength <- length(flagTable)
+                              if (flagTableLength) {
+                                  for (i in seq_len(flagTableLength)) {
+                                      cat("\"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
+                                      if (i != flagTableLength) cat(", ") else cat("\n")
+                                  }
                               }
                           }
                       }
