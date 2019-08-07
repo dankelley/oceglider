@@ -1087,7 +1087,8 @@ server <- function(input, output, session) {
                  glider <- input$glider
                  sourceDirectory <- dataName()
                  ## Will use a single flag
-                 g@metadata$flags$payload1 <<- list(state$flag) # a nameless flag applies to all data
+                 visible <- visibleIndices()
+                 g@metadata$flags$payload1 <<- list(ifelse(visible, initialFlagValue, badFlagValue)) # a nameless flag applies to all data
                  ## FIXME: decide what editing steps to save in the processing log. We likely do not want the *full* details,
                  ## because that might end up doubling object size, and what human could make sense of thousands of lines of
                  ## changes?  Besides, a human would be able to just look at the flags, to tell.
