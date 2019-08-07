@@ -1,4 +1,11 @@
 ## vim:textwidth=128:expandtab:shiftwidth=2:softtabstop=2
+
+## DEVELOPER NOTES
+##
+## Pay attention to these flags:
+## * FIXME_flag: alter if we save all flags
+
+
 HIDE <- FALSE
 appName <- "glider QC"
 appVersion <- "0.7"
@@ -60,6 +67,13 @@ library(shinythemes)
 library(oce)
 library(oceanglider)
 ##library(shinycssloaders)
+
+plotNoValid <- function(msg="No data to plot")
+{
+  plot(c(0,1), c(0,1), xlab="", ylab="", type="n", axes=FALSE)
+  text(0.5, 0.5, msg)
+  state$usr <<- NULL
+}
 
 options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let user choose.
 
@@ -175,6 +189,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                               Shiny.onInputChange("keypress", e.which);
                               Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
+                theme=shinytheme("superhero"),
                 conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
                 fluidRow(column(1, h6(paste(appName, appVersion))),
                          column(1, checkboxInput("debug", h6("Debug"), value=!FALSE)),
@@ -210,8 +225,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                                      brush=brushOpts(id="brush",
                                                                      delay=2000,
                                                                      delayType="debounce",
-                                                                     resetOnNew=TRUE))),
-                                 fluidRow(uiOutput(outputId="info")))
+                                                                     resetOnNew=TRUE))))
                 )
 
 server <- function(input, output, session) {
@@ -541,12 +555,12 @@ server <- function(input, output, session) {
     actionButton(inputId="saveRda", label=h6("Save Analysis"))
   })
 
-  output$info <- renderText({
-    msg("output$info\n")
-    paste("glider=", input$glider, ", mission=", input$mission, ", source=", source$file,
-          if (source$type == "rda") " (loaded from previous analysis)" else " (read from raw data)",
-          sep="")
-  })
+  ## output$info <- renderText({
+  ##   msg("output$info\n")
+  ##   paste("glider=", input$glider, ", mission=", input$mission, ", source=", source$file,
+  ##         if (source$type == "rda") " (loaded from previous analysis)" else " (read from raw data)",
+  ##         sep="")
+  ## })
 
   output$focus <- renderUI({
     selectInput(inputId="focus", label=h6("Focus"), choices=c("mission <m>"="mission", "yo <y>"="yo"), selected="mission")
@@ -743,7 +757,6 @@ server <- function(input, output, session) {
     hoverx <- input$hover$x
     hovery <- input$hover$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
-    res <- "(Move mouse into plot window to see properties)"
     if (!is.null(hoverx) && plotExists) {
       ## BOOKMARK_plot_type_2_of_4: note that 1, 3 and 4 must align with this
       if (input$plotChoice == "TS") {
@@ -803,6 +816,10 @@ server <- function(input, output, session) {
       ## msg("comments:\n")
       ## for (com in comments)
       ##   msg(com, "\n")
+    } else {
+      res <- paste("glider:", input$glider, ", mission:", input$mission, ", source:", source$file,
+                   if (source$type == "rda") " (loaded from previous analysis)" else " (read from raw data)",
+                   sep="")
     }
     res
   })
@@ -967,7 +984,7 @@ server <- function(input, output, session) {
 
                state$flag <<- rep(initialFlagValue, ndata)
                ## Will use a single flag
-               g@metadata$flags$payload1 <<- list(state$flag) # NOTE: no name given, which means apply to all
+               g@metadata$flags$payload1 <<- list(state$flag) # FIXME_flag: alter if we save all flags
                t <<- as.numeric(g[["time"]])
                dt <- diff(t)
                ## Compute time since power-on.  This takes just 0.03s elapsed time, so
@@ -1030,7 +1047,7 @@ server <- function(input, output, session) {
                ndata <<- length(p)
                maxYo <<- max(g[["yoNumber"]], na.rm=TRUE)
                t <<- as.numeric(g[["time"]]) # in seconds, for hover operations
-               state$flag <<- g@metadata$flags$payload1$overall
+               state$flag <<- g@metadata$flags$payload1[[1]] # FIXME_flag: alter if we save all flags
                state$rda <<- filename
                state$gliderExists <<- TRUE
   })
@@ -1070,7 +1087,7 @@ server <- function(input, output, session) {
                  glider <- input$glider
                  sourceDirectory <- dataName()
                  ## Will use a single flag
-                 g@metadata$flags$payload1 <<- list(overall=state$flag)
+                 g@metadata$flags$payload1 <<- list(state$flag) # a nameless flag applies to all data
                  ## FIXME: decide what editing steps to save in the processing log. We likely do not want the *full* details,
                  ## because that might end up doubling object size, and what human could make sense of thousands of lines of
                  ## changes?  Besides, a human would be able to just look at the flags, to tell.
@@ -1082,15 +1099,12 @@ server <- function(input, output, session) {
                      pl <- processingLogAppend(pl, comment)
                    g@processingLog <- pl
                  }
-                 msg("saving with sum(2==g@metadata$flags$payload1$overall)/length(same) = ",
-                     sum(2==g@metadata$flags$payload1$overall)/length(g@metadata$flags$payload1$overall), "\n")
                  withProgress(message=paste0("Saving '", rda, "'"),
                               value=0,
                               {
-                                save(g, glider, mission, sourceDirectory, edits, file=rda)
+                                save(g, edits, file=rda)
                               }
                               )
-                 msg("  ... finished saving to file '", rda, "'\n", sep="")
                }
   )
 
@@ -1174,14 +1188,18 @@ server <- function(input, output, session) {
               drawPalette(colormap=cm, zlab=input$colorBy)
                                         #omar <- par("mar")
                                         #par(mar=c(3, 3, 2, 5.5), mgp=c(2, 0.7, 0))
-              timing <- system.time({
-                oce.plot.ts(x, y,
-                            type=input$plotType,
-                            col=cm$zcol,
-                            mar=marTimeseries,
-                            ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
-              })
-              msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+              if (any(is.finite(y))) {
+                timing <- system.time({
+                  oce.plot.ts(x, y,
+                              type=input$plotType,
+                              col=cm$zcol,
+                              mar=marTimeseries,
+                              ylab=ylab, pch=pch, cex=cex, flipy=input$plotChoice=="pressure time-series")
+                })
+                msg(input$plotType, " time-series plot (coloured by ", input$colorBy, ") took elapsed time ", timing[3], "s\n", sep="")
+              } else {
+                plotNoValid()
+              }
             }
           } else {
             timing <- system.time({
