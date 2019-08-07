@@ -205,7 +205,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
     if (missing(actions))
         actions <- "NA"
     if (missing(where))
-       if (object[["type"]] == "seaexplorer") "payload1" else NULL
+       where <- if (object[["type"]] == "seaexplorer") "payload1" else NULL
     oce::handleFlagsInternal(object=object, flags=flags, actions=actions, where=where, debug=debug)
 }
 
