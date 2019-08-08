@@ -8,8 +8,8 @@
 
 HIDE <- FALSE
 appName <- "glider QC"
-appVersion <- "0.8beta"
-debugFlag <- !FALSE                     # A button controls this. If on, we get lots of console message + a theme selector.
+appVersion <- "0.8 (beta)"
+debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
 ## * Data-quality Flag Scheme
@@ -188,15 +188,16 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                               Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
                 theme=shinytheme("superhero"),
-                conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
-                fluidRow(column(1, h6(paste(appName, appVersion))),
+                # conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
+                fluidRow(column(1, h6(paste(appName, appVersion), style="color:red")),
+                         ##column(2, uiOutput(outputId="theme")),
                          column(1, checkboxInput("debug", h6("Debug"), value=!FALSE)),
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE)),
                          conditionalPanel(condition="output.gliderExists",
                                           column(2, uiOutput(outputId="comment")),
                                           column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
-                                 fluidRow(includeMarkdown("qcbeta.md"))),
+                                 fluidRow(includeMarkdown("qcbeta_help.md"))),
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="glider")),
                                           column(2, uiOutput(outputId="mission")),
@@ -504,6 +505,13 @@ server <- function(input, output, session) {
                    format(oce::presentTime(), "%Y%m%d_%H%M"), ".rda", sep=""))
   }
 
+  ## output$theme <- renderUI({
+  ##   selectInput(inputId="theme",
+  ##               label=h6("Select theme"),
+  ##               choices=c("cerulean", "cosmo", "cyborg", "darkly", "flatly", "journal", "lumen", "paper", "readable", "sandstone", "simplex", "slate", "spacelab", "superhero", "united", "yeti"),
+  ##               selected="cerulian")
+  ## })
+
   output$gliderExists <- reactive({
     state$gliderExists
   })
@@ -514,6 +522,9 @@ server <- function(input, output, session) {
                 choices=gliders,
                 selected=gliders[1])
   })
+
+
+
 
   output$mission <- renderUI({
     selectInput(inputId="mission",
@@ -538,7 +549,7 @@ server <- function(input, output, session) {
 
   output$loadRda <- renderUI({
     files <- relevantRdaFiles(input$glider, input$mission)
-    msg("output$loadRda with length(files)=", length(files), "\n", sep="")
+    ##msg("output$loadRda with length(files)=", length(files), "\n", sep="")
     if (length(files)) {
       actionButton(inputId="loadRdaAction", label=h6("Load Previous Analysis"))
     }
@@ -603,6 +614,7 @@ server <- function(input, output, session) {
                           "S"="salinity",
                           "N2"="N2",
                           "log10(neg. N2)"="lnN2",
+                          "oxygen",
                           "N2 extremes"="N2 extremes",
                           "navState"="navState",
                           "tSincePowerOn"="tSincePowerOn",
@@ -614,10 +626,16 @@ server <- function(input, output, session) {
   output$focusYo <- renderUI({
     numericInput("focusYo",
                  ##if (is.null(maxYo)) "Yo number [enter value within 5s]" else paste("Yo number (in range 1 to ", maxYo, ") [enter value within 5s]", sep=""),
-                 h6(if (is.null(maxYo)) "Yo number" else paste("Yo number (in range 1 to ", maxYo, ")", sep="")),
+                 h6(if (is.null(maxYo)) "Yo number" else paste("Yo # (max ", maxYo, ")", sep="")),
                  value=if (is.null(global$yoSelected)) "1" else global$yoSelected)
                  ##value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
+
+  ## observeEvent(input$theme,
+  ##              {
+  ##                msg("theme=", input$theme, "\n");
+  ##              }
+  ## )
 
   observeEvent(input$keypressTrigger, {
                if (HIDE) {
