@@ -1,4 +1,4 @@
-**Overview of qc (version 0.7)**
+**Overview of qc (version 0.8)**
 
 This app is designed to handle SeaExplorer glider data, in a file format used
 by the Bedford Institute of Oceanography as of July 2019.  Extension to other

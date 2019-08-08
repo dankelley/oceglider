@@ -8,7 +8,7 @@
 
 ignoreKeypress <- FALSE
 appName <- "glider QC"
-appVersion <- "0.9 (beta)"
+appVersion <- "0.8"
 debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
@@ -230,7 +230,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="comment")),
                                           column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
-                                 fluidRow(includeMarkdown("qcbeta_help.md"))),
+                                 fluidRow(includeMarkdown("qc08_help.md"))),
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="glider")),
                                           column(2, uiOutput(outputId="mission")),
@@ -634,13 +634,12 @@ server <- function(input, output, session) {
                           "latitude"="latitude",
                           "longitude"="longitude",
                           "p"="pressure",
-                          "density"="sigma0",
                           "T"="temperature",
                           "S"="salinity",
                           "N2"="N2",
-                          "log10(neg. N2)"="lnN2",
-                          "oxygen",
                           "instability"="instability",
+                          "density"="sigma0",
+                          "oxygen",
                           "navState"="navState",
                           "tSincePowerOn"="tSincePowerOn",
                           "spiciness"="spiciness0",

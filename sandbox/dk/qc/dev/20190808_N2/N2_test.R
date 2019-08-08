@@ -3,9 +3,11 @@ options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let 
 
 N2unstable <- function(pressure, sigma0, g=9.8, L=2, rho0=1025)
 {
+    i <- seq_along(pressure) # for checking on reordering scheme
     z <- swZ(pressure)
     o <- order(z)
     oo <- order(o)
+    i <- i[o]
     if (L > 0) {
         m <- runlm(z[o], sigma0[o], L=L)
         N2 <- -g / rho0 * m$dydx
@@ -16,6 +18,9 @@ N2unstable <- function(pressure, sigma0, g=9.8, L=2, rho0=1025)
     N2[!is.finite(N2)] <- NA
     N2 <- N2[oo] # return to original order
     unstable <- N2 < (-mean(N2[N2>0], na.rm=TRUE))
+    io <- i[oo]
+    if (any(1 != diff(io)))
+        stop("reordering is broken: please contact author")
     list(N2=N2, unstable=unstable)
 }
 
@@ -33,18 +38,10 @@ if (createPDF) pdf("N2_test.pdf")
 
 par(mfrow=c(1, 2), mar=c(3, 3, 1.5, 1), mgp=c(2, 0.7, 0))
 for (y in 1:max) {
-#for (y in 350) {
     message("y=", y)
     yo <- subset(g, yoNumber==y)
     sigma0 <- yo[["sigma0"]]
     p <- yo[["pressure"]]
-    ##o <- order(p)
-    ##sigma0 <- sigma0[o]
-    ##p <- p[o]
-    ##bad <- is.na(p) | is.na(sigma0) | p > 300
-    ##> bad <- is.na(p) | p > 300
-    ##> p <- p[!bad]
-    ##> sigma0 <- sigma0[!bad]
     N2u <- N2unstable(p, sigma0)
     N2 <- N2u$N2
     unstable <- N2u$unstable
