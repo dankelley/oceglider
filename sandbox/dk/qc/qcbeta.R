@@ -6,7 +6,7 @@
 ## * FIXME_flag: alter if we save all flags
 
 
-HIDE <- FALSE
+ignoreKeypress <- FALSE
 appName <- "glider QC"
 appVersion <- "0.8 (beta)"
 debugFlag <- TRUE                      # For console messages that trace control flow.
@@ -638,7 +638,7 @@ server <- function(input, output, session) {
   ## )
 
   observeEvent(input$keypressTrigger, {
-               if (HIDE) {
+               if (ignoreKeypress) {
                  ## msg("keypress '", input$keypress, "' ignored, since processing a modalDialog\n", sep="")
                  return()
                }
@@ -1077,7 +1077,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$commentButton,
                {
-                 HIDE <<- TRUE
+                 ignoreKeypress <<- TRUE
                  showModal(commentDialog())
                }
   )
@@ -1087,7 +1087,7 @@ server <- function(input, output, session) {
                  if (!is.null(input$comment)) {
                    state$comments <<- c(state$comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
                    removeModal()
-                   HIDE <<- FALSE
+                   ignoreKeypress <<- FALSE
                  }
                }
   )
