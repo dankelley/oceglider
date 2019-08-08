@@ -23,8 +23,9 @@ if (!exists("g")) {
 
 max <- max(g[["yoNumber"]])
 
-if (!interactive())
-    pdf("N2_test.pdf")
+##if (!interactive())
+##    pdf("N2_test.pdf")
+
 par(mfrow=c(1, 2), mar=c(3, 3, 1.5, 1), mgp=c(2, 0.7, 0))
 for (y in 1:max) {
     message("y=", y)
@@ -46,6 +47,6 @@ for (y in 1:max) {
     mtext(sprintf("yo=%d", y), side=3)
 }
 
-if (!interactive())
-    dev.off()
+## if (!interactive())
+##     dev.off()
 
