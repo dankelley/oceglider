@@ -1,2 +1,2 @@
 all:
-	Rscript -e "shiny::runApp('qc07.R', port=4321)"
+	Rscript -e "shiny::runApp('qcbeta.R', port=4321)"

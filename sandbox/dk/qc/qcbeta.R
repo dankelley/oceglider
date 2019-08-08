@@ -8,7 +8,7 @@
 
 HIDE <- FALSE
 appName <- "glider QC"
-appVersion <- "0.7"
+appVersion <- "0.8beta"
 debugFlag <- !FALSE                     # A button controls this. If on, we get lots of console message + a theme selector.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
@@ -196,7 +196,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="comment")),
                                           column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
-                                 fluidRow(includeMarkdown("qc07_help.md"))),
+                                 fluidRow(includeMarkdown("qcbeta.md"))),
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="glider")),
                                           column(2, uiOutput(outputId="mission")),
@@ -602,7 +602,7 @@ server <- function(input, output, session) {
                           "T"="temperature",
                           "S"="salinity",
                           "N2"="N2",
-                          #"log10(neg. N2)"="lnN2",
+                          "log10(neg. N2)"="lnN2",
                           "N2 extremes"="N2 extremes",
                           "navState"="navState",
                           "tSincePowerOn"="tSincePowerOn",
