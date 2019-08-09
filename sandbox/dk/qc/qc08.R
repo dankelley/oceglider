@@ -228,6 +228,7 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE)),
                          conditionalPanel(condition="output.gliderExists",
                                           column(2, uiOutput(outputId="comment")),
+                                          column(2, uiOutput(outputId="seeComments")),
                                           column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
                                  fluidRow(includeMarkdown("qc08_help.md"))),
@@ -541,15 +542,16 @@ server <- function(input, output, session) {
     state$gliderExists
   })
 
+  ## output$commentsExist <- reactive({
+  ##   length(state$comments) > 0
+  ## })
+
   output$glider <- renderUI({
     selectInput(inputId="glider",
                 label=h6("Select a glider"),
                 choices=gliders,
                 selected=gliders[1])
   })
-
-
-
 
   output$mission <- renderUI({
     selectInput(inputId="mission",
@@ -582,6 +584,10 @@ server <- function(input, output, session) {
 
   output$comment <- renderUI({
     actionButton(inputId="commentButton", label=h6(paste("Add Comment #", 1+length(state$comments), sep="")))
+  })
+
+  output$seeComments <- renderUI({
+    actionButton(inputId="seeCommentsButton", label=h6("See Comments"))
   })
 
   output$saveRda <- renderUI({
@@ -655,11 +661,17 @@ server <- function(input, output, session) {
                  ##value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
 
-  ## observeEvent(input$theme,
-  ##              {
-  ##                msg("theme=", input$theme, "\n");
-  ##              }
-  ## )
+  observeEvent(input$seeCommentsButton, {
+               ## msg("in input$seeComments\n")
+               if (length(state$comments) > 0) {
+                 show <- NULL
+                 for (comment in state$comments)
+                   show <- paste(show, "<p>\n", comment)
+               } else {
+                 show <- "<b>**No comments have been made yet.**</b>"
+               }
+               showModal(modalDialog(title="Comments", HTML(show), easyClose=TRUE))
+  })
 
   observeEvent(input$keypressTrigger, {
                if (ignoreKeypress) {
@@ -1103,8 +1115,13 @@ server <- function(input, output, session) {
     ## when that is clicked, which means that we have no way to change
     ## ignoreKeypress back to TRUE. But we *need* to change that to TRUE,
     ## so we can detect keypresses.
-    modalDialog(textInput("comment", "Processing Notes", placeholder='(Optional)'),
-                ##footer=tagList(modalButton("Cancel"), actionButton("commentOK", "OK")))
+    ## 
+    ## Note 2: the textAreaInput args 'rows' and 'cols' do not seem to have work
+    ## as expected (in the  Cerulean shiny theme, anyway). This is not a big concern
+    ## because the UI has a slider so the user can enlarge the input region.
+    modalDialog(textAreaInput("comment",
+                              label=paste0("Comment #", 1+length(state$comments)),
+                              rows=20, cols=80),
                 footer=tagList(actionButton("commentOK", "OK")))
   }
 
