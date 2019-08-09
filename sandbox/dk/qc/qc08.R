@@ -1099,8 +1099,13 @@ server <- function(input, output, session) {
 
   commentDialog <- function(failed=FALSE)
   {
+    ## The dialog has no 'Cancel' button, because I see no way to determine
+    ## when that is clicked, which means that we have no way to change
+    ## ignoreKeypress back to TRUE. But we *need* to change that to TRUE,
+    ## so we can detect keypresses.
     modalDialog(textInput("comment", "Processing Notes", placeholder='(Optional)'),
-                footer=tagList(modalButton("Cancel"), actionButton("commentOK", "OK")))
+                ##footer=tagList(modalButton("Cancel"), actionButton("commentOK", "OK")))
+                footer=tagList(actionButton("commentOK", "OK")))
   }
 
   observeEvent(input$commentButton,
@@ -1112,11 +1117,18 @@ server <- function(input, output, session) {
 
   observeEvent(input$commentOK,
                {
+                 ##msg("At top of input$commentOK ... ignoreKeypress is", ignoreKeypress, "\n")
                  if (!is.null(input$comment)) {
+                   ##msg("  ... non-null comment '", input$comment, "'\n", sep="")
                    state$comments <<- c(state$comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
-                   removeModal()
-                   ignoreKeypress <<- FALSE
+                 } else {
+                   ##msg("  ... null comment\n")
                  }
+                 ##msg("  ... about to remove modal\n")
+                 removeModal()
+                 ##msg("  ... done removing modal\n")
+                 ignoreKeypress <<- FALSE
+                 ##msg("  ... set ignoreKeypress to ", ignoreKeypress, "\n", sep="")
                }
   )
 
