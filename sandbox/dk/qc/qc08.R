@@ -220,8 +220,8 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                               Shiny.onInputChange("keypress", e.which);
                               Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
-                theme=shinytheme("cerulean"),
-                # conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
+                #theme=shinytheme("cerulean"),
+                conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
                 fluidRow(column(1, h6(paste(appName, appVersion), style="color:red")),
                          ##column(2, uiOutput(outputId="theme")),
                          column(1, checkboxInput("debug", h6("Debug"), value=!FALSE)),
@@ -398,11 +398,9 @@ server <- function(input, output, session) {
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
     msg("    after hideInitialYos:                            sum(!visible) =", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
-    hapu <- debounce(hideAfterPowerOn, 2000)()
-    poweringOn <- g[["tSincePowerOn"]] < hapu
-    if (file.exists("stop")) browser()
-    visible <- visible & !poweringOn
+    visible <- visible & g[["tSincePowerOn"]] >= debounce(hideAfterPowerOn, 2000)()
     msg("    after hideAfterPowerup:                          sum(!visible) =", sum(!visible), "\n")
+    ## 6. (salinity, temperature, conductivity) statistical outliers
     if (!is.null(input$trimOutliers) && input$trimOutliers) {
       SAok <- abs(SA - SAmean) < 3 * SAsd
       CTok <- abs(CT - CTmean) < 3 * CTsd
@@ -790,10 +788,6 @@ server <- function(input, output, session) {
   output$hideAfterPowerOn <- renderUI({
     sliderInput("hideAfterPowerOn", h6("Hide after power-on"), min=0, max=120, value=0)
   })
-
-  ## output$despikePressure <- renderUI({
-  ##   checkboxInput(inputId="despikePressure", label=h6("Hide p outliers"))
-  ## })
 
   output$trimOutliers <- renderUI({
     checkboxInput(inputId="trimOutliers", label=h6("Hide T,S outliers"))
