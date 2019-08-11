@@ -8,7 +8,7 @@
 
 ignoreKeypress <- FALSE
 appName <- "glider QC"
-appVersion <- "0.8"
+appVersion <- "0.8.1"
 debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
@@ -666,7 +666,7 @@ server <- function(input, output, session) {
                  for (comment in state$comments)
                    show <- paste(show, "<p>\n", comment)
                } else {
-                 show <- "<b>**No comments have been made yet.**</b>"
+                 show <- "<b>(No comments have been made yet.</b>"
                }
                showModal(modalDialog(title="Comments", HTML(show), easyClose=TRUE))
   })
@@ -1000,9 +1000,9 @@ server <- function(input, output, session) {
                ## yo-by-yo N^2 calculation
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
-               sigma0 <-  g[["sigma0"]]
-               g@data$payload1[["sigma0"]] <<- sigma0
-               g@data$payload1[["spiciness0"]] <<- g[["spiciness"]]
+               sigma0 <<- g[["sigma0"]]
+               g@data$payload1[["sigma0"]] <<- sigma0 # add directly
+               g@data$payload1[["spiciness0"]] <<- g[["spiciness0"]] # add directly
                g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                ## It's a bit tricky to calculate N^2, because it will be defined
@@ -1109,7 +1109,7 @@ server <- function(input, output, session) {
     ## when that is clicked, which means that we have no way to change
     ## ignoreKeypress back to TRUE. But we *need* to change that to TRUE,
     ## so we can detect keypresses.
-    ## 
+    ##
     ## Note 2: the textAreaInput args 'rows' and 'cols' do not seem to have work
     ## as expected (in the  Cerulean shiny theme, anyway). This is not a big concern
     ## because the UI has a slider so the user can enlarge the input region.
@@ -1357,6 +1357,9 @@ server <- function(input, output, session) {
           if (input$colorBy != "(none)") {
             if (input$colorBy == "navState") {
               par(mar=marProfile, mgp=mgp)
+              msg("length(x)=", length(x), ", length(y)=", length(y), "\n")
+              msg("sum(look)=", sum(look), "\n")
+              msg(vectorShow(ylim))
               plot(x, y, ylim=ylim,
                    type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
@@ -1380,6 +1383,8 @@ server <- function(input, output, session) {
                 unstable <- g@data$payload1[look, "unstable"]
                 points(x[unstable], y[unstable], pch=pch, cex=cex, col="red")
               } else {
+                ##if (input$colorBy == "spiciness0")
+                ##  browser()
                 cm <- colormap(g@data$payload1[look, input$colorBy])
                 par(mar=marPaletteProfile, mgp=mgp)
                 drawPalette(colormap=cm, zlab=input$colorBy)
