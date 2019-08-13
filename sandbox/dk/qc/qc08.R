@@ -8,7 +8,7 @@
 
 ignoreKeypress <- FALSE
 appName <- "glider QC"
-appVersion <- "0.8.1"
+appVersion <- "0.8.2"
 debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
 pressureThreshold <- 0.5
@@ -244,7 +244,8 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="plotType")),
                                           column(2, uiOutput(outputId="focus")),
                                           column(2, uiOutput(outputId="focusYo"))),
-                                 fluidRow(column(2, uiOutput(outputId="trimOutliers")),
+                                 fluidRow(column(2, uiOutput(outputId="limitRange")),
+                                          column(2, uiOutput(outputId="hideOutliers")),
                                           column(2, uiOutput(outputId="hideInitialYos")),
                                           column(2, uiOutput(outputId="hideTop")),
                                           column(2, uiOutput(outputId="hideAfterPowerOn"))),
@@ -400,17 +401,23 @@ server <- function(input, output, session) {
     ## 5. ignore for some time after powerup
     visible <- visible & g[["tSincePowerOn"]] >= debounce(hideAfterPowerOn, 2000)()
     msg("    after hideAfterPowerup:                          sum(!visible) =", sum(!visible), "\n")
-    ## 6. (salinity, temperature, conductivity) statistical outliers
-    if (!is.null(input$trimOutliers) && input$trimOutliers) {
-      SAok <- abs(SA - SAmean) < 3 * SAsd
-      CTok <- abs(CT - CTmean) < 3 * CTsd
-      Cok <- abs(C - Cmean) < 3 * Csd
-      ok <- SAok & CTok & Cok
+    ## 6. trim to allowed ranges
+    if (!is.null(input$limitRange) && input$limitRange) {
+      ok <- (-5 < p) & (2 < SA) & (SA < 41) & (-2.5 < CT) & (CT < 40)
       ok[is.na(ok)] <- FALSE
       visible <- visible & ok
-      msg("    after trimOutliers:                              sum(!visible) =", sum(!visible), "\n")
+      msg("    after limitRange:                              sum(!visible) =", sum(!visible), "\n")
     }
-    ## 7. ignore already-flagged data
+    ## 7. (salinity, temperature, conductivity) statistical outliers
+    if (!is.null(input$hideOutliers) && input$hideOutliers) {
+      SAok <- abs(SA - SAmean) < 3 * SAsd
+      CTok <- abs(CT - CTmean) < 3 * CTsd
+      ok <- SAok & CTok
+      ok[is.na(ok)] <- FALSE
+      visible <- visible & ok
+      msg("    after hideOutliers:                            sum(!visible) =", sum(!visible), "\n")
+    }
+    ## 8. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
     msg("    after accounting for already-flagged data:       sum(!visible) =", sum(!visible), "\n")
     msg("  }  # visibleIndices(", message, ")\n", sep="")
@@ -789,8 +796,12 @@ server <- function(input, output, session) {
     sliderInput("hideAfterPowerOn", h6("Hide after power-on"), min=0, max=120, value=0)
   })
 
-  output$trimOutliers <- renderUI({
-    checkboxInput(inputId="trimOutliers", label=h6("Hide T,S outliers"))
+  output$limitRange <- renderUI({
+    checkboxInput(inputId="limitRange", label=h6("Limit Range"))
+  })
+
+  output$hideOutliers <- renderUI({
+    checkboxInput(inputId="hideOutliers", label=h6("Hide Outliers"))
   })
 
   output$navState <- renderUI({

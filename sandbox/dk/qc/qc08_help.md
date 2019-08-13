@@ -128,3 +128,23 @@ mouse drag operations, by unchecking `navState` checkboxes, or by other
 operations. This file will be available the next time the app is loaded, which
 means that work can be done in stages.
 
+**Interface Details**
+
+* Selecting the `Limit Range` checkbox hides pressures less than -5dbar,
+  temperatures outside the range -2.5 to 40C, and salinities outside the range
+2 to 41.  This is consistent with ARGO-float procedures (see Section 6 of Wong
+et al., 2018) except that here the tests are done Conservative Temperature and
+Absolute Salinity.
+
+* Selecting the `Hide Outliers` checkbox hides Conservative Temperatures and
+  Absolute Salinities that differ by more than 3 standard deviations from their
+means.
+
+* Selecting the `Hide T,S outliers` hides 
+
+**References**
+
+* Wong, Annie, Robert Keeley, Thierry Carval, and the Argo Data Management Tam.
+  “Argo Quality Control Manual For CTD and Trajectory Data,” 2018.
+https://www.oceanbestpractices.net/bitstream/handle/11329/450/32470.pdf?sequence=1&isAllowed=y.
+
