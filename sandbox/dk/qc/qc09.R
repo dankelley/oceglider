@@ -8,7 +8,7 @@
 
 ignoreKeypress <- FALSE
 appName <- "glider QC"
-appVersion <- "0.9beta1"
+appVersion <- "0.9"
 debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
 ## * Data-quality Flag Scheme

@@ -8,10 +8,9 @@
 
 ignoreKeypress <- FALSE
 appName <- "glider QC"
-appVersion <- "0.9 (beta)"
+appVersion <- "0.10 (beta)"
 debugFlag <- TRUE                      # For console messages that trace control flow.
 plotExists <- FALSE                    # used to control several menus and actions
-pressureThreshold <- 0.5
 ## * Data-quality Flag Scheme
 ##
 ##     name    "IOOS"
@@ -221,16 +220,17 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                               Shiny.onInputChange("keypressTrigger", Math.random());
                             });'),
                 theme=shinytheme("cerulean"),
-                # conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
+                ##conditionalPanel(condition="input.debug", shinythemes::themeSelector()),
                 fluidRow(column(1, h6(paste(appName, appVersion), style="color:red")),
                          ##column(2, uiOutput(outputId="theme")),
                          column(1, checkboxInput("debug", h6("Debug"), value=!FALSE)),
                          column(2, checkboxInput("instructions", h6("Show Instructions"), value=FALSE)),
                          conditionalPanel(condition="output.gliderExists",
                                           column(2, uiOutput(outputId="comment")),
+                                          column(2, uiOutput(outputId="seeComments")),
                                           column(2, uiOutput(outputId="saveRda")))),
                 conditionalPanel(condition="input.instructions",
-                                 fluidRow(includeMarkdown("qcbeta_help.md"))),
+                                 fluidRow(includeMarkdown("qc08_help.md"))),
                 conditionalPanel(condition="!output.gliderExists",
                                  fluidRow(column(2, uiOutput(outputId="glider")),
                                           column(2, uiOutput(outputId="mission")),
@@ -243,7 +243,8 @@ ui <- fluidPage(tags$script('$(document).on("keypress",
                                           column(2, uiOutput(outputId="plotType")),
                                           column(2, uiOutput(outputId="focus")),
                                           column(2, uiOutput(outputId="focusYo"))),
-                                 fluidRow(column(2, uiOutput(outputId="trimOutliers")),
+                                 fluidRow(column(2, uiOutput(outputId="limitRange")),
+                                          column(2, uiOutput(outputId="hideOutliers")),
                                           column(2, uiOutput(outputId="hideInitialYos")),
                                           column(2, uiOutput(outputId="hideTop")),
                                           column(2, uiOutput(outputId="hideAfterPowerOn"))),
@@ -373,45 +374,36 @@ server <- function(input, output, session) {
     ## 2. start with data in desired navStage
     visible <- visible & (g[["navState"]] %in% input$navState)
     msg("    after select navState:                           sum(!visible) =", sum(!visible), "\n")
-    ## 3. remove any pressure spikes
-    ##. if (input$despikePressure) {
-    ##.   p <- g[["pressure"]]
-    ##.   badp <- is.na(p)
-    ##.   if (any(badp))
-    ##.     p[badp] <- mean(p, na.rm=TRUE) # will trim later anyhow
-    ##.   pressureShift <- abs(p - runmed(p, k=11))
-    ##.   badPressure <- pressureShift > pressureThreshold
-    ##.   if (any(badp))
-    ##.     badPressure[badp] <- TRUE
-    ##.   visible <- visible & !badPressure
-    ##. }
-    ##. msg("    after despikePressure:                           sum(!visible) =", sum(!visible), "\n")
-    ## 4. remove pressures less than a specified limit
+    ## 3. remove pressures less than a specified limit
     if (!is.null(input$hideTop) && input$hideTop > 0) {
       tooNearSurface <- p < input$hideTop
       visible <- visible & !tooNearSurface
     }
     msg("    after hideTop:                                   sum(!visible) =", sum(!visible), "\n")
-    ## 5. hide initial yos
+    ## 4. hide initial yos
     if (!is.null(input$hideInitialYos) && input$hideInitialYos > 0)
       visible <- visible & (g[["yoNumber"]] > as.numeric(input$hideInitialYos))
     msg("    after hideInitialYos:                            sum(!visible) =", sum(!visible), "\n")
     ## 5. ignore for some time after powerup
-    hapu <- debounce(hideAfterPowerOn, 2000)()
-    poweringOn <- g[["tSincePowerOn"]] < hapu
-    if (file.exists("stop")) browser()
-    visible <- visible & !poweringOn
+    visible <- visible & g[["tSincePowerOn"]] >= debounce(hideAfterPowerOn, 2000)()
     msg("    after hideAfterPowerup:                          sum(!visible) =", sum(!visible), "\n")
-    if (!is.null(input$trimOutliers) && input$trimOutliers) {
-      SAok <- abs(SA - SAmean) < 3 * SAsd
-      CTok <- abs(CT - CTmean) < 3 * CTsd
-      Cok <- abs(C - Cmean) < 3 * Csd
-      ok <- SAok & CTok & Cok
+    ## 6. trim to allowed ranges
+    if (!is.null(input$limitRange) && input$limitRange) {
+      ok <- (-5 < p) & (2 < SA) & (SA < 41) & (-2.5 < CT) & (CT < 40)
       ok[is.na(ok)] <- FALSE
       visible <- visible & ok
-      msg("    after trimOutliers:                              sum(!visible) =", sum(!visible), "\n")
+      msg("    after limitRange:                                sum(!visible) =", sum(!visible), "\n")
     }
-    ## 7. ignore already-flagged data
+    ## 7. (salinity, temperature, conductivity) statistical outliers
+    if (!is.null(input$hideOutliers) && input$hideOutliers) {
+      SAok <- abs(SA - SAmean) < 3 * SAsd
+      CTok <- abs(CT - CTmean) < 3 * CTsd
+      ok <- SAok & CTok
+      ok[is.na(ok)] <- FALSE
+      visible <- visible & ok
+      msg("    after hideOutliers:                              sum(!visible) =", sum(!visible), "\n")
+    }
+    ## 8. ignore already-flagged data
     visible <- visible & (state$flag != badFlagValue)
     msg("    after accounting for already-flagged data:       sum(!visible) =", sum(!visible), "\n")
     msg("  }  # visibleIndices(", message, ")\n", sep="")
@@ -541,15 +533,16 @@ server <- function(input, output, session) {
     state$gliderExists
   })
 
+  ## output$commentsExist <- reactive({
+  ##   length(state$comments) > 0
+  ## })
+
   output$glider <- renderUI({
     selectInput(inputId="glider",
                 label=h6("Select a glider"),
                 choices=gliders,
                 selected=gliders[1])
   })
-
-
-
 
   output$mission <- renderUI({
     selectInput(inputId="mission",
@@ -582,6 +575,10 @@ server <- function(input, output, session) {
 
   output$comment <- renderUI({
     actionButton(inputId="commentButton", label=h6(paste("Add Comment #", 1+length(state$comments), sep="")))
+  })
+
+  output$seeComments <- renderUI({
+    actionButton(inputId="seeCommentsButton", label=h6("See Comments"))
   })
 
   output$saveRda <- renderUI({
@@ -655,11 +652,17 @@ server <- function(input, output, session) {
                  ##value=if (is.null(state$yoSelected)) "1" else state$yoSelected)
   })
 
-  ## observeEvent(input$theme,
-  ##              {
-  ##                msg("theme=", input$theme, "\n");
-  ##              }
-  ## )
+  observeEvent(input$seeCommentsButton, {
+               ## msg("in input$seeComments\n")
+               if (length(state$comments) > 0) {
+                 show <- NULL
+                 for (comment in state$comments)
+                   show <- paste(show, "<p>\n", comment)
+               } else {
+                 show <- "<b>(No comments have been made yet.</b>"
+               }
+               showModal(modalDialog(title="Comments", HTML(show), easyClose=TRUE))
+  })
 
   observeEvent(input$keypressTrigger, {
                if (ignoreKeypress) {
@@ -779,12 +782,12 @@ server <- function(input, output, session) {
     sliderInput("hideAfterPowerOn", h6("Hide after power-on"), min=0, max=120, value=0)
   })
 
-  ## output$despikePressure <- renderUI({
-  ##   checkboxInput(inputId="despikePressure", label=h6("Hide p outliers"))
-  ## })
+  output$limitRange <- renderUI({
+    checkboxInput(inputId="limitRange", label=h6("Limit Range"))
+  })
 
-  output$trimOutliers <- renderUI({
-    checkboxInput(inputId="trimOutliers", label=h6("Hide T,S outliers"))
+  output$hideOutliers <- renderUI({
+    checkboxInput(inputId="hideOutliers", label=h6("Hide Outliers"))
   })
 
   output$navState <- renderUI({
@@ -794,14 +797,14 @@ server <- function(input, output, session) {
   })
 
   output$status <- renderText({
-    msg("**output$status**. state$gliderExists=", state$gliderExists, "\n")
+    ##msg("**output$status**. state$gliderExists=", state$gliderExists, "\n")
     hoverx <- input$hover$x
     hovery <- input$hover$y
     res <- if (is.null(g)) "Status: no glider exists. Please read data or load previous analysis." else paste(input$glider, input$mission)
     if (!is.null(hoverx) && plotExists) {
       ## BOOKMARK_plot_type_2_of_4: note that 1, 3 and 4 must align with this
       if (input$plotChoice == "TS") {
-        msg("**TS plot**\n")
+        ##msg("**TS plot**\n")
         x <- g[["SA"]]
         y <- g[["CT"]]
       } else if (grepl("time-series$", input$plotChoice)) {
@@ -976,7 +979,7 @@ server <- function(input, output, session) {
                withProgress(message=paste0("Reading ", nfiles, " pld1.raw files in '", dir, "'"),
                             value=0,
                             {
-                              g <<- try(read.glider.seaexplorer.delayed(dir))
+                              g <<- try(read.glider.seaexplorer.delayed(dir, progressBar="shiny"))
                             }
                             )
                if (inherits(g, "try-error")) {
@@ -994,9 +997,9 @@ server <- function(input, output, session) {
                ## yo-by-yo N^2 calculation
                g@data$payload1[["SA"]] <<- g[["SA"]]
                g@data$payload1[["CT"]] <<- g[["CT"]]
-               sigma0 <-  g[["sigma0"]]
-               g@data$payload1[["sigma0"]] <<- sigma0
-               g@data$payload1[["spiciness0"]] <<- g[["spiciness"]]
+               sigma0 <<- g[["sigma0"]]
+               g@data$payload1[["sigma0"]] <<- sigma0 # add directly
+               g@data$payload1[["spiciness0"]] <<- g[["spiciness0"]] # add directly
                g@data$payload1[["distance"]] <<- oce::geodDist(g[["longitude"]], g[["latitude"]], alongPath=FALSE)
                g@data$payload1[["navStateColor"]] <<- navStateColors(g[["navState"]])
                ## It's a bit tricky to calculate N^2, because it will be defined
@@ -1099,8 +1102,18 @@ server <- function(input, output, session) {
 
   commentDialog <- function(failed=FALSE)
   {
-    modalDialog(textInput("comment", "Processing Notes", placeholder='(Optional)'),
-                footer=tagList(modalButton("Cancel"), actionButton("commentOK", "OK")))
+    ## The dialog has no 'Cancel' button, because I see no way to determine
+    ## when that is clicked, which means that we have no way to change
+    ## ignoreKeypress back to TRUE. But we *need* to change that to TRUE,
+    ## so we can detect keypresses.
+    ##
+    ## Note 2: the textAreaInput args 'rows' and 'cols' do not seem to have work
+    ## as expected (in the  Cerulean shiny theme, anyway). This is not a big concern
+    ## because the UI has a slider so the user can enlarge the input region.
+    modalDialog(textAreaInput("comment",
+                              label=paste0("Comment #", 1+length(state$comments)),
+                              rows=20, cols=80),
+                footer=tagList(actionButton("commentOK", "OK")))
   }
 
   observeEvent(input$commentButton,
@@ -1112,11 +1125,18 @@ server <- function(input, output, session) {
 
   observeEvent(input$commentOK,
                {
+                 ##msg("At top of input$commentOK ... ignoreKeypress is", ignoreKeypress, "\n")
                  if (!is.null(input$comment)) {
+                   ##msg("  ... non-null comment '", input$comment, "'\n", sep="")
                    state$comments <<- c(state$comments, paste("[", format(presentTime()), "] ", input$comment, sep=""))
-                   removeModal()
-                   ignoreKeypress <<- FALSE
+                 } else {
+                   ##msg("  ... null comment\n")
                  }
+                 ##msg("  ... about to remove modal\n")
+                 removeModal()
+                 ##msg("  ... done removing modal\n")
+                 ignoreKeypress <<- FALSE
+                 ##msg("  ... set ignoreKeypress to ", ignoreKeypress, "\n", sep="")
                }
   )
 
@@ -1334,6 +1354,9 @@ server <- function(input, output, session) {
           if (input$colorBy != "(none)") {
             if (input$colorBy == "navState") {
               par(mar=marProfile, mgp=mgp)
+              msg("length(x)=", length(x), ", length(y)=", length(y), "\n")
+              msg("sum(look)=", sum(look), "\n")
+              msg(vectorShow(ylim))
               plot(x, y, ylim=ylim,
                    type=input$plotType, pch=pch, cex=cex, col=g@data$payload1[look, "navStateColor"],
                    xlab="", ylab=resizableLabel("p"), axes=FALSE)
@@ -1357,6 +1380,8 @@ server <- function(input, output, session) {
                 unstable <- g@data$payload1[look, "unstable"]
                 points(x[unstable], y[unstable], pch=pch, cex=cex, col="red")
               } else {
+                ##if (input$colorBy == "spiciness0")
+                ##  browser()
                 cm <- colormap(g@data$payload1[look, input$colorBy])
                 par(mar=marPaletteProfile, mgp=mgp)
                 drawPalette(colormap=cm, zlab=input$colorBy)
