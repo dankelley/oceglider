@@ -979,7 +979,7 @@ server <- function(input, output, session) {
                withProgress(message=paste0("Reading ", nfiles, " pld1.raw files in '", dir, "'"),
                             value=0,
                             {
-                              g <<- try(read.glider.seaexplorer.delayed(dir))
+                              g <<- try(read.glider.seaexplorer.delayed(dir, progressBar="shiny"))
                             }
                             )
                if (inherits(g, "try-error")) {

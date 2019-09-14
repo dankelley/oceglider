@@ -120,10 +120,16 @@ navStateCodes <- function(g)
 #'     only included for similarity with
 #'     [read.glider.seaexplorer.delayed()].
 #'
-#' @param progressBar A logical indicating whether to show progress
-#'     bars while reading the data, which can be useful when reading full
-#'     datasets on slow machines. The default is to show the progress bar
-#'     only in interactive mode.
+#' @param progressBar either a logical or character value that controls
+#'     whether/how to indicate the progress made in reading and interpreting
+#'     the data.  This can be useful, since the work can be slow.  If `progressBar`
+#'     is a logical value, then it indicates whether to show textual progress
+#'     with [txtProgressBar()].  If `progressBar` is the character value `"shiny"`,
+#'     then [shiny::setProgress()] and [shiny::incProgress()] will be used,
+#'     on the assumption that the call to `read.glider.seaexplorer.realtime()`
+#'     was made within the context of a call to [shiny::withProgress()].
+#'     The default is to use the value returned by [interactive()], i.e.
+#'     to use a textual progress indicator, but only in interactive mode.
 #'
 #' @param missingValue A value that indicates missing data; all
 #'     values that match this are set to `NA`.
@@ -154,6 +160,7 @@ navStateCodes <- function(g)
 #' @importFrom utils read.delim
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend initializeFlagScheme
+## @importFrom shiny incProgress setProgress
 #'
 #' @export
 #'
@@ -166,6 +173,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
         debug <- getOption("gliderDebug", default=0)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
+    if (is.character(progressBar) && progressBar == "shiny") {
+        if (!requireNamespace("shiny", quietly=TRUE))
+            stop("cannot have progressBar=\"shiny\" unless the \"shiny\" package is installed")
+    }
     gliderDebug(debug, "read.glider.seaexplorer.realtime(\"", directory, "\", ...) {\n", sep="", unindent=1)
     yoGiven <- !missing(yo)
     glifiles <- dir(directory, pattern='*gli*', full.names=TRUE)
@@ -225,14 +236,19 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 
     ## gli files
     nfiles <- length(glifiles)
-    if (progressBar) {
+    if (is.logical(progressBar) && progressBar) {
         cat('* Reading', nfiles, ifelse(nfiles==1, 'gli file\n', 'gli files...\n'))
         pb <- txtProgressBar(0, nfiles, 0, style=3) # start at 0 to allow for a single yo
+    } else if (is.character(progressBar) && progressBar == "shiny") {
+        shiny::setProgress(0, paste("reading", nfiles, "files"))
     }
     gli <- list()
     for (i in seq_len(nfiles)) {
-        if (progressBar)
+        if (is.logical(progressBar) && progressBar) {
             setTxtProgressBar(pb, i)
+        } else if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::incProgress(1 / nfiles)
+        }
         gliderDebug(debug, "reading gli file:  ", glifiles[i], "\n")
         gliData <- utils::read.delim(glifiles[i], sep=";")
         gliData$yoNumberNav <- rep(yo[i], dim(gliData)[1])
@@ -242,16 +258,21 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     gliData$X <- NULL
     ## pld1 files
     nfiles <- length(pld1files)
-    if (progressBar) {
+    if (is.logical(progressBar) && progressBar) {
         cat('\n')
         flush.console()
         cat('* Reading', nfiles, ifelse(nfiles==1, 'pld1 file\n', 'pld1 files...\n'))
         pb <- txtProgressBar(0, nfiles, 0, style=3)
+    } else if (is.character(progressBar) && progressBar == "shiny") {
+        shiny::setProgress(0, paste("reading", nfiles, "files"))
     }
     pld1 <- list()
     for (i in seq_len(nfiles)) {
-        if (progressBar)
+        if (is.logical(progressBar) && progressBar) {
             setTxtProgressBar(pb, i)
+        } else if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::incProgress(1 / nfiles)
+        }
         gliderDebug(debug, "reading pld1 file: ", pld1files[i], "?\n")
         pld1Data <- utils::read.delim(pld1files[i], sep=";")
         pld1Data$yoNumber <- rep(yo[i], dim(pld1Data)[1])
@@ -259,7 +280,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     }
     pld1Data <- do.call(rbind.data.frame, pld1)
     pld1Data$X <- NULL
-    if (progressBar)
+    if (is.logical(progressBar) && progressBar)
         cat('\n')
 
     ## change missingValue to NA
@@ -568,10 +589,17 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
 #'
-#' @param progressBar A logical indicating whether to show progress
-#'     bars while reading the data. Can be useful when reading full
-#'     datasets.
-#'
+#' @param progressBar either a logical or character value that controls
+#'     whether/how to indicate the progress made in reading and interpreting
+#'     the data.  This can be useful, since the work can be slow.  If `progressBar`
+#'     is a logical value, then it indicates whether to show textual progress
+#'     with [txtProgressBar()].  If `progressBar` is the character value `"shiny"`,
+#'     then [shiny::setProgress()] and [shiny::incProgress()] will be used,
+#'     on the assumption that the call to `read.glider.seaexplorer.realtime()`
+#'     was made within the context of a call to [shiny::withProgress()].
+#'     The default is to use the value returned by [interactive()], i.e.
+#'     to use a textual progress indicator, but only in interactive mode.
+##'
 #' @template debug
 #'
 #' @template seaexplorer_names
@@ -589,6 +617,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @importFrom oce swSCTp processingLogAppend
 #' @importFrom stats approx
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
+## @importFrom shiny incProgress setProgress
 #'
 #' @export
 #'
@@ -601,6 +630,10 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
         debug <- getOption("gliderDebug", default=0)
     if (missing(directory))
         stop("must provide 'directory', in which glider files reside")
+    if (is.character(progressBar) && progressBar == "shiny") {
+        if (!requireNamespace("shiny", quietly=TRUE))
+            stop("cannot have progressBar=\"shiny\" unless the \"shiny\" package is installed")
+    }
     gliderDebug(debug, "read.glider.seaexplorer.delayed(\"", directory, "\", ...) {\n", sep="", unindent=1)
     if (level != 0 & level != 1)
         stop("Level must be either 0 or 1")
@@ -640,12 +673,20 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
 
     pld1 <- list()
-    if (progressBar) {
+    if (is.logical(progressBar) && progressBar) {
         cat('* Reading', length(files), 'files...\n')
         pb <- txtProgressBar(0, length(files), 0, style=3) # start at 0 to allow for a single yo
+    } else if (is.character(progressBar) && progressBar == "shiny") {
+        shiny::setProgress(0, paste("reading", length(files), "files"))
     }
-    for (i in 1:length(files)) {
-        if (progressBar) setTxtProgressBar(pb, i)
+    nfiles <- length(files)
+    for (i in seq_len(nfiles)) {
+        if (is.logical(progressBar) && progressBar) {
+            setTxtProgressBar(pb, i)
+        } else if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::incProgress(1 / nfiles)
+        }
+
         d <- utils::read.delim(files[i], sep=';', stringsAsFactors=FALSE, row.names=NULL)
         d$yoNumber <- rep(yo[i], dim(d)[1])
         ## Rename items in payload1 data.
@@ -729,7 +770,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     gliderDebug(debug, ' (position 8) \n')
     df[['X']] <- NULL # get rid of the weird last column
     gliderDebug(debug > 3, ' (position 9) \n')
-    if (progressBar) {
+    if (is.logical(progressBar) && progressBar) {
         cat('\n')
         flush.console()
     }
@@ -775,27 +816,38 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
 
         ## Interpolate NAs for all sensors
         n <- length(names(df)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
-        if (progressBar) {
+        if (is.logical(progressBar) && progressBar) {
             cat('* Interpolating NAs...\n')
             pb <- txtProgressBar(1, n, 1, style=3)
+        } else if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::setProgress(0, paste("handling NA values for", n, "variables"))
         }
         i <- 1
         for (var in names(df)) {
             if (!(var %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))) {
-                if (progressBar) setTxtProgressBar(pb, i)
+                if (is.logical(progressBar) && progressBar) {
+                    setTxtProgressBar(pb, i)
+                } else if (is.character(progressBar) && progressBar == "shiny") {
+                    shiny::incProgress(1 / n, paste("handling NA for", var))
+                }
                 df[[var]] <- approx(df[['time']], df[[var]], df[['time']])$y
                 i <- i + 1
             }
         }
-        if (progressBar) {
+        if (is.logical(progressBar) && progressBar) {
             cat('\n')
             flush.console()
         }
-
         ## Remove duplicated times
+        if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::setProgress(0, "removing duplicated items")
+        }
         df <- df[!duplicated(df), ]
 
         ## Calculate salinity
+        if (is.character(progressBar) && progressBar == "shiny") {
+            shiny::setProgress(0, "calculating salinity")
+        }
         df$salinity <- with(df, swSCTp(conductivity, temperature, pressure, conductivityUnit = 'S/m'))
         df$salinity[df$salinity > 40] <- NA
 
@@ -803,6 +855,9 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
     }
     ## BOOKMARK START assure that this is echoed in read.glider.seaexplorer.realtime()
     ## insert units
+    if (is.character(progressBar) && progressBar == "shiny") {
+        shiny::setProgress(0, "creating units")
+    }
     for (stream in names(res@data)) {
         ## FIXME: add more units here, if any of them are certain to be known
         res@metadata$units[[stream]] <- list()

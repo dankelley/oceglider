@@ -17,9 +17,16 @@ will read all yo numbers for which files are present in \code{dir}.}
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
 
-\item{progressBar}{A logical indicating whether to show progress
-bars while reading the data. Can be useful when reading full
-datasets.}
+\item{progressBar}{either a logical or character value that controls
+whether/how to indicate the progress made in reading and interpreting
+the data.  This can be useful, since the work can be slow.  If \code{progressBar}
+is a logical value, then it indicates whether to show textual progress
+with \code{\link[=txtProgressBar]{txtProgressBar()}}.  If \code{progressBar} is the character value \code{"shiny"},
+then \code{\link[shiny:setProgress]{shiny::setProgress()}} and \code{\link[shiny:incProgress]{shiny::incProgress()}} will be used,
+on the assumption that the call to \code{read.glider.seaexplorer.realtime()}
+was made within the context of a call to \code{\link[shiny:withProgress]{shiny::withProgress()}}.
+The default is to use the value returned by \code{\link[=interactive]{interactive()}}, i.e.
+to use a textual progress indicator, but only in interactive mode.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
