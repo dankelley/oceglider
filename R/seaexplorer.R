@@ -591,7 +591,15 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #'
 #' @param removeSamplesAtstart Number of samples to remove from the
 #'     start of each yo. Currently implemented to remove the samples
-#'     from the beginning of each "inflecting" period.
+#'     from the beginning of each "inflecting" period. Likely to be
+#'     removed shortly in favour of the `removeTimesincePowerOn`
+#'     argument.
+#'
+#' @param removeTimeSincePowerOn Amount of time to remove data after
+#'     the CTD is powered on. This is to remove spurious data that can
+#'     occur when the glider doesn't sample every yo, and water
+#'     trapped within the CTD needs to be flushed out before good data
+#'     are obtained.
 #' 
 #' @param progressBar either a logical or character value that controls
 #'     whether/how to indicate the progress made in reading and interpreting
@@ -628,7 +636,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSamplesAtStart=0, progressBar=interactive(), debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSamplesAtStart=0, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -789,9 +797,9 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSample
     df$longitude[!trans] <- NA
     df$latitude[!trans] <- NA
 
-    ## Now interpolate lon/lat
-    df$longitude <- approx(df$time, df$longitude, df$time)$y
-    df$latitude <- approx(df$time, df$latitude, df$time)$y
+    ## ## Now interpolate lon/lat
+    ## df$longitude <- approx(df$time, df$longitude, df$time)$y
+    ## df$latitude <- approx(df$time, df$latitude, df$time)$y
 
     ## Trim out any empty rows (no data at all)
     sub <- df[, which(!(names(df) %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber')))]
@@ -818,6 +826,15 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSample
                 }
                 df <- df[ok,]
             }
+        }
+
+        if (removeTimeSincePowerOn > 0) {
+            starts <- c(1, which(diff(df$time) > 60) + 1)  # FIXME: should 60s be an argument?
+            dt <- median(diff(as.numeric(df$time[!is.na(df$temperature)])))
+            ok <- rep(TRUE, length(df$time))
+            n <- round(removeTimeSincePowerOn/dt)
+            for (s in starts) ok[s:(s+n)] <- FALSE
+            df <- df[ok,]
         }
 
         ## Interpolate NAs for all sensors
