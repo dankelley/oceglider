@@ -4,10 +4,13 @@
 \alias{read.glider.slocum}
 \title{Read a Slocum Glider file}
 \usage{
-read.glider.slocum(file, debug, nameMap = list(conductivity =
-  "sci_water_cond", temperature = "sci_water_temp", pressure =
-  "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
-  "i_depth"))
+read.glider.slocum(
+  file,
+  debug,
+  nameMap = list(conductivity = "sci_water_cond", temperature = "sci_water_temp",
+    pressure = "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
+    "i_depth")
+)
 }
 \arguments{
 \item{file}{A connection or a character string giving the name of the file to load.}
@@ -39,7 +42,7 @@ in the returned object. (Renaming simplifies later analysis, e.g.
 permitting direct use of algorithms in the \code{oce} package,
 which assume that salinity is named \code{"salinity"}, etc.)
 The original names of data items are retained in the metadata
-of the returned object, so that the \code{[[} operator in the \code{oce}
+of the returned object, so that the \verb{[[} operator in the \code{oce}
 package can retrieve the data using either the original name
 (e.g. \code{x[["sci_water_temp"]]}) or the more standard
 name (e.g. \code{x[["temperature"]]}).
@@ -73,9 +76,10 @@ if (file.exists("~/slocum.csv")) {
 
 }
 \seealso{
-Other functions to read glider data: \code{\link{read.glider.netcdf}},
-  \code{\link{read.glider.seaexplorer.delayed}},
-  \code{\link{read.glider.seaexplorer.realtime}}
+Other functions to read glider data: 
+\code{\link{read.glider.netcdf}()},
+\code{\link{read.glider.seaexplorer.delayed}()},
+\code{\link{read.glider.seaexplorer.realtime}()}
 }
 \author{
 Dan Kelley

@@ -4,8 +4,15 @@
 \alias{read.glider.seaexplorer.delayed}
 \title{Read delayed-mode SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.delayed(directory, yo, level = 1,
-  progressBar = interactive(), debug)
+read.glider.seaexplorer.delayed(
+  directory,
+  yo,
+  level = 1,
+  removeSamplesAtStart = 0,
+  removeTimeSincePowerOn = 0,
+  progressBar = interactive(),
+  debug
+)
 }
 \arguments{
 \item{directory}{The directory in which the delayed-mode SeaExplorer files are located.}
@@ -16,6 +23,12 @@ will read all yo numbers for which files are present in \code{dir}.}
 
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
+
+\item{removeTimeSincePowerOn}{Amount of time to remove data after
+the CTD is powered on. This is to remove spurious data that can
+occur when the glider doesn't sample every yo, and water
+trapped within the CTD needs to be flushed out before good data
+are obtained.}
 
 \item{progressBar}{either a logical or character value that controls
 whether/how to indicate the progress made in reading and interpreting
@@ -38,6 +51,12 @@ function. If one \code{glider} function calls another, it
 passes the value of \code{debug} but decreased by 1, which means
 that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
+
+\item{removeSamplesAtstart}{Number of samples to remove from the
+start of each yo. Currently implemented to remove the samples
+from the beginning of each "inflecting" period. Likely to be
+removed shortly in favour of the \code{removeTimesincePowerOn}
+argument.}
 }
 \description{
 Reads delayed-mode CSV files produced by a SeaExplorer glider,
@@ -182,11 +201,13 @@ plot(g, which="p")
 
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.realtime}}
+Other functions for seaexplorer gliders: 
+\code{\link{read.glider.seaexplorer.realtime}()}
 
-Other functions to read glider data: \code{\link{read.glider.netcdf}},
-  \code{\link{read.glider.seaexplorer.realtime}},
-  \code{\link{read.glider.slocum}}
+Other functions to read glider data: 
+\code{\link{read.glider.netcdf}()},
+\code{\link{read.glider.seaexplorer.realtime}()},
+\code{\link{read.glider.slocum}()}
 }
 \author{
 Clark Richards and Dan Kelley

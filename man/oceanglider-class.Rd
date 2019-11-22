@@ -3,7 +3,6 @@
 \docType{package}
 \name{oceanglider-class}
 \alias{oceanglider-class}
-\alias{oceanglider-class-package}
 \title{oceanglider: A Package for Processing Ocean Glider Data}
 \description{
 This package was written with two particular dataset types

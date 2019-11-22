@@ -7,7 +7,7 @@
 urlExists(url, quiet = FALSE)
 }
 \arguments{
-\item{url}{Character value specifying the URL. If no \code{/} is present
+\item{url}{Character value specifying the URL. If no \verb{/} is present
 at the end of this string, then it is added before checks are done.}
 
 \item{quiet}{Logical value indicating whether to print a suggestion

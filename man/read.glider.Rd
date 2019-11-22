@@ -20,7 +20,7 @@ passes the value of \code{debug} but decreased by 1, which means
 that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
 
-\item{...}{Extra parameters passed to more specific \code{read.*} functions.}
+\item{...}{Extra parameters passed to more specific \verb{read.*} functions.}
 }
 \value{
 A \code{glider} object, i.e. one inheriting from \linkS4class{glider}.

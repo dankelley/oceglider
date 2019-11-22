@@ -4,8 +4,14 @@
 \alias{read.glider.seaexplorer.realtime}
 \title{Read real-time SeaExplorer glider data}
 \usage{
-read.glider.seaexplorer.realtime(directory, yo, level = 1,
-  progressBar = interactive(), missingValue = 9999, debug)
+read.glider.seaexplorer.realtime(
+  directory,
+  yo,
+  level = 1,
+  progressBar = interactive(),
+  missingValue = 9999,
+  debug
+)
 }
 \arguments{
 \item{directory}{The directory in which the realtime SeaExplorer files are located.}
@@ -158,11 +164,13 @@ https://cdn.ioos.noaa.gov/media/2017/12/QARTOD-Data-Flags-Manual_Final_version1.
 }
 }
 \seealso{
-Other functions for seaexplorer gliders: \code{\link{read.glider.seaexplorer.delayed}}
+Other functions for seaexplorer gliders: 
+\code{\link{read.glider.seaexplorer.delayed}()}
 
-Other functions to read glider data: \code{\link{read.glider.netcdf}},
-  \code{\link{read.glider.seaexplorer.delayed}},
-  \code{\link{read.glider.slocum}}
+Other functions to read glider data: 
+\code{\link{read.glider.netcdf}()},
+\code{\link{read.glider.seaexplorer.delayed}()},
+\code{\link{read.glider.slocum}()}
 }
 \author{
 Dan Kelley and Clark Richards
