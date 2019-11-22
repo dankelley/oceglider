@@ -589,6 +589,10 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
 #'
+#' @param removeSamplesAtstart Number of samples to remove from the
+#'     start of each yo. Currently implemented to remove the samples
+#'     from the beginning of each "inflecting" period.
+#' 
 #' @param progressBar either a logical or character value that controls
 #'     whether/how to indicate the progress made in reading and interpreting
 #'     the data.  This can be useful, since the work can be slow.  If `progressBar`
@@ -624,7 +628,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=interactive(), debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSamplesAtStart=0, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -801,17 +805,19 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, progressBar=
                                                  paste("read.glider.seaexplorer.delayed(directory=", directory, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     } else if (level == 1) {
-        inflectUp <- as.integer(df$navState == 118)
-        iuStart <- which(diff(inflectUp) == 1) + 1
-        inflectDown <- as.integer(df$navState == 110)
-        idStart <- which(diff(inflectDown) == 1) + 1
-        if (length(iuStart) > 0 & length(idStart) > 0) {
-            ok <- rep(TRUE, dim(df)[1])
-            for (i in 0:5) {
-                ok[iuStart+i] <- FALSE
-                ok[idStart+i] <- FALSE
+        if (removeSamplesAtStart > 0) {
+            inflectUp <- as.integer(df$navState == 118)
+            iuStart <- which(diff(inflectUp) == 1) + 1
+            inflectDown <- as.integer(df$navState == 110)
+            idStart <- which(diff(inflectDown) == 1) + 1
+            if (length(iuStart) > 0 & length(idStart) > 0) {
+                ok <- rep(TRUE, dim(df)[1])
+                for (i in 0:removeSamplesAtStart) {
+                    ok[iuStart+i] <- FALSE
+                    ok[idStart+i] <- FALSE
+                }
+                df <- df[ok,]
             }
-            df <- df[ok,]
         }
 
         ## Interpolate NAs for all sensors
