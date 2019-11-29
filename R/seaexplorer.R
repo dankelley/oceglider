@@ -797,9 +797,9 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSample
     df$longitude[!trans] <- NA
     df$latitude[!trans] <- NA
 
-    ## ## Now interpolate lon/lat
-    ## df$longitude <- approx(df$time, df$longitude, df$time)$y
-    ## df$latitude <- approx(df$time, df$latitude, df$time)$y
+    ## Now interpolate lon/lat
+    df$longitude <- approx(df$time, df$longitude, df$time)$y
+    df$latitude <- approx(df$time, df$latitude, df$time)$y
 
     ## Trim out any empty rows (no data at all)
     sub <- df[, which(!(names(df) %in% c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber')))]
