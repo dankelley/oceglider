@@ -627,7 +627,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #'
 #' @importFrom methods new
 #' @importFrom oce swSCTp processingLogAppend
-#' @importFrom stats approx
+#' @importFrom stats approx median
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 ## @importFrom shiny incProgress setProgress
 #'
