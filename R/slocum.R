@@ -34,7 +34,7 @@
 #'     # 1. Plot time-depth trace, colour-coded for temperature
 #'     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
 #'     cm <- colormap(z=g[['temperature']])
-#'     drawPalette(colormap=cm, cex=3/4)
+#'     drawPalette(colormap=cm, cex.axis=3/4)
 #'     t <- g[["time"]]
 #'     p <- g[["depth"]]
 #'     plot(t, p, ylim=rev(range(p)), xlab="Time", ylab="Pressure [dbar]",
@@ -45,7 +45,7 @@
 #'     dist <- geodDist(g[['longitude']],g[['latitude']],alongPath=TRUE)
 #'     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
 #'     cm <- colormap(z=g[['temperature']])
-#'     drawPalette(colormap=cm, cex=3/4)
+#'     drawPalette(colormap=cm, cex.axis=3/4)
 #'     p <- g[["depth"]]
 #'     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
 #'          col=cm$zcol, cex=1/2, pch=20)
