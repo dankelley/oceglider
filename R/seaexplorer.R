@@ -589,7 +589,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
 #'
-#' @param removeSamplesAtstart Number of samples to remove from the
+#' @param removeSamplesAtStart Number of samples to remove from the
 #'     start of each yo. Currently implemented to remove the samples
 #'     from the beginning of each "inflecting" period. Likely to be
 #'     removed shortly in favour of the `removeTimesincePowerOn`

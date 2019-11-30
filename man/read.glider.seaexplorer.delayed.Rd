@@ -24,6 +24,12 @@ will read all yo numbers for which files are present in \code{dir}.}
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
 
+\item{removeSamplesAtStart}{Number of samples to remove from the
+start of each yo. Currently implemented to remove the samples
+from the beginning of each "inflecting" period. Likely to be
+removed shortly in favour of the \code{removeTimesincePowerOn}
+argument.}
+
 \item{removeTimeSincePowerOn}{Amount of time to remove data after
 the CTD is powered on. This is to remove spurious data that can
 occur when the glider doesn't sample every yo, and water
@@ -51,12 +57,6 @@ function. If one \code{glider} function calls another, it
 passes the value of \code{debug} but decreased by 1, which means
 that the value of \code{debug} controls not just the breadth
 of debugging, but also the depth.}
-
-\item{removeSamplesAtstart}{Number of samples to remove from the
-start of each yo. Currently implemented to remove the samples
-from the beginning of each "inflecting" period. Likely to be
-removed shortly in favour of the \code{removeTimesincePowerOn}
-argument.}
 }
 \description{
 Reads delayed-mode CSV files produced by a SeaExplorer glider,
