@@ -589,12 +589,6 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
 #'
-#' @param removeSamplesAtStart Number of samples to remove from the
-#'     start of each yo. Currently implemented to remove the samples
-#'     from the beginning of each "inflecting" period. Likely to be
-#'     removed shortly in favour of the `removeTimesincePowerOn`
-#'     argument.
-#'
 #' @param removeTimeSincePowerOn Amount of time to remove data after
 #'     the CTD is powered on. This is to remove spurious data that can
 #'     occur when the glider doesn't sample every yo, and water
@@ -636,7 +630,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSamplesAtStart=0, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -813,21 +807,6 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeSample
                                                  paste("read.glider.seaexplorer.delayed(directory=", directory, ", yo=", head(yo, 1), ":", tail(yo, 1), ", level=", level, ")", sep=""))
         return(res)
     } else if (level == 1) {
-        if (removeSamplesAtStart > 0) {
-            inflectUp <- as.integer(df$navState == 118)
-            iuStart <- which(diff(inflectUp) == 1) + 1
-            inflectDown <- as.integer(df$navState == 110)
-            idStart <- which(diff(inflectDown) == 1) + 1
-            if (length(iuStart) > 0 & length(idStart) > 0) {
-                ok <- rep(TRUE, dim(df)[1])
-                for (i in 0:removeSamplesAtStart) {
-                    ok[iuStart+i] <- FALSE
-                    ok[idStart+i] <- FALSE
-                }
-                df <- df[ok,]
-            }
-        }
-
         if (removeTimeSincePowerOn > 0) {
             starts <- c(1, which(diff(df$time) > 60) + 1)  # FIXME: should 60s be an argument?
             dt <- median(diff(as.numeric(df$time[!is.na(df$temperature)])))
