@@ -552,13 +552,18 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' the first sample output to the payload computer is the *last*
 #' sample recorded before power down.
 #'
-#' \item NAs for all the sensors are interpolated to a common
-#' time. For example, if a Wetlabs FLBBCD sensor sampled, but there is
-#' no corresponding GP-CTD sample from the same time, the CTD
-#' parameters will be interpolated from the ones before and
-#' after. This has the disadvantage of interpolating values that were
-#' not measured, but has the advantage of assigning pressures to
-#' values measured by sensors not integrated into the CTD
+#' \item Interpolation, depending on the value of `interpToCTD`. If
+#' `interpToCTD` is `TRUE`, then any "extra" sensors are interpolated
+#' to the times for which there is CTD data. Otherwise, NAs for *all*
+#' the sensors are interpolated to a common time, corresponding to the
+#' raw time stamps output from the various sensors. A caution -- this
+#' will produce an apparent "upsampling" of each sensor, so that the
+#' apparent sample rate is higher. For example, if a Wetlabs FLBBCD
+#' sensor sampled, but there is no corresponding GP-CTD sample from
+#' the same time, the CTD parameters will be interpolated from the
+#' ones before and after. This has the disadvantage of interpolating
+#' values that were not measured, but has the advantage of assigning
+#' pressures to values measured by sensors not integrated into the CTD
 #' (e.g. Wetlabs FLBBCD, Rinko O2). Following the interpolation, any
 #' rows with duplicated times are removed.
 #'
@@ -588,6 +593,11 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #'
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
+#'
+#' @param interpToCTD A logical indicating whether all sensors should
+#'     be interpolated to the CTD times to obtain a common time base,
+#'     or whether all sensors should simply be interpolated for all
+#'     time stamps (which was the default behavious before 2019-12-08)
 #'
 #' @param removeTimeSincePowerOn Amount of time to remove data after
 #'     the CTD is powered on. This is to remove spurious data that can
@@ -630,7 +640,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpToCTD=TRUE, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -816,7 +826,8 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeTimeSi
             df <- df[ok,]
         }
 
-        ## Interpolate NAs for all sensors
+        ## Interpolate NAs
+        ctd <- which(!is.na(df$temperature)) # indices of measure CTD points
         n <- length(names(df)) - length(c('time', 'navState', 'longitude', 'latitude', 'pressureNav', 'yoNumber'))
         if (is.logical(progressBar) && progressBar) {
             cat('* Interpolating NAs...\n')
@@ -835,6 +846,13 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, removeTimeSi
                 df[[var]] <- approx(df[['time']], df[[var]], df[['time']])$y
                 i <- i + 1
             }
+        }
+        ## We want to interpolate non-CTD fields to the time stamps
+        ## for which there is actual measured CTD data. Since we've
+        ## already interpolated to all existing time stamps, we can
+        ## just remove the ones that were *not* from the CTD
+        if (interpToCTD) {
+            df <- df[ctd, ]
         }
         if (is.logical(progressBar) && progressBar) {
             cat('\n')
