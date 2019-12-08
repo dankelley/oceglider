@@ -42,7 +42,7 @@ in the returned object. (Renaming simplifies later analysis, e.g.
 permitting direct use of algorithms in the \code{oce} package,
 which assume that salinity is named \code{"salinity"}, etc.)
 The original names of data items are retained in the metadata
-of the returned object, so that the \verb{[[} operator in the \code{oce}
+of the returned object, so that the \code{[[} operator in the \code{oce}
 package can retrieve the data using either the original name
 (e.g. \code{x[["sci_water_temp"]]}) or the more standard
 name (e.g. \code{x[["temperature"]]}).

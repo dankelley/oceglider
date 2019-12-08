@@ -8,7 +8,7 @@ read.glider.seaexplorer.delayed(
   directory,
   yo,
   level = 1,
-  removeSamplesAtStart = 0,
+  interpToCTD = TRUE,
   removeTimeSincePowerOn = 0,
   progressBar = interactive(),
   debug
@@ -24,11 +24,10 @@ will read all yo numbers for which files are present in \code{dir}.}
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
 
-\item{removeSamplesAtStart}{Number of samples to remove from the
-start of each yo. Currently implemented to remove the samples
-from the beginning of each "inflecting" period. Likely to be
-removed shortly in favour of the \code{removeTimesincePowerOn}
-argument.}
+\item{interpToCTD}{A logical indicating whether all sensors should
+be interpolated to the CTD times to obtain a common time base,
+or whether all sensors should simply be interpolated for all
+time stamps (which was the default behavious before 2019-12-08)}
 
 \item{removeTimeSincePowerOn}{Amount of time to remove data after
 the CTD is powered on. This is to remove spurious data that can
@@ -90,13 +89,18 @@ set to sample on alternating profiles, when the CTD is powered up
 the first sample output to the payload computer is the \emph{last}
 sample recorded before power down.
 
-\item NAs for all the sensors are interpolated to a common
-time. For example, if a Wetlabs FLBBCD sensor sampled, but there is
-no corresponding GP-CTD sample from the same time, the CTD
-parameters will be interpolated from the ones before and
-after. This has the disadvantage of interpolating values that were
-not measured, but has the advantage of assigning pressures to
-values measured by sensors not integrated into the CTD
+\item Interpolation, depending on the value of \code{interpToCTD}. If
+\code{interpToCTD} is \code{TRUE}, then any "extra" sensors are interpolated
+to the times for which there is CTD data. Otherwise, NAs for \emph{all}
+the sensors are interpolated to a common time, corresponding to the
+raw time stamps output from the various sensors. A caution -- this
+will produce an apparent "upsampling" of each sensor, so that the
+apparent sample rate is higher. For example, if a Wetlabs FLBBCD
+sensor sampled, but there is no corresponding GP-CTD sample from
+the same time, the CTD parameters will be interpolated from the
+ones before and after. This has the disadvantage of interpolating
+values that were not measured, but has the advantage of assigning
+pressures to values measured by sensors not integrated into the CTD
 (e.g. Wetlabs FLBBCD, Rinko O2). Following the interpolation, any
 rows with duplicated times are removed.
 
