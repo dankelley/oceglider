@@ -843,7 +843,8 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpToCTD=
                 } else if (is.character(progressBar) && progressBar == "shiny") {
                     shiny::incProgress(1 / n, paste("handling NA for", var))
                 }
-                df[[var]] <- approx(df[['time']], df[[var]], df[['time']])$y
+                if (!all(is.na(df[[var]]))) # in case the entire field is missing, e.g. oxygenFrequency
+                    df[[var]] <- approx(df[['time']], df[[var]], df[['time']])$y
                 i <- i + 1
             }
         }
