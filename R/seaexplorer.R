@@ -552,8 +552,8 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' the first sample output to the payload computer is the *last*
 #' sample recorded before power down.
 #'
-#' \item Interpolation, depending on the value of `interpToCTD`. If
-#' `interpToCTD` is `TRUE`, then any "extra" sensors are interpolated
+#' \item Interpolation, depending on the value of `interpolateToCTD`. If
+#' `interpolateToCTD` is `TRUE`, then any "extra" sensors are interpolated
 #' to the times for which there is CTD data. Otherwise, NAs for *all*
 #' the sensors are interpolated to a common time, corresponding to the
 #' raw time stamps output from the various sensors. A caution -- this
@@ -594,7 +594,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @param level A numeric value specifying the processing level, 0 or
 #'     1. See Details.
 #'
-#' @param interpToCTD A logical indicating whether all sensors should
+#' @param interpolateToCTD A logical indicating whether all sensors should
 #'     be interpolated to the CTD times to obtain a common time base,
 #'     or whether all sensors should simply be interpolated for all
 #'     time stamps (which was the default behavious before 2019-12-08)
@@ -640,7 +640,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
-read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpToCTD=TRUE, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
+read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpolateToCTD=TRUE, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -852,7 +852,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpToCTD=
         ## for which there is actual measured CTD data. Since we've
         ## already interpolated to all existing time stamps, we can
         ## just remove the ones that were *not* from the CTD
-        if (interpToCTD) {
+        if (interpolateToCTD) {
             df <- df[ctd, ]
         }
         if (is.logical(progressBar) && progressBar) {
