@@ -29,7 +29,7 @@ whether/how to indicate the progress made in reading and interpreting
 the data.  This can be useful, since the work can be slow.  If \code{progressBar}
 is a logical value, then it indicates whether to show textual progress
 with \code{\link[=txtProgressBar]{txtProgressBar()}}.  If \code{progressBar} is the character value \code{"shiny"},
-then \code{\link[shiny:setProgress]{shiny::setProgress()}} and \code{\link[shiny:incProgress]{shiny::incProgress()}} will be used,
+then \code{\link[shiny:withProgress]{shiny::setProgress()}} and \code{\link[shiny:withProgress]{shiny::incProgress()}} will be used,
 on the assumption that the call to \code{read.glider.seaexplorer.realtime()}
 was made within the context of a call to \code{\link[shiny:withProgress]{shiny::withProgress()}}.
 The default is to use the value returned by \code{\link[=interactive]{interactive()}}, i.e.
@@ -152,9 +152,9 @@ authors, if you need to handle such files.
 library(oceanglider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 g <- read.glider.seaexplorer.realtime(directory)
-plot(g, which="navState")
-plot(g, which="S")
-plot(g, which="T")
+plotGlider(g, which="navState")
+plotGlider(g, which="S")
+plotGlider(g, which="T")
 
 }
 \references{

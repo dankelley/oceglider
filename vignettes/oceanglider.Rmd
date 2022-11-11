@@ -100,23 +100,24 @@ these are called delayed-mode data, so the function to read them is called
 ```{r}
 directory2 <- system.file("extdata/seaexplorer/raw", package="oceanglider")
 g2 <- read.glider.seaexplorer.delayed(directory2, level=1)
+message(class(g2))
 ```
 
 Here is how to plot a time-series of pressure from this dataset:
 ```{r}
-plot(g2, which="p")
+plotGlider(g2, which="p")
 ```
 
 Here is how to see locations in space:
 ```{r}
-plot(g2, which="map")
+plotGlider(g2, which="map")
 ```
 
 The points are on a line because
 [`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed)
 interpolates longitude and latitude between surfacings, and this small subset
 of glider data was selected to have a position record at the first and last of
-the sequenc.
+the sequence.
 
 It is also noteworthy that some of the spots seem to have only a few data. This
 can be checked with
@@ -148,11 +149,11 @@ payload <- g3[["payload"]] # or [["payload1"]]
 s <- split(payload, payload$yoNumber)
 par(mfrow=c(2, 3)) # we happen to know there are 3 significant yos
 for (ss in s) {
-   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
-                      temperature=ss[["temperature"]],
-                      pressure=ss[["pressure"]],
-                      longitude=ss[["longitude"]],
-                      latitude=ss[["latitude"]])
+    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+        temperature=ss[["temperature"]],
+        pressure=ss[["pressure"]],
+        longitude=ss[["longitude"]],
+        latitude=ss[["latitude"]])
    oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
 ```
@@ -199,12 +200,12 @@ payload <- g4[["payload"]] # or [["payload1"]]
 s <- split(payload, payload$yoNumber)
 par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
 for (ss in s) {
-   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
-                      temperature=ss[["temperature"]],
-                      pressure=ss[["pressure"]],
-                      longitude=ss[["longitude"]],
-                      latitude=ss[["latitude"]])
-   oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
+    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+        temperature=ss[["temperature"]],
+        pressure=ss[["pressure"]],
+        longitude=ss[["longitude"]],
+        latitude=ss[["latitude"]])
+    oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
 ```
 
@@ -214,11 +215,11 @@ isolating the ascent (called `"upcast"` in the CTD context), e.g.
 ```{r}
 par(mfrow=c(2, 2)) # we happen to know there are 3 significant yos
 for (ss in s) {
-   ctd <- oce::as.ctd(salinity=ss[["salinity"]],
-                      temperature=ss[["temperature"]],
-                      pressure=ss[["pressure"]],
-                      longitude=ss[["longitude"]],
-                      latitude=ss[["latitude"]])
+    ctd <- oce::as.ctd(salinity=ss[["salinity"]],
+        temperature=ss[["temperature"]],
+        pressure=ss[["pressure"]],
+        longitude=ss[["longitude"]],
+        latitude=ss[["latitude"]])
    ctd <- oce::ctdTrim(ctd, "upcast")
    oce::plotProfile(ctd, xtype="salinity+temperature", eos="unesco")
 }
@@ -232,10 +233,10 @@ par(mfrow=c(1, 1))
 for (i in seq_along(s)) {
     ss <- s[[i]]
     ctd <- oce::as.ctd(salinity=ss[["salinity"]],
-                       temperature=ss[["temperature"]],
-                       pressure=ss[["pressure"]],
-                       longitude=ss[["longitude"]],
-                       latitude=ss[["latitude"]])
+        temperature=ss[["temperature"]],
+        pressure=ss[["pressure"]],
+        longitude=ss[["longitude"]],
+        latitude=ss[["latitude"]])
     ctd <- oce::ctdTrim(ctd, "upcast")
     if (i == 1) {
        oce::plotProfile(ctd, xtype="temperature", eos="unesco")
@@ -246,7 +247,7 @@ for (i in seq_along(s)) {
 legend("bottomright", lwd=1, col=seq_along(s),
     legend=paste("yo",
         as.character(lapply(s,function(ss) ss$yoNumber[1]))))
-````
+```
 
 At this stage, readers will likely have some ideas for doing more with this
 sample dataset, and ought to be aware that many of the steps here might not

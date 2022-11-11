@@ -8,7 +8,7 @@ read.glider.seaexplorer.delayed(
   directory,
   yo,
   level = 1,
-  interpToCTD = TRUE,
+  interpolateToCTD = TRUE,
   removeTimeSincePowerOn = 0,
   progressBar = interactive(),
   debug
@@ -24,7 +24,7 @@ will read all yo numbers for which files are present in \code{dir}.}
 \item{level}{A numeric value specifying the processing level, 0 or
 1. See Details.}
 
-\item{interpToCTD}{A logical indicating whether all sensors should
+\item{interpolateToCTD}{A logical indicating whether all sensors should
 be interpolated to the CTD times to obtain a common time base,
 or whether all sensors should simply be interpolated for all
 time stamps (which was the default behavious before 2019-12-08)}
@@ -40,7 +40,7 @@ whether/how to indicate the progress made in reading and interpreting
 the data.  This can be useful, since the work can be slow.  If \code{progressBar}
 is a logical value, then it indicates whether to show textual progress
 with \code{\link[=txtProgressBar]{txtProgressBar()}}.  If \code{progressBar} is the character value \code{"shiny"},
-then \code{\link[shiny:setProgress]{shiny::setProgress()}} and \code{\link[shiny:incProgress]{shiny::incProgress()}} will be used,
+then \code{\link[shiny:withProgress]{shiny::setProgress()}} and \code{\link[shiny:withProgress]{shiny::incProgress()}} will be used,
 on the assumption that the call to \code{read.glider.seaexplorer.realtime()}
 was made within the context of a call to \code{\link[shiny:withProgress]{shiny::withProgress()}}.
 The default is to use the value returned by \code{\link[=interactive]{interactive()}}, i.e.
@@ -89,8 +89,8 @@ set to sample on alternating profiles, when the CTD is powered up
 the first sample output to the payload computer is the \emph{last}
 sample recorded before power down.
 
-\item Interpolation, depending on the value of \code{interpToCTD}. If
-\code{interpToCTD} is \code{TRUE}, then any "extra" sensors are interpolated
+\item Interpolation, depending on the value of \code{interpolateToCTD}. If
+\code{interpolateToCTD} is \code{TRUE}, then any "extra" sensors are interpolated
 to the times for which there is CTD data. Otherwise, NAs for \emph{all}
 the sensors are interpolated to a common time, corresponding to the
 raw time stamps output from the various sensors. A caution -- this
@@ -201,7 +201,7 @@ authors, if you need to handle such files.
 library(oceanglider)
 directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
 g <- read.glider.seaexplorer.delayed(directory)
-plot(g, which="p")
+plotGlider(g, which="p")
 
 }
 \seealso{

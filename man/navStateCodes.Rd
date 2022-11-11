@@ -54,11 +54,11 @@ see pages 1-24 of reference 1.)
 }
 }
 \examples{
-## Use codes to identify upcasts, at least roughly (note the stray points)
+# Use codes to identify upcasts, at least roughly (note the stray points)
 directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
 g <- read.glider.seaexplorer.delayed(directory)
 ns <- navStateCodes(g)
-plot(g, which="p")
+plotGlider(g, which="p")
 ga <- subset(g, navState == ns$ascending)
 points(ga[["time"]], ga[["pressure"]], col=3, pch=20)
 giu <- subset(g, navState == ns$inflecting_upwards)

@@ -18,7 +18,7 @@ format, in which e.g. 45deg 30.1min is saved as 4530.100, as
 illustrated in the example.
 }
 \examples{
-expect_equal(45+30.100/60, degreeMinute(4530.100))
+degreeMinute(4530.100) # 45+30.100/60
 
 }
 \author{

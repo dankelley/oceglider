@@ -612,10 +612,7 @@ server <- function(input, output, session) {
   })
 
   output$plotChoice <- renderUI({
-    selectInput(inputId="plotChoice",
-                label=h6("Plot"),
-                ## BOOKMARK_plot_type_1_of_4: note that 2, 3 and 4 must align with this
-                choices=c("TS <T>"="TS",
+  c("TS <T>"="TS",
                           "C(t)"="conductivity time-series",
                           "p(t) <P>"="pressure time-series",
                           "S(t) <S>"="salinity time-series",

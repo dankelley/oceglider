@@ -19,19 +19,18 @@ NULL
 #' @export
 glider <- setClass("glider", contains="oce")
 
-
 setMethod(f="initialize",
-          signature="glider",
-          definition=function(.Object, filename) {
-              if (!missing(filename))
-                  .Object@metadata$filename <- filename
-              .Object@metadata$type <- "?"
-              .Object@metadata$subtype <- "?"
-              .Object@metadata$level <- NA # unknown at start
-              .Object@processingLog$time <- as.POSIXct(Sys.time())
-              .Object@processingLog$value <- "create 'glider' object"
-              return(.Object)
-          })
+    signature="glider",
+    definition=function(.Object, filename) {
+        if (!missing(filename))
+            .Object@metadata$filename <- filename
+        .Object@metadata$type <- "?"
+        .Object@metadata$subtype <- "?"
+        .Object@metadata$level <- NA # unknown at start
+        .Object@processingLog$time <- as.POSIXct(Sys.time())
+        .Object@processingLog$value <- "create 'glider' object"
+        return(.Object)
+    })
 
 ## OLD #' Signal erroneous application to non-oce objects
 ## OLD #' @param object A vector, which cannot be the case for \code{oce} objects.
@@ -145,23 +144,23 @@ setMethod(f="initialize",
 #'
 #' @md
 setMethod("handleFlags",
-          signature=c(object="glider", flags="ANY", actions="ANY", where="ANY", debug="ANY"),
-          definition=function(object, flags=NULL, actions=NULL, where="payload1", debug=getOption("gliderDebug", 0)) {
-              ## DEVELOPER 1: alter the next comment to explain your setup
-              if (is.null(flags)) {
-                  flags <- c(3, 4, 9)
-                  if (is.null(flags))
-                      stop("must supply 'flags', or use initializeFlagScheme() on the glider object first")
-              }
-              if (is.null(actions)) {
-                  actions <- list("NA") # DEVELOPER 3: alter this line to suit a new data class
-                  names(actions) <- names(flags)
-              }
-              if (any(names(actions)!=names(flags)))
-                  stop("names of flags and actions must match")
-              ##handleFlags(object=object, flags=flags, actions=actions, where=where, debug=debug)
-              handleFlagsInternal(object=object, flags=flags, actions=actions, where=where, debug=debug)
-          })
+    signature=c(object="glider", flags="ANY", actions="ANY", where="ANY", debug="ANY"),
+    definition=function(object, flags=NULL, actions=NULL, where="payload1", debug=getOption("gliderDebug", 0)) {
+        # DEVELOPER 1: alter the next comment to explain your setup
+        if (is.null(flags)) {
+            flags <- c(3, 4, 9)
+            if (is.null(flags))
+                stop("must supply 'flags', or use initializeFlagScheme() on the glider object first")
+        }
+        if (is.null(actions)) {
+            actions <- list("NA") # DEVELOPER 3: alter this line to suit a new data class
+            names(actions) <- names(flags)
+        }
+        if (any(names(actions)!=names(flags)))
+            stop("names of flags and actions must match")
+        # handleFlags(object=object, flags=flags, actions=actions, where=where, debug=debug)
+        handleFlagsInternal(object=object, flags=flags, actions=actions, where=where, debug=debug)
+    })
 
 
 ## NOT EXPORTED #' Low-level function to handle flags
@@ -191,7 +190,8 @@ setMethod("handleFlags",
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @export
 ## NOT EXPORTED #' @md
-handleFlagsInternal <- function(object, flags, actions, where, debug) {
+handleFlagsInternal <- function(object, flags, actions, where, debug)
+{
     if (missing(debug))
         debug <- 0
     gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
@@ -199,7 +199,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
         warning("no flags supplied (internal error; report to developer)")
         return(object)
     }
-    ## Permit e.g. flags=c(1,3)
+    # Permit e.g. flags=c(1,3)
     if (!is.list(flags))
         flags <- list(flags)
     if (missing(actions))
@@ -246,7 +246,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 ##OLD         warning("no flags supplied (internal error; report to developer)")
 ##OLD         return(object)
 ##OLD     }
-##OLD     ## Permit e.g. flags=c(1,3)
+##OLD     # Permit e.g. flags=c(1,3)
 ##OLD     if (!is.list(flags))
 ##OLD         flags <- list(flags)
 ##OLD     if (missing(actions)) {
@@ -259,22 +259,22 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 ##OLD         stop("names of flags must match those of actions")
 ##OLD     if (missing(where))
 ##OLD         where <- "payload1" # FIXME: check whether seaexplorer or other
-##OLD     ##> schemeMappingNames <- names(object@metadata$flagScheme$mapping)
-##OLD     ##> if (is.character(flags[[1]])) {
-##OLD     ##>     for (f in flags[[1]]) {
-##OLD     ##>         if (!(f %in% schemeMappingNames))
-##OLD     ##>             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
-##OLD     ##>                  paste(schemeMappingNames, collapse="\", \""), "\"")
-##OLD     ##>     }
-##OLD     ##>     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
-##OLD     ##>     browser()
-##OLD     ##> }
+##OLD     # > schemeMappingNames <- names(object@metadata$flagScheme$mapping)
+##OLD     # > if (is.character(flags[[1]])) {
+##OLD     # >     for (f in flags[[1]]) {
+##OLD     # >         if (!(f %in% schemeMappingNames))
+##OLD     # >             stop("flag \"", f, "\" is not part of the flagScheme mapping; try one of: \"",
+##OLD     # >                  paste(schemeMappingNames, collapse="\", \""), "\"")
+##OLD     # >     }
+##OLD     # >     flags <- as.numeric(object@metadata$flagScheme$mapping[flags[[1]]])
+##OLD     # >     browser()
+##OLD     # > }
 ##OLD     gliderDebug(debug, "flags=", paste(as.vector(flags), collapse=","), "\n")
 ##OLD     if (length(object@metadata$flags)) {
 ##OLD         all <- is.null(names(flags[1])) # "ALL" %in% names(flags)
 ##OLD         gliderDebug(debug, "all=", all, "\n")
-##OLD         ## if (all && length(flags) > 1)
-##OLD         ##    stop("if first flag is unnamed, no other flags can be specified")
+##OLD         # if (all && length(flags) > 1)
+##OLD         #    stop("if first flag is unnamed, no other flags can be specified")
 ##OLD         if (all && (length(actions) > 1 || !is.null(names(actions)))) {
 ##OLD             stop("if flags is a list of a single unnamed item, actions must be similar")
 ##OLD         }
@@ -285,12 +285,12 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 ##OLD                 print(table(flagsObject))
 ##OLD             if (!is.null(flagsObject)) {
 ##OLD                 dataItemLength <- length(object@data[[where]][[name]])
-##OLD                 ##> message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
+##OLD                 # > message("name: ", name, ", flags: ", paste(object@metadata$flags[[name]], collapse=" "))
 ##OLD                 flagsThis <- if (all) flags[[1]] else flags[[name]]
-##OLD                 ##> message("flagsThis:");print(flagsThis)
+##OLD                 # > message("flagsThis:");print(flagsThis)
 ##OLD                 gliderDebug(debug, "before converting to numbers, flagsThis=", paste(flagsThis, collapse=","), "\n", sep="")
 ##OLD                 actionsThis <- if (all) actions[[1]] else actions[[name]]
-##OLD                 ## FIXME: document this singleFlag behaviour
+##OLD                 # FIXME: document this singleFlag behaviour
 ##OLD                 singleFlag <- length(object@metadata$flags[[where]]) == 1 && (is.null(names(object@metadata$flags[[where]])) || names(object@metadata$flags[[where]]) == "overall")
 ##OLD                 gliderDebug(debug, "singleFlag=", singleFlag, "\n", sep="")
 ##OLD                 if (name %in% names(object@metadata$flags[[where]]) || singleFlag) {
@@ -301,8 +301,8 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 ##OLD                         actionNeeded <- object@metadata$flags[[where]][[name]] %in% flagsThis
 ##OLD                     }
 ##OLD                     gliderDebug(debug, vectorShow(actionNeeded))
-##OLD                     ##> if (name == "salinity") browser()
-##OLD                     ##gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
+##OLD                     # > if (name == "salinity") browser()
+##OLD                     # gliderDebug(debug, "actionNeeded: ", paste(actionNeeded, collapse=" "))
 ##OLD                     if (any(actionNeeded)) {
 ##OLD                         gliderDebug(debug, "  \"", name, "\" has ", dataItemLength, " data, of which ",
 ##OLD                                     sum(actionNeeded), " are flagged\n", sep="")
@@ -373,20 +373,19 @@ handleFlagsInternal <- function(object, flags, actions, where, debug) {
 #'
 #' @md
 setMethod("setFlags",
-          c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
-          function(object, name=NULL, i=NULL, value=NULL, debug=0) {
-              res <- setFlagsInternalOceanglider(object, name, i, value, debug-1)
-              res
-          })
+    c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
+    function(object, name=NULL, i=NULL, value=NULL, debug=0) {
+        setFlagsInternalOceanglider(object, name, i, value, debug-1)
+    })
 
 
 setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
 {
     gliderDebug(debug, "setFlagsInternalOceanglider(object, name='", name, "', value=", value,
-                ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
-                unindent=1)
+        ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
+        unindent=1)
     res <- object
-    ## Ensure proper argument setup.
+    # Ensure proper argument setup.
     if (is.null(name))
         stop("must supply a name")
     if (is.null(i))
@@ -405,8 +404,8 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
                  length(res@metadata$flags[[where]][[1]]))
         if (setAll)
             i <- seq_along(object@data[[where]][[1]])
-        ## Permit 'value' to be a character string, if a scheme already
-        ## exists and 'value' is one of the stated flag names.
+        # Permit 'value' to be a character string, if a scheme already
+        # exists and 'value' is one of the stated flag names.
         valueOrig <- value
         if (is.character(value)) {
             if (is.null(res@metadata$flagScheme)) {
@@ -419,13 +418,13 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
                          paste(names(res@metadata$flagScheme$mapping), "\", \""), "\"", sep="")
             }
         }
-        ## Finally, apply the value
+        # Finally, apply the value
         res@metadata$flags[[where]][[name]][i] <- value
     }
     res@processingLog <- processingLogAppend(res@processingLog,
-                                             paste("setFlags(object, name=\"", name, "\",",
-                                                   "i=c(", paste(head(i, collapse=",")), "...),",
-                                                   "value=", valueOrig, ")", collapse="", sep=""))
+        paste("setFlags(object, name=\"", name, "\",",
+            "i=c(", paste(head(i, collapse=",")), "...),",
+            "value=", valueOrig, ")", collapse="", sep=""))
     gliderDebug(debug, "} # setFlagsInternalOceanglider\n", sep="", unindent=1)
     res
 }
@@ -505,80 +504,80 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
 #'
 #' @md
 setMethod(f="subset",
-          signature="glider",
-          definition=function(x, subset, ...) {
-              if (missing(subset))
-                  stop("must give 'subset'")
-              dots <- list(...)
-              debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
-              subsetString <- paste(deparse(substitute(subset)), collapse=" ")
-              gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
-              gliderDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
+    signature="glider",
+    definition=function(x, subset, ...) {
+        if (missing(subset))
+            stop("must give 'subset'")
+        dots <- list(...)
+        debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
+        subsetString <- paste(deparse(substitute(subset)), collapse=" ")
+        gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
+        gliderDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
 
-              gliderDebug(debug, "type is seaexplorer\n")
-              if (!"payload1" %in% names(x@data))
-                  stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
-              if (is.character(substitute(subset))) {
-                  gliderDebug(debug, "subset is character\n")
-                  ## subset is a character string
-                  if (subset == "ascending") {
-                      res <- x
-                      keep <- res@data$glider$navState == 117
-                      res@data$glider <- subset(res@data$glider, keep)
-                      res@data$payload1 <- subset(res@data$payload1, keep)
-                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
-                      }
-                  } else if (subset == "descending") {
-                      res <- x
-                      keep <- res@data$glider$navState == 100
-                      res@data$glider <- subset(res@data$glider, keep)
-                      res@data$payload1 <- subset(res@data$payload1, keep)
-                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
-                      }
-                  }
-              } else {
-                  gliderDebug(debug, "subset is a logical expression\n")
-                  ## subset is a logical expression
-                  if (1 == length(grep("yolength", subsetString))) {
-                      if (!"payload1" %in% names(x@data))
-                          stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
-                      s <- split(x@data$payload1, x[["yoNumber"]])
-                      ## warning removed for issue (https://github.com/dankelley/oceanglider/issues/41)
-                      ## warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
-                      thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
-                      keepYo <- eval(substitute(subset), list(yolength=thisYolength))
-                      ##message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
-                      res <- x
-                      ##44 https://github.com/dankelley/oceanglider/issues/44
-                      ##44 res@metadata$yo <- x@metadata$yo[keepYo]
-                      keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
-                      ## NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
-                      ## res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
-                      res@data$glider <- x@data$glider[keepData, ]
-                      res@data$payload1 <- x@data$payload1[keepData, ]
-                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keepData]
-                      }
-                  } else {
-                      ##warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
-                      keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
-                      keep[is.na(keep)] <- FALSE
-                      gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
-                      res <- x
-                      res@data[["payload1"]] <- x@data[["payload1"]][keep,]
-                      for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                          res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
-                      }
-                  }
-              }
-              res@processingLog <- processingLogAppend(res@processingLog,
-                                                       paste(deparse(match.call(call=sys.call(sys.parent(1)))),
-                                                             sep="", collapse=""))
-              gliderDebug(debug, "} # subset,glider-method\n", sep="", unindent=1)
-              res
-          })
+        gliderDebug(debug, "type is seaexplorer\n")
+        if (!"payload1" %in% names(x@data))
+            stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
+        if (is.character(substitute(subset))) {
+            gliderDebug(debug, "subset is character\n")
+            # subset is a character string
+            if (subset == "ascending") {
+                res <- x
+                keep <- res@data$glider$navState == 117
+                res@data$glider <- subset(res@data$glider, keep)
+                res@data$payload1 <- subset(res@data$payload1, keep)
+                for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                }
+            } else if (subset == "descending") {
+                res <- x
+                keep <- res@data$glider$navState == 100
+                res@data$glider <- subset(res@data$glider, keep)
+                res@data$payload1 <- subset(res@data$payload1, keep)
+                for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                }
+            }
+        } else {
+            gliderDebug(debug, "subset is a logical expression\n")
+            # subset is a logical expression
+            if (1 == length(grep("yolength", subsetString))) {
+                if (!"payload1" %in% names(x@data))
+                    stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
+                s <- split(x@data$payload1, x[["yoNumber"]])
+                # warning removed for issue (https://github.com/dankelley/oceanglider/issues/41)
+                # warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
+                thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
+                keepYo <- eval(substitute(subset), list(yolength=thisYolength))
+                # message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
+                res <- x
+                # 44 https://github.com/dankelley/oceanglider/issues/44
+                # 44 res@metadata$yo <- x@metadata$yo[keepYo]
+                keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
+                # NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
+                # res@data$payload <- do.call(rbind.data.frame, x@data$payload[keepYo, ])
+                res@data$glider <- x@data$glider[keepData, ]
+                res@data$payload1 <- x@data$payload1[keepData, ]
+                for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keepData]
+                }
+            } else {
+                # warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
+                keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
+                keep[is.na(keep)] <- FALSE
+                gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
+                res <- x
+                res@data[["payload1"]] <- x@data[["payload1"]][keep,]
+                for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                }
+            }
+        }
+        res@processingLog <- processingLogAppend(res@processingLog,
+            paste(deparse(match.call(call=sys.call(sys.parent(1)))),
+                sep="", collapse=""))
+        gliderDebug(debug, "} # subset,glider-method\n", sep="", unindent=1)
+        res
+    })
 
 
 #' Retrieve Part of a glider Object
@@ -688,109 +687,109 @@ setMethod(f="subset",
 #'
 #' @md
 setMethod(f="[[",
-          signature(x="glider", i="ANY", j="ANY"),
-          definition=function(x, i, j, ...) {
-              ##. message("in [[, i='", i, "'")
-              ##.debug <- getOption("gliderDebug", default=0)
-              ## gliderDebug(debug, "glider [[ {\n", unindent=1)
-              if (missing(i))
-                  stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
-              i <- i[1]                # drop extras if more than one given
-              if (!is.character(i))
-                  stop("glider item must be specified by name", call.=FALSE)
-              if (i == "filename")
-                  return(x@metadata$filename)
-              else if (i == "data")
-                  return(x@data)
-              else if (i == "metadata")
-                  return(x@metadata)
-              else if (i == "yo" && !missing(j)) { # NOTE: not 'yoNumber'
-                  lines <- which(x@data$payload1$yoNumber == j)
-                  x@data$payload1 <- x@data$payload1[lines, ]
-                  for (f in names(x@metadata$flags$payload1)) {
-                      x@metadata$flags$payload1[[f]] <- x@metadata$flags$payload1[[f]][lines]
-                  }
-                  return(x)
-              }
-              type <- x@metadata$type
-              if (is.null(type))
-                  stop("'type' is NULL")
-              if (length(grep("Flag$", i))) {
-                  ## returns a list
-                  where <- "payload1"
-                  return(if ("flags" %in% names(x@metadata)) x@metadata$flags[[where]][[gsub("Flag$", "", i)]] else NULL)
-              }
-              ## FIXME (DK) recognize "Unit$" as done in oce.
-              if (i == "type")
-                  return(type)
-              if (i == "sigmaTheta")
-                  return(swSigmaTheta(salinity=x[["salinity"]],
-                                      temperature=x[["temperature"]],
-                                      pressure=x[["pressure"]],
-                                      longitude=x[["longitude"]],
-                                      latitude=x[["latitude"]]))
-              if (i == "sigma0")
-                  return(swSigma0(salinity=x[["salinity"]],
-                                  temperature=x[["temperature"]],
-                                  pressure=x[["pressure"]],
-                                  longitude=x[["longitude"]],
-                                  latitude=x[["latitude"]]))
-              if (i == "SA")
-                  return(gsw_SA_from_SP(SP=x[["salinity"]], p=x[["pressure"]],
-                                        longitude=x[["longitude"]], latitude=x[["latitude"]]))
-              if (i == "CT") {
-                  t <- x[["temperature"]]
-                  SP <- x[["salinity"]] # stored as practical salinity
-                  p <- x[["pressure"]]
-                  SA <- gsw_SA_from_SP(SP=SP, p=p, longitude=x[["longitude"]], latitude=x[["latitude"]])
-                  return(gsw_CT_from_t(SA, t, p))
-              }
-              if (i == "spiciness0") {
-                  t <- x[["temperature"]]
-                  SP <- x[["salinity"]] # stored as practical salinity
-                  p <- x[["pressure"]]
-                  ## SA <- gsw::gsw_SA_from_SP(SP, p, x[["longitude"]], x[["latitude"]])
-                  ## CT <- gsw::gsw_CT_from_t(SA, t, p)
-                  ## return(gsw::gsw_spiciness0(SA=SA, CT=CT))
-                  SA <- gsw_SA_from_SP(SP, p, x[["longitude"]], x[["latitude"]])
-                  CT <- gsw_CT_from_t(SA, t, p)
-                  return(gsw_spiciness0(SA=SA, CT=CT))
-              }
-              ##. message("it is a seaexplorer")
-              if (i == "glider")
-                  return(x@data$glider)
-              if (i == "payload")
-                  return(x@data$payload)
-              if (missing(j)) {
-                  ##. message("j is missing")
-                  if (i %in% names(x@metadata)) {
-                      ##. message("i in metadata")
-                      return(x@metadata[[i]])
-                  } else if (i %in% names(x@data)) {
-                      ##. message("i in data")
-                      return(x@data[[i]])
-                  } else {
-                      ##. message("returning i from within payload")
-                      if (i %in% names(x@data[["payload1"]]))
-                          return(x@data$payload1[[i]])
-                      else
-                          return(x@data$glider[[i]]) # what if there is no glider?
-                      return(x@data$payload[[i]])
-                  }
-              }
-              ##. message("j is not missing. j='", j, "'")
-              ## if (j == "glider")
-              ##     return(x@data$glider)
-              ## if (j == "payload")
-              ##     return(x@data$payload1)
-              ## if (j == "payload1")
-              ##     return(x@data$payload1)
-              ## if (j == "payload2")
-              ##     return(x@data$payload2)
-              ## stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
-              warning("[[", i, ",", j, "]] not understood, so returning NULL", sep="")
-              return(NULL)
-          })
+    signature(x="glider", i="ANY", j="ANY"),
+    definition=function(x, i, j, ...) {
+        #. message("in [[, i='", i, "'")
+        #.debug <- getOption("gliderDebug", default=0)
+        # gliderDebug(debug, "glider [[ {\n", unindent=1)
+        if (missing(i))
+            stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
+        i <- i[1]                # drop extras if more than one given
+        if (!is.character(i))
+            stop("glider item must be specified by name", call.=FALSE)
+        if (i == "filename")
+            return(x@metadata$filename)
+        else if (i == "data")
+            return(x@data)
+        else if (i == "metadata")
+            return(x@metadata)
+        else if (i == "yo" && !missing(j)) { # NOTE: not 'yoNumber'
+            lines <- which(x@data$payload1$yoNumber == j)
+            x@data$payload1 <- x@data$payload1[lines, ]
+            for (f in names(x@metadata$flags$payload1)) {
+                x@metadata$flags$payload1[[f]] <- x@metadata$flags$payload1[[f]][lines]
+            }
+            return(x)
+        }
+        type <- x@metadata$type
+        if (is.null(type))
+            stop("'type' is NULL")
+        if (length(grep("Flag$", i))) {
+            # returns a list
+            where <- "payload1"
+            return(if ("flags" %in% names(x@metadata)) x@metadata$flags[[where]][[gsub("Flag$", "", i)]] else NULL)
+        }
+        # FIXME (DK) recognize "Unit$" as done in oce.
+        if (i == "type")
+            return(type)
+        if (i == "sigmaTheta")
+            return(swSigmaTheta(salinity=x[["salinity"]],
+                    temperature=x[["temperature"]],
+                    pressure=x[["pressure"]],
+                    longitude=x[["longitude"]],
+                    latitude=x[["latitude"]]))
+        if (i == "sigma0")
+            return(swSigma0(salinity=x[["salinity"]],
+                    temperature=x[["temperature"]],
+                    pressure=x[["pressure"]],
+                    longitude=x[["longitude"]],
+                    latitude=x[["latitude"]]))
+        if (i == "SA")
+            return(gsw_SA_from_SP(SP=x[["salinity"]], p=x[["pressure"]],
+                    longitude=x[["longitude"]], latitude=x[["latitude"]]))
+        if (i == "CT") {
+            t <- x[["temperature"]]
+            SP <- x[["salinity"]] # stored as practical salinity
+            p <- x[["pressure"]]
+            SA <- gsw_SA_from_SP(SP=SP, p=p, longitude=x[["longitude"]], latitude=x[["latitude"]])
+            return(gsw_CT_from_t(SA, t, p))
+        }
+        if (i == "spiciness0") {
+            t <- x[["temperature"]]
+            SP <- x[["salinity"]] # stored as practical salinity
+            p <- x[["pressure"]]
+            # SA <- gsw::gsw_SA_from_SP(SP, p, x[["longitude"]], x[["latitude"]])
+            # CT <- gsw::gsw_CT_from_t(SA, t, p)
+            # return(gsw::gsw_spiciness0(SA=SA, CT=CT))
+            SA <- gsw_SA_from_SP(SP, p, x[["longitude"]], x[["latitude"]])
+            CT <- gsw_CT_from_t(SA, t, p)
+            return(gsw_spiciness0(SA=SA, CT=CT))
+        }
+        #. message("it is a seaexplorer")
+        if (i == "glider")
+            return(x@data$glider)
+        if (i == "payload")
+            return(x@data$payload)
+        if (missing(j)) {
+            #. message("j is missing")
+            if (i %in% names(x@metadata)) {
+                #. message("i in metadata")
+                return(x@metadata[[i]])
+            } else if (i %in% names(x@data)) {
+                #. message("i in data")
+                return(x@data[[i]])
+            } else {
+                #. message("returning i from within payload")
+                if (i %in% names(x@data[["payload1"]]))
+                    return(x@data$payload1[[i]])
+                else
+                    return(x@data$glider[[i]]) # what if there is no glider?
+                return(x@data$payload[[i]])
+            }
+        }
+        #. message("j is not missing. j='", j, "'")
+        # if (j == "glider")
+        #     return(x@data$glider)
+        # if (j == "payload")
+        #     return(x@data$payload1)
+        # if (j == "payload1")
+        #     return(x@data$payload1)
+        # if (j == "payload2")
+        #     return(x@data$payload2)
+        # stop("type='", type, "' not permitted; it must be 'seaexplorer' or 'slocum'")
+        warning("[[", i, ",", j, "]] not understood, so returning NULL", sep="")
+        return(NULL)
+    })
 
 #' Plot a glider Object
 #'
@@ -804,7 +803,7 @@ setMethod(f="[[",
 #'
 #' \item `which=0` or `which="map"`: plot a map of sampling locations. This
 #' can be quite slow with the default plot type, so try e.g.
-#' `plot(g, type="l")` to speed things up for a quick look at the data.
+#' `plotGlider(g, type="l")` to speed things up for a quick look at the data.
 #' In many cases, that quick look might be followed by the drawing of
 #' a larger view, including a coastline, with functions provided for
 #' `coastline` objects in the \CRANpkg{oce} package.
@@ -880,81 +879,80 @@ setMethod(f="[[",
 #' @examples
 #' library(oceanglider)
 #'
-#' ## Examples 1: a single yo of low-resolution real-time data
+#' # Examples 1: a single yo of low-resolution real-time data
 #' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceanglider")
 #' g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
-#' plot(g, which="p")
-#' plot(g, which="S")
-#' plot(g, which="T")
-#' plot(g, which="TS") # note odd connections between points
-#' plot(g, which="map")
-#' plot(g, which="navState")
+#' plotGlider(g, which="p")
+#' plotGlider(g, which="S")
+#' plotGlider(g, which="T")
+#' plotGlider(g, which="TS") # note odd connections between points
+#' plotGlider(g, which="map")
+#' plotGlider(g, which="navState")
 #'
 #' # Example 2: navState and pressure history of some delayed-mode yos,
 #' # from a deployment in which sampling was supposed to be
 #' # suppressed during the descending phases of motion.
 #' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceanglider")
 #' g <- read.glider.seaexplorer.delayed(dirRaw)
-#' plot(g, which="navState")
+#' plotGlider(g, which="navState")
 #'
 #' # Note: colormap and drawPalette are oce functions.
 #' cm <- colormap(g[["temperature"]])
 #' # Note the setting of mar, here and in th plot.
 #' par(mar=c(2, 3.5, 2, 4))
 #' drawPalette(colormap=cm)
-#' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
+#' plotGlider(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
 #'
 #' @export
 #'
 #' @md
-setMethod(f="plot",
-          signature="glider",
-          definition=function(x, which, type="o", debug, ...) {
-              dots <- list(...)
-              debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
-              gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
-              if (which == 0 || which == "map") {
-                  gliderDebug(debug, "map plot\n", sep="")
-                  latitude <- x[["latitude"]]
-                  longitude <- x[["longitude"]]
-                  asp <- 1 / cos(mean(latitude*pi/180))
-                  plot(longitude, latitude, asp=asp,
-                       xlab=resizableLabel("longitude"),
-                       ylab=resizableLabel("latitude"), type=type, ...)
-              } else if (which == 1 || which == "p") {
-                  gliderDebug(debug, "pressure time-series plot\n", sep="")
-                  p <- x[["pressure"]]
-                  if ("ylim" %in% names(dots)) oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, type=type, ...)
-                  else oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, type=type, ...)
-              } else if (which == 2 || which == "T") {
-                  oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, type=type, ...)
-              } else if (which == 3 || which == "S") {
-                  oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, type=type, ...)
-              } else if (which == 4 || which == "TS") {
-                  plotTS(x, debug=debug-1, type=type, ...)
-              } else if (which == 5 || which == "navState") {
-                  ns <- navStateCodes(x)
-                  oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
-                              mar=c(2, 3, 1, 9), type=type, ...)
-                  for (ii in seq_along(ns)) {
-                      abline(h=ns[[ii]], col="blue")
-                  }
-                  # labels in margin, not rotated so we can read them.
-                  oxpd <- par("xpd")
-                  par(xpd=NA)
-                  tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])
-                  for (ii in seq_along(ns)) {
-                      text(tmax, ns[[ii]],
-                           sprintf(" %d: %s", ns[[ii]],
-                                   names(ns[ii])),
-                           col="blue", cex=0.75, xpd=TRUE, pos=4)
-                  }
-                  par(xpd=oxpd)
-              } else {
-                  stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
-              }
-              gliderDebug(debug, "} # plot,glider-method\n", sep="", unindent=1)
-          })
+plotGlider <- function(x, which, type="o", debug, ...)
+{
+    dots <- list(...)
+    debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
+    gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
+    if (which == 0 || which == "map") {
+        gliderDebug(debug, "map plot\n", sep="")
+        latitude <- x[["latitude"]]
+        longitude <- x[["longitude"]]
+        asp <- 1 / cos(mean(latitude*pi/180))
+        plot(longitude, latitude, asp=asp,
+            xlab=resizableLabel("longitude"),
+            ylab=resizableLabel("latitude"), type=type, ...)
+    } else if (which == 1 || which == "p") {
+        gliderDebug(debug, "pressure time-series plot\n", sep="")
+        p <- x[["pressure"]]
+        if ("ylim" %in% names(dots)) oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, type=type, ...)
+        else oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, type=type, ...)
+    } else if (which == 2 || which == "T") {
+        oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, type=type, ...)
+    } else if (which == 3 || which == "S") {
+        oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, type=type, ...)
+    } else if (which == 4 || which == "TS") {
+        plotTS(x, debug=debug-1, type=type, ...)
+    } else if (which == 5 || which == "navState") {
+        ns <- navStateCodes(x)
+        oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
+            mar=c(2, 3, 1, 9), type=type, ...)
+        for (ii in seq_along(ns)) {
+            abline(h=ns[[ii]], col="blue")
+        }
+        # labels in margin, not rotated so we can read them.
+        oxpd <- par("xpd")
+        par(xpd=NA)
+        tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])
+        for (ii in seq_along(ns)) {
+            text(tmax, ns[[ii]],
+                sprintf(" %d: %s", ns[[ii]],
+                    names(ns[ii])),
+                col="blue", cex=0.75, xpd=TRUE, pos=4)
+        }
+        par(xpd=oxpd)
+    } else {
+        stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
+    }
+    gliderDebug(debug, "} # plot,glider-method\n", sep="", unindent=1)
+}
 
 #' Summarize a glider Object
 #'
@@ -969,188 +967,187 @@ setMethod(f="plot",
 #'
 #' @md
 setMethod(f="summary",
-          signature="glider",
-          definition=function(object, ...) {
-              ##mnames <- names(object@metadata)
-              cat("Glider Summary\n--------------\n\n")
-              nfiles <- length(object@metadata$filename)
-              if (nfiles == 0) {
-                  cat("* Input file: (none)\n")
-              } else if (nfiles == 1) {
-                  cat("* Input file:\n")
-                  cat("    ", object@metadata$filename[1], "\n", sep="")
-              } else if (nfiles == 2) {
-                  cat("* Input files:\n")
-                  cat("    ", object@metadata$filename[1], "\n", sep="")
-                  cat("    ", object@metadata$filename[2], "\n", sep="")
-              } else {
-                  cat("* Input files:\n")
-                  cat("    ", object@metadata$filename[1], "\n", sep="")
-                  cat("    ", object@metadata$filename[2], "\n", sep="")
-                  cat("    (and ", nfiles - 2, " others)\n", sep="")
-              }
-              metadataNames <- names(object@metadata)
-              type <- object@metadata[["type"]]
-              cat("* Type:    ", type, "\n", sep="")
-              if ("subtype" %in% metadataNames)
-                  cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
-              ##44 https://github.com/dankelley/oceanglider/issues/44
-              ##44 nyo <- length(object@metadata$yo)
-              ##44 if (nyo == 1)
-              ##44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))
-              ##44 else if (nyo > 1)
-              ##44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
-              ##44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
-              payload1Exists <- "payload1" %in% names(object@data)
-              stream <- if (object[["type"]] == "seaexplorer") object@data$payload1 else object@data
-              if (payload1Exists) {
-                  odataName <- "payload1"
-                  odata <- object@data[[odataName]]
-              } else {
-                  odataName <- ""
-                  odata <- object@data
-              }
-              ## order names alphabetically (easier with long lists of unfamiliar names)
-              o <- order(names(odata))
-              odata <- odata[, o]
-              ## Make a list, so following code looks more like oce code.
-              if (is.data.frame(odata))
-                  odata <- as.list(odata)
-              ndata <- length(odata)
-              threes <- matrix(nrow=ndata, ncol=3)
-              odataNames <- names(odata)
-              if ("time" %in% odataNames) {
-                  from <- min(odata$time, na.rm=TRUE)
-                  to <- max(odata$time, na.rm=TRUE)
-                  nt <- length(odata$time)
-                  deltat <- mean(diff(as.numeric(odata$time)), na.rm=TRUE)
-                  if (is.na(deltat)) {
-                      cat("* Time:               ", format(from), "\n")
-                  } else {
-                      cat("* Time ranges from", format(from), "to", format(to), "with", nt, "samples and mean increment", deltat, "s\n")
-                  }
-              }
-              for (i in 1:ndata)
-                  threes[i, ] <- oce::threenum(odata[[i]])
-              if ("units" %in% metadataNames) {
-                  if (payload1Exists) {
-                      units <- object@metadata$units$payload1[o]
-                      unitsNames <- names(object@metadata$units$payload1[o])
-                  } else {
-                      units <- object@metadata$units[o]
-                      unitsNames <- names(object@metadata$units[o])
-                  }
-                  units <- unlist(lapply(seq_along(units),
-                                         function(i) {
-                                             u <- units[[i]]
-                                             if (0 == length(u[1][[1]])) {
-                                                 if (2 == length(u)) return(u[2]) else return("")
-                                             }
-                                             if (length(u) == 1) {
-                                                 res <- if (is.expression(u)) as.character(u) else u
-                                             } else if (length(u) == 2) {
-                                                 res <- if (nchar(u[2])) paste(u[[1]], u[[2]], sep=", ") else u[[1]]
-                                             } else {
-                                                 res <- ""
-                                             }
-                                             res <- as.character(res)[1] # the [1] is in case the unit is mixed up
-                                             ## Clean up notation, by stages. (The order may matter.)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+C", "\u00B0C", res)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+F", "\u00B0F", res)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+E", "\u00B0E", res)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+W", "\u00B0W", res)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+N", "\u00B0N", res)
-                                             if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+S", "\u00B0S", res)
-                                             if (nchar(res)) res <- gsub("percent", "%", res)
-                                             if (nchar(res)) res <- gsub("degree", "\u00B0", res)
-                                             if (nchar(res)) res <- gsub("^,[ ]*", "", res)
-                                             if (nchar(res)) res <- gsub("mu . ", "\u03BC", res)
-                                             if (nchar(res)) res <- gsub("per . mil", "\u2030", res)
-                                             if (nchar(res)) res <- gsub("10\\^\\(-8\\)[ ]*\\*", "10\u207B\u2078", res)
-                                             if (nchar(res)) res <- gsub("\\^2", "\u00B2", res)
-                                             if (nchar(res)) res <- gsub("\\^3", "\u00B3", res)
-                                             res
-                                         }))
-                  names(units) <- unitsNames
-                  rownames(threes) <- paste("    ", oce::dataLabel(names(odata), units), sep="")
-              } else {
-                  rownames(threes) <- paste("    ", names(odata), sep="")
-              }
-              if (!is.null(threes)) {
-                  dim <- if (payload1Exists) {
-                      as.vector(lapply(object@data$payload1, function(x) length(x)))
-                  } else {
-                      as.vector(lapply(object@data, function(x) length(x)))
-                  }
-                  if (payload1Exists) {
-                      OriginalName <- unlist(lapply(names(odata), function(n)
-                                                    if (n %in% names(object@metadata$dataNamesOriginal$payload1))
-                                                        object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
-                  } else {
-                      OriginalName <- unlist(lapply(names(odata), function(n)
-                                                    if (n %in% names(object@metadata$dataNamesOriginal))
-                                                        object@metadata$dataNamesOriginal[[n]] else "-"))
-                  }
-                  threes <- cbind(threes, dim, OriginalName)
-                  colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
-                  if (object[["type"]] == "seaexplorer") {
-                      cat("* Data Overview (of the \"payload1\" stream):\n", sep="")
-                  } else {
-                      cat("* Data Overview:\n", sep="")
-                  }
-                  owidth <- options('width')
-                  options(width=150) # make wide to avoid line breaks
-                  if ("time" %in% odataNames)
-                      threes <- threes[-which("time" == odataNames), , drop=FALSE]
-                  print(as.data.frame(threes), digits=5)
-                  options(width=owidth$width)
-                  cat("\n")
-              }
-
-              ## Get flags specifically from metadata; using [["flags"]] could extract
-              ## it from data, if present there and not in metadata (as e.g. with
-              ## the data("glider") that is provided with oce).
-              flags <- object@metadata$flags[["payload1"]]
-              if (length(flags)) {
-                  if (!is.null(object@metadata$flagScheme)) {
-                      cat("* Data-quality Flag Scheme\n\n")
-                      cat("    name    \"", object@metadata$flagScheme$name, "\"\n", sep="")
-                      cat("    mapping ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$mapping,
-                                                                                   width.cutoff=400))), "\n\n", sep="")
-                  }
-                  flagNames <- names(flags)
-                  if (is.null(flagNames)) {
-                      cat("* Data-quality Flags (one flag applies to all data)\n\n")
-                      flagTable <- table(flags)
-                      flagTableLength <- length(flagTable)
-                      if (flagTableLength) {
-                          for (i in seq_len(flagTableLength)) {
-                              cat("    \"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
-                              if (i != flagTableLength) cat(", ") else cat("\n")
-                          }
-                      }
-                  } else {
-                      cat("* Data-quality Flags\n\n")
-                      width <- 1 + max(nchar(flagNames))
-                      for (name in flagNames) {
-                          padding <- rep(" ", width - nchar(name))
-                          if (!all(is.na(flags[[name]]))) {
-                              cat("    ", name, ":", padding, sep="")
-                              flagTable <- table(flags[[name]])
-                              flagTableLength <- length(flagTable)
-                              if (flagTableLength) {
-                                  for (i in seq_len(flagTableLength)) {
-                                      cat("\"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
-                                      if (i != flagTableLength) cat(", ") else cat("\n")
-                                  }
-                              }
-                          }
-                      }
-                  }
-                  cat("\n")
-              }
-              processingLogShow(object)
-          })
+    signature="glider",
+    definition=function(object, ...) {
+        # mnames <- names(object@metadata)
+        cat("Glider Summary\n--------------\n\n")
+        nfiles <- length(object@metadata$filename)
+        if (nfiles == 0) {
+            cat("* Input file: (none)\n")
+        } else if (nfiles == 1) {
+            cat("* Input file:\n")
+            cat("    ", object@metadata$filename[1], "\n", sep="")
+        } else if (nfiles == 2) {
+            cat("* Input files:\n")
+            cat("    ", object@metadata$filename[1], "\n", sep="")
+            cat("    ", object@metadata$filename[2], "\n", sep="")
+        } else {
+            cat("* Input files:\n")
+            cat("    ", object@metadata$filename[1], "\n", sep="")
+            cat("    ", object@metadata$filename[2], "\n", sep="")
+            cat("    (and ", nfiles - 2, " others)\n", sep="")
+        }
+        metadataNames <- names(object@metadata)
+        type <- object@metadata[["type"]]
+        cat("* Type:    ", type, "\n", sep="")
+        if ("subtype" %in% metadataNames)
+            cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
+        # 44 https://github.com/dankelley/oceanglider/issues/44
+        # 44 nyo <- length(object@metadata$yo)
+        # 44 if (nyo == 1)
+        # 44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))
+        # 44 else if (nyo > 1)
+        # 44     cat(sprintf("* Yo:      %d values, between %d and %d\n",
+        # 44                 nyo, object@metadata$yo[1], object@metadata$yo[nyo]))
+        payload1Exists <- "payload1" %in% names(object@data)
+        stream <- if (object[["type"]] == "seaexplorer") object@data$payload1 else object@data
+        if (payload1Exists) {
+            odataName <- "payload1"
+            odata <- object@data[[odataName]]
+        } else {
+            odataName <- ""
+            odata <- object@data
+        }
+        # order names alphabetically (easier with long lists of unfamiliar names)
+        o <- order(names(odata))
+        odata <- odata[, o]
+        # Make a list, so following code looks more like oce code.
+        if (is.data.frame(odata))
+            odata <- as.list(odata)
+        ndata <- length(odata)
+        threes <- matrix(nrow=ndata, ncol=3)
+        odataNames <- names(odata)
+        if ("time" %in% odataNames) {
+            from <- min(odata$time, na.rm=TRUE)
+            to <- max(odata$time, na.rm=TRUE)
+            nt <- length(odata$time)
+            deltat <- mean(diff(as.numeric(odata$time)), na.rm=TRUE)
+            if (is.na(deltat)) {
+                cat("* Time:               ", format(from), "\n")
+            } else {
+                cat("* Time ranges from", format(from), "to", format(to), "with", nt, "samples and mean increment", deltat, "s\n")
+            }
+        }
+        for (i in 1:ndata)
+            threes[i, ] <- oce::threenum(odata[[i]])
+        if ("units" %in% metadataNames) {
+            if (payload1Exists) {
+                units <- object@metadata$units$payload1[o]
+                unitsNames <- names(object@metadata$units$payload1[o])
+            } else {
+                units <- object@metadata$units[o]
+                unitsNames <- names(object@metadata$units[o])
+            }
+            units <- unlist(lapply(seq_along(units),
+                    function(i) {
+                        u <- units[[i]]
+                        if (0 == length(u[1][[1]])) {
+                            if (2 == length(u)) return(u[2]) else return("")
+                        }
+                        if (length(u) == 1) {
+                            res <- if (is.expression(u)) as.character(u) else u
+                        } else if (length(u) == 2) {
+                            res <- if (nchar(u[2])) paste(u[[1]], u[[2]], sep=", ") else u[[1]]
+                        } else {
+                            res <- ""
+                        }
+                        res <- as.character(res)[1] # the [1] is in case the unit is mixed up
+                        # Clean up notation, by stages. (The order may matter.)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+C", "\u00B0C", res)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+F", "\u00B0F", res)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+E", "\u00B0E", res)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+W", "\u00B0W", res)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+N", "\u00B0N", res)
+                        if (nchar(res)) res <- gsub("degree[ ]+[*][ ]+S", "\u00B0S", res)
+                        if (nchar(res)) res <- gsub("percent", "%", res)
+                        if (nchar(res)) res <- gsub("degree", "\u00B0", res)
+                        if (nchar(res)) res <- gsub("^,[ ]*", "", res)
+                        if (nchar(res)) res <- gsub("mu . ", "\u03BC", res)
+                        if (nchar(res)) res <- gsub("per . mil", "\u2030", res)
+                        if (nchar(res)) res <- gsub("10\\^\\(-8\\)[ ]*\\*", "10\u207B\u2078", res)
+                        if (nchar(res)) res <- gsub("\\^2", "\u00B2", res)
+                        if (nchar(res)) res <- gsub("\\^3", "\u00B3", res)
+                        res
+                    }))
+            names(units) <- unitsNames
+            rownames(threes) <- paste("    ", oce::dataLabel(names(odata), units), sep="")
+        } else {
+            rownames(threes) <- paste("    ", names(odata), sep="")
+        }
+        if (!is.null(threes)) {
+            dim <- if (payload1Exists) {
+                as.vector(lapply(object@data$payload1, function(x) length(x)))
+            } else {
+                as.vector(lapply(object@data, function(x) length(x)))
+            }
+            if (payload1Exists) {
+                OriginalName <- unlist(lapply(names(odata), function(n)
+                        if (n %in% names(object@metadata$dataNamesOriginal$payload1))
+                            object@metadata$dataNamesOriginal$payload1[[n]] else "-"))
+            } else {
+                OriginalName <- unlist(lapply(names(odata), function(n)
+                        if (n %in% names(object@metadata$dataNamesOriginal))
+                            object@metadata$dataNamesOriginal[[n]] else "-"))
+            }
+            threes <- cbind(threes, dim, OriginalName)
+            colnames(threes) <- c("Min.", "Mean", "Max.", "Dim.", "OriginalName")
+            if (object[["type"]] == "seaexplorer") {
+                cat("* Data Overview (of the \"payload1\" stream):\n", sep="")
+            } else {
+                cat("* Data Overview:\n", sep="")
+            }
+            owidth <- options('width')
+            options(width=150) # make wide to avoid line breaks
+            if ("time" %in% odataNames)
+                threes <- threes[-which("time" == odataNames), , drop=FALSE]
+            print(as.data.frame(threes), digits=5)
+            options(width=owidth$width)
+            cat("\n")
+        }
+        # Get flags specifically from metadata; using [["flags"]] could extract
+        # it from data, if present there and not in metadata (as e.g. with
+        # the data("glider") that is provided with oce).
+        flags <- object@metadata$flags[["payload1"]]
+        if (length(flags)) {
+            if (!is.null(object@metadata$flagScheme)) {
+                cat("* Data-quality Flag Scheme\n\n")
+                cat("    name    \"", object@metadata$flagScheme$name, "\"\n", sep="")
+                cat("    mapping ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$mapping,
+                                width.cutoff=400))), "\n\n", sep="")
+            }
+            flagNames <- names(flags)
+            if (is.null(flagNames)) {
+                cat("* Data-quality Flags (one flag applies to all data)\n\n")
+                flagTable <- table(flags)
+                flagTableLength <- length(flagTable)
+                if (flagTableLength) {
+                    for (i in seq_len(flagTableLength)) {
+                        cat("    \"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
+                        if (i != flagTableLength) cat(", ") else cat("\n")
+                    }
+                }
+            } else {
+                cat("* Data-quality Flags\n\n")
+                width <- 1 + max(nchar(flagNames))
+                for (name in flagNames) {
+                    padding <- rep(" ", width - nchar(name))
+                    if (!all(is.na(flags[[name]]))) {
+                        cat("    ", name, ":", padding, sep="")
+                        flagTable <- table(flags[[name]])
+                        flagTableLength <- length(flagTable)
+                        if (flagTableLength) {
+                            for (i in seq_len(flagTableLength)) {
+                                cat("\"", names(flagTable)[i], "\"", " ", flagTable[i], "", sep="")
+                                if (i != flagTableLength) cat(", ") else cat("\n")
+                            }
+                        }
+                    }
+                }
+            }
+            cat("\n")
+        }
+        processingLogShow(object)
+    })
 
 
 #' Convert a string from snake_case to camelCase
@@ -1160,7 +1157,7 @@ setMethod(f="summary",
 #' @return CamelCase version of `s`
 #'
 #' @examples
-#' expect_equal("profileDirection", toCamelCase("profile_direction"))
+#' toCamelCase("profile_direction") # "profileDirection"
 #'
 #' @author Dan Kelley
 #'
@@ -1201,7 +1198,7 @@ toCamelCase <- function(s)
 #' @return Numerical value in decimal degrees.
 #'
 #' @examples
-#' expect_equal(45+30.100/60, degreeMinute(4530.100))
+#' degreeMinute(4530.100) # 45+30.100/60
 #'
 #' @author Dan Kelley
 #'
@@ -1279,7 +1276,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #' @md
 urlExists <- function(url, quiet=FALSE)
 {
-    ## tack a '/' on the end, if not there already
+    # tack a '/' on the end, if not there already
     urlOrig <- url
     if (0 == length(grep("/$", url)))
         url <- paste(url, "/", sep="")
@@ -1307,7 +1304,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 {
     if (is.null(attname))
         stop("must give attname")
-    ##message(attname)
+    # message(attname)
     t <- try(ncatt_get(f, varid=varid, attname=attname), silent=TRUE)
     if (inherits(t, "try-error")) {
         NULL
@@ -1354,7 +1351,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #' g <- subset(g, time > as.POSIXct("2018-01-01"))
 #' # Remove any observation with bad salinity
 #' g <- subset(g, is.finite(g[["salinity"]]))
-#' plot(g, which="map")
+#' plotGlider(g, which="map")
 #' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
 #'               longitude=g[["longitude"]], latitude=g[["latitude"]])
 #' plotTS(ctd, useSmoothScatter=TRUE)
@@ -1363,7 +1360,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #' g <- read.glider.netcdf("~/Dropbox/glider_erdapp.nc")
 #' # Remove any observation with bad salinity
 #' g <- subset(g, is.finite(g[["salinity"]]))
-#' plot(g, which="map")
+#' plotGlider(g, which="map")
 #' ctd <- as.ctd(g[["salinity"]], g[["temperature"]], g[["pressure"]],
 #'               latitude=g[["latitude"]], longitude=g[["longitude"]])
 #' plotTS(ctd, useSmoothScatter=TRUE)
@@ -1386,7 +1383,7 @@ read.glider.netcdf <- function(file, debug)
     f <- nc_open(file)
     res <- new("glider")
 
-    ## Next demonstrates how to detect this filetype.
+    # Next demonstrates how to detect this filetype.
     instrument <- getAtt(f, attname="instrument", default="?")
     instrumentManufacturer <- getAtt(f, attname="instrument_manufacturer", default="?")
     instrumentModel <- getAtt(f, attname="instrument_model", default="?")
@@ -1395,14 +1392,14 @@ read.glider.netcdf <- function(file, debug)
         type <- "slocum"
     res@metadata$type <- type
     data <- list()
-    ## FIXME get units
-    ## FIXME change some variable names from snake-case to camel-case
+    # FIXME get units
+    # FIXME change some variable names from snake-case to camel-case
     dataNames <- names(f$var)
     data$time <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
     dataNamesOriginal <- list()
-    ##? if (!"time" %in% dataNames)
-    ##?     dataNamesOriginal$time <- "-"
-    ## Get all variables, except time, which is not listed in f$var
+    #? if (!"time" %in% dataNames)
+    #?     dataNamesOriginal$time <- "-"
+    # Get all variables, except time, which is not listed in f$var
     gliderDebug(debug, "reading and renaming data\n")
     for (i in seq_along(dataNames))  {
         newName <- toCamelCase(dataNames[i])
@@ -1416,10 +1413,10 @@ read.glider.netcdf <- function(file, debug)
             dataNames[i] <- newName
         }
     }
-    ##gliderDebug(debug, "dataNames:", paste(dataNames, collapse=";"), "\n")
-    ##names(data) <- if ("time" %in% dataNames) dataNames else c("time", dataNames)
+    # gliderDebug(debug, "dataNames:", paste(dataNames, collapse=";"), "\n")
+    # names(data) <- if ("time" %in% dataNames) dataNames else c("time", dataNames)
     res@data$payload1 <- as.data.frame(data)
-    ##head(res@data$payload1$time)
+    # head(res@data$payload1$time)
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- list(payload1=dataNamesOriginal)
     gliderDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
@@ -1503,8 +1500,8 @@ read.glider <- function(file, debug, ...)
 #'      latitude=list(unit=expression(degree*N), scale=""))
 #' gg <- as.glider("seaexplorer", data, units)
 #' par(mfrow=c(2, 1))
-#' plot(g, which="p")
-#' plot(gg, which="p")
+#' plotGlider(g, which="p")
+#' plotGlider(gg, which="p")
 #'
 #' @author Dan Kelley
 #'

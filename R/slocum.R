@@ -65,12 +65,12 @@
 #'
 #' @md
 read.glider.slocum <- function(file, debug,
-                               nameMap=list(conductivity="sci_water_cond",
-                                            temperature="sci_water_temp",
-                                            pressure="sci_water_pressure",
-                                            longitude="lon",
-                                            latitude="lat",
-                                            depth="i_depth"))
+    nameMap=list(conductivity="sci_water_cond",
+        temperature="sci_water_temp",
+        pressure="sci_water_pressure",
+        longitude="lon",
+        latitude="lat",
+        depth="i_depth"))
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
@@ -88,7 +88,6 @@ read.glider.slocum <- function(file, debug,
         open(file, "r")
         on.exit(close(file))
     }
-
     data <- utils::read.csv(filename, header=TRUE)
     names <- names(data)
     nameMapNames <- names(nameMap)
@@ -108,13 +107,13 @@ read.glider.slocum <- function(file, debug,
     gliderDebug(debug, 'new data names: "', paste(names, collapse='", "'), '"\n')
     names(data) <- names
     salinity <- with(data,
-                     oce::swSCTp(conductivity, temperature, pressure,
-                                 conductivityUnit="S/m", eos="unesco"))
+        oce::swSCTp(conductivity, temperature, pressure,
+            conductivityUnit="S/m", eos="unesco"))
     data$salinity <- salinity
     data$time <- oce::numberAsPOSIXct(data$unix_timestamp, "unix")
     rval@data$payload1 <- as.data.frame(data)
     rval@metadata$filename <- filename
-    ## FIXME add to dataNamesOriginal as for CTD data type
+    # FIXME add to dataNamesOriginal as for CTD data type
     rval
 }
 

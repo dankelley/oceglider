@@ -16,7 +16,7 @@ CamelCase version of \code{s}
 Convert a string from snake_case to camelCase
 }
 \examples{
-expect_equal("profileDirection", toCamelCase("profile_direction"))
+toCamelCase("profile_direction") # "profileDirection"
 
 }
 \author{
