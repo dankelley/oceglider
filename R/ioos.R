@@ -20,7 +20,7 @@
 #' (This class inherits from [oce::oce-class] in the
 #' \CRANpkg{oce} package.)
 #'
-#' @author Dan Kelley and Chantelle Layton
+#' @author Chantelle Layton and Dan Kelley
 #'
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get nc_close
