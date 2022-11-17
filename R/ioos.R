@@ -52,10 +52,12 @@ read.glider.netcdf.ioos.DEK <- function(file, debug)
     # get all data
     data <- list()
     dataNames <- names(f$var)
-    # FIXME : nc file downloaded from IOOS glider ERDDAP has multiple time variables
-    #         and actually, the dimension variables are very strange
+    # NOTE : nc file downloaded from IOOS glider ERDDAP has multiple time variables
+    #        and actually, the dimension variables are very strange
     # FIXME : we'll need to decide on a hierarchy for which 'time' variable should be denoted as 'time'
     #         for plotting purposes
+    # FIXME : incorporate units
+    # FIXME : incorporate "qc" and "flag" variables nicely (similar to oce-ctd objects)
     dataNamesOriginal <- list()
     gliderDebug(debug, "reading and renaming data\n")
     fixVector <- function(x)
@@ -76,18 +78,14 @@ read.glider.netcdf.ioos.DEK <- function(file, debug)
             gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
             dataNames[i] <- newName
         } else {
+            # unit <- f$var[[which(names(f$var) == dataNames[i])]][['units']]
             data[[newName]] <- fixVector(ncdf4::ncvar_get(f, dataNames[i]))
             gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
         }
     }
-    # FIXME it was res@metadata$payload1
-    #res@data$payload1 <- as.data.frame(data)
     res@data <- as.data.frame(data)
     res@metadata$filename <- file
-    # FIXME it was list(payload1 = dataNamesOriginal) is the 'payload1' needed
-    #       for both res@data and @metadata$dataNamesOriginal so they can 'hook-up' to eachother ?
-    #res@metadata$dataNamesOriginal <- list(payload1 = dataNamesOriginal)
     res@metadata$dataNamesOriginal <- dataNamesOriginal
     gliderDebug(debug, "} # read.glider.netcdf.ioos", unindent=1, sep="")
     ncdf4::nc_close(f)
