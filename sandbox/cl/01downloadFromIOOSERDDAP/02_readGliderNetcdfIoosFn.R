@@ -1,4 +1,5 @@
 # function pulled from oceanglider.R line 1317, removed formatting for easy testing
+library(oceanglider) # need various functions
 library(ncdf4)
 path <- './sandbox/cl/01downloadFromIOOSERDDAP/'
 file <- list.files(path = path, pattern = '.*\\.nc$', full.names = TRUE)
