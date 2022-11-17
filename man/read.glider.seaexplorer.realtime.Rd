@@ -168,6 +168,7 @@ Other functions for seaexplorer gliders:
 \code{\link{read.glider.seaexplorer.delayed}()}
 
 Other functions to read glider data: 
+\code{\link{read.glider.netcdf.ioos}()},
 \code{\link{read.glider.netcdf}()},
 \code{\link{read.glider.seaexplorer.delayed}()},
 \code{\link{read.glider.slocum}()}
