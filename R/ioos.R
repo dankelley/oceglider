@@ -27,7 +27,7 @@
 #' @export
 #'
 #' @md
-read.glider.netcdf.ioos.DEK <- function(file, debug)
+read.glider.netcdf.ioos <- function(file, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
