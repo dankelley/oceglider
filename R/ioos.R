@@ -49,15 +49,26 @@ read.glider.netcdf.ioos <- function(file, debug)
     # assign attributes to metadata
     res@metadata <- attributes
 
-    # get all data
+    # get all data, including dimensions
     data <- list()
-    dataNames <- names(f$var)
+    # check length of variables and dimensions
+    dimlen <- lapply(f$dim, '[[', 'len')
+    varlen <- lapply(f$var, function(k) k[['dim']][[1]][['len']]) # a bit strange
+    # find the most dominant one, denote this as the primary length
+    # if the length of the dim/var isn't the same, we'll do something different with it below
+    tlen <- table(c(unlist(dimlen), unlist(varlen)))
+    primarylen <- as.numeric(names(tlen)[which.max(tlen)])
+    dataNames <- c(names(f$var),
+                   names(f$dim))
+    dataType <- c(rep('var', length(f$var)),
+                  rep('dim', length(f$dim)))
     # NOTE : nc file downloaded from IOOS glider ERDDAP has multiple time variables
     #        and actually, the dimension variables are very strange
     # FIXME : we'll need to decide on a hierarchy for which 'time' variable should be denoted as 'time'
     #         for plotting purposes
     # FIXME : incorporate units
     # FIXME : incorporate "qc" and "flag" variables nicely (similar to oce-ctd objects)
+    # TO-DO : look into dimensions of variables
     dataNamesOriginal <- list()
     gliderDebug(debug, "reading and renaming data\n")
     fixVector <- function(x)
@@ -69,6 +80,11 @@ read.glider.netcdf.ioos <- function(file, debug)
     for (i in seq_along(dataNames))  {
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
+        # get data length
+        if(dataType[i] == 'var'){
+          ok <- which(names(f$var) == dataNames[i])
+          f$var[[ok]][['dim']][['len']]
+        }
         # check if it's a time variable,
         #   IOOS glider ERDDAP has 'flag' and 'qc' variables for time, so don't convert those to POSIX
         #   the qc check might be fragile, watch out for it. Debug statements will help in future
@@ -79,6 +95,7 @@ read.glider.netcdf.ioos <- function(file, debug)
             dataNames[i] <- newName
         } else {
             # unit <- f$var[[which(names(f$var) == dataNames[i])]][['units']]
+            test <- ncvar_get(f, dataNames[i])
             data[[newName]] <- fixVector(ncdf4::ncvar_get(f, dataNames[i]))
             gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
