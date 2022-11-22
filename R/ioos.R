@@ -56,12 +56,16 @@ read.glider.netcdf.ioos <- function(file, debug)
     # get all data, including dimensions
     data <- list()
     # check length of variables and dimensions
-    dimlen <- lapply(f$dim, '[[', 'len')
-    varlen <- lapply(f$var, function(k) k[['dim']][[1]][['len']]) # a bit strange
+    # dimNames <- names(f$dim)
+    # dimlen <- lapply(dimNames, function(k) ncdf4::ncatt_get(f, k)$len)
+    # dimlen <- lapply(f$dim, '[[', 'len')
+    # varNames <- names(f$var)
+    # varlen <- lapply(varNames, function(k) ncdf4::ncatt_get(f, k)$dim)
+    # varlen <- lapply(f$var, function(k) k[['dim']][[1]][['len']]) # a bit strange
     # find the most dominant one, denote this as the primary length
     # if the length of the dim/var isn't the same, we'll do something different with it below
-    tlen <- table(c(unlist(dimlen), unlist(varlen)))
-    primarylen <- as.numeric(names(tlen)[which.max(tlen)])
+    # tlen <- table(c(unlist(dimlen), unlist(varlen)))
+    # primarylen <- as.numeric(names(tlen)[which.max(tlen)])
     dataNames <- c(names(f$var),
                    names(f$dim))
     dataType <- c(rep('var', length(f$var)),
@@ -85,10 +89,10 @@ read.glider.netcdf.ioos <- function(file, debug)
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         # get data length
-        if(dataType[i] == 'var'){
-          ok <- which(names(f$var) == dataNames[i])
-          f$var[[ok]][['dim']][['len']]
-        }
+        # if(dataType[i] == 'var'){
+        #   ok <- which(names(f$var) == dataNames[i])
+        #   f$var[[ok]][['dim']][['len']]
+        # }
         # check if it's a time variable,
         #   IOOS glider ERDDAP has 'flag' and 'qc' variables for time, so don't convert those to POSIX
         #   the qc check might be fragile, watch out for it. Debug statements will help in future
@@ -98,8 +102,8 @@ read.glider.netcdf.ioos <- function(file, debug)
             gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
             dataNames[i] <- newName
         } else {
-            # unit <- f$var[[which(names(f$var) == dataNames[i])]][['units']]
-            test <- ncvar_get(f, dataNames[i])
+            #unit <- f$var[[which(names(f$var) == dataNames[i])]][['units']]
+            #test <- ncvar_get(f, dataNames[i])
             data[[newName]] <- fixVector(ncdf4::ncvar_get(f, dataNames[i]))
             gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
@@ -122,13 +126,32 @@ read.glider.netcdf.ioos <- function(file, debug)
                     res@metadata$units[[newName]] <- list(unit=expression(S/m), scale="")
                 } else if (unit == "degrees_north") {
                     res@metadata$units[[newName]] <- list(unit=expression(degree*N), scale="")
+                } else if (unit == "degrees_east") {
+                    res@metadata$units[[newName]] <- list(unit=expression(degree*E), scale="")
+                } else if (unit == "m"){
+                    res@metadata$units[[newName]] <- list(unit=expression(m), scale="")
+                } else if (unit == "m-1") {
+                    res@metadata$units[[newName]] <- list(unit=expression(m^-1), scale="") # not sure...
+                } else if (unit == "degrees") {
+                    res@metadata$units[[newName]] <- list(unit=expression(degree), scale="")
+                } else if (unit == "m s-1"){
+                    res@metadata$units[[newName]] <- list(unit=expression(m/s), scale="")
+                } else if (unit == "dbar") {
+                    res@metadata$units[[newName]] <- list(unit=expression(dbar), scale="")
+                } else if (unit == "1") {
+                    if(newName == 'salinity'){
+                      res@metadata$units[[newName]] <- list(unit="", scale="PSS-78") # need to check on scale
+                    } else {
+                      message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
+                    }
                 } else {
                     message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
                 }
             }
         }
     }
-    res@data <- as.data.frame(data)
+    res@data <- data # try leaving it as a list for nwo
+    #res@data <- as.data.frame(data)
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- dataNamesOriginal
     gliderDebug(debug, "} # read.glider.netcdf.ioos", unindent=1, sep="")
