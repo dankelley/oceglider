@@ -66,11 +66,11 @@ read.glider.netcdf.ioos <- function(file, debug)
     # if the length of the dim/var isn't the same, we'll do something different with it below
     # tlen <- table(c(unlist(dimlen), unlist(varlen)))
     # primarylen <- as.numeric(names(tlen)[which.max(tlen)])
-    dataNames <- c(names(f$var)
-                   #names(f$dim)
+    dataNames <- c(names(f$var),
+                   names(f$dim)
                    )
-    dataType <- c(rep('var', length(f$var))
-                  #rep('dim', length(f$dim))
+    dataType <- c(rep('var', length(f$var)),
+                  rep('dim', length(f$dim))
                   )
     # NOTE : nc file downloaded from IOOS glider ERDDAP has multiple time variables
     #        and actually, the dimension variables are very strange
@@ -94,77 +94,86 @@ read.glider.netcdf.ioos <- function(file, debug)
         #   ok <- which(names(f$var) == dataNames[i])
         #   f$var[[ok]][['dim']][['len']]
         # }
+        capture.output(d <- try(ncdf4::ncvar_get(f, dataNames[i]), silent = TRUE))
+        gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" try-error logical is \"", inherits(d, "try-error"), "\"\n", sep="")
+
         # check if it's a time variable,
         #   IOOS glider ERDDAP has 'flag' and 'qc' variables for time, so don't convert those to POSIX
         #   the qc check might be fragile, watch out for it. Debug statements will help in future
-        isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
-        if (isTime) {
-            data[[newName]] <- numberAsPOSIXct(fixVector(ncdf4::ncvar_get(f, dataNames[i])))
-            gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
-            dataNames[i] <- newName
-        } else {
-            data[[newName]] <- fixVector(ncdf4::ncvar_get(f, dataNames[i]))
-            gliderDebug(debug, "i=", i, " ... length of \"", dataNames[i], "\" is \"", length(data[[newName]]), "\"\n", sep="")
-            gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
-            dataNames[i] <- newName
-            # Handle units. Note that ncatt_get() prints a message for things that
-            # lack attributes, and its 'quiet' argument does not silence them, so
-            # we discard the output.
-            capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
-            if (!inherits(unit, "try-error") && !is.null(unit)) {
-                if (unit == "Celsius") {
-                    # Gliders are new, so perhaps this scale guess is OK. In any case,
-                    # the test file used to write this code had no information beyond
-                    # the word "Celcius".
-                    res@metadata$units[[newName]] <- list(unit=expression(degree*C), scale="ITS-90")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "kg m-3") {
-                    res@metadata$units[[newName]] <- list(unit=expression(kg/m^3), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "ug l-1") {
-                    res@metadata$units[[newName]] <- list(unit=expression(mu*g/l), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "S m-1") {
-                    res@metadata$units[[newName]] <- list(unit=expression(S/m), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "degrees_north") {
-                    res@metadata$units[[newName]] <- list(unit=expression(degree*N), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "degrees_east") {
-                    res@metadata$units[[newName]] <- list(unit=expression(degree*E), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "m"){
-                    res@metadata$units[[newName]] <- list(unit=expression(m), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "m-1") {
-                    res@metadata$units[[newName]] <- list(unit=expression(m^-1), scale="") # not sure...
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "degrees") {
-                    res@metadata$units[[newName]] <- list(unit=expression(degree), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "m s-1"){
-                    res@metadata$units[[newName]] <- list(unit=expression(m/s), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "dbar") {
-                    res@metadata$units[[newName]] <- list(unit=expression(dbar), scale="")
-                    gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                } else if (unit == "1") {
-                    if(newName == 'salinity'){
-                      res@metadata$units[[newName]] <- list(unit="", scale="PSS-78") # need to check on scale
+        if(!inherits(d, "try-error")){
+          isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
+          if (isTime) {
+              data[[newName]] <- numberAsPOSIXct(fixVector(d))
+              gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
+          } else {
+              data[[newName]] <- fixVector(d)
+              gliderDebug(debug, "i=", i, " ... length of \"", dataNames[i], "\" is \"", length(data[[newName]]), "\"\n", sep="")
+              gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
+              # Handle units. Note that ncatt_get() prints a message for things that
+              # lack attributes, and its 'quiet' argument does not silence them, so
+              # we discard the output.
+              capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
+              if (!inherits(unit, "try-error") && !is.null(unit)) {
+                  if (unit == "Celsius") {
+                      # Gliders are new, so perhaps this scale guess is OK. In any case,
+                      # the test file used to write this code had no information beyond
+                      # the word "Celcius".
+                      res@metadata$units[[newName]] <- list(unit=expression(degree*C), scale="ITS-90")
                       gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                    } else {
+                  } else if (unit == "kg m-3") {
+                      res@metadata$units[[newName]] <- list(unit=expression(kg/m^3), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "ug l-1") {
+                      res@metadata$units[[newName]] <- list(unit=expression(mu*g/l), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "S m-1") {
+                      res@metadata$units[[newName]] <- list(unit=expression(S/m), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "degrees_north") {
+                      res@metadata$units[[newName]] <- list(unit=expression(degree*N), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "degrees_east") {
+                      res@metadata$units[[newName]] <- list(unit=expression(degree*E), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "m"){
+                      res@metadata$units[[newName]] <- list(unit=expression(m), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "m-1") {
+                      res@metadata$units[[newName]] <- list(unit=expression(m^-1), scale="") # not sure...
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "degrees") {
+                      res@metadata$units[[newName]] <- list(unit=expression(degree), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "m s-1"){
+                      res@metadata$units[[newName]] <- list(unit=expression(m/s), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "dbar") {
+                      res@metadata$units[[newName]] <- list(unit=expression(dbar), scale="")
+                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                  } else if (unit == "1") {
+                      if(newName == 'salinity'){
+                        res@metadata$units[[newName]] <- list(unit="", scale="PSS-78") # need to check on scale
+                        gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
+                      } else {
+                        message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
+                      }
+                  } else {
                       message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
-                    }
-                } else {
-                    message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
-                }
-            }
+                  }
+              }
+          }
+        } else {
+          #data[[newName]] <- NULL # not sure if I need this
+          message("Could not read \"", newName, "\", proceeding to next variable\"")
         }
     }
     #res@data <- data # try leaving it as a list ?
+    # remove any data that is NULL
+    #isNull <- unlist(lapply(data, is.null))
+    inData <- names(dataNamesOriginal) %in% names(data)
     res@data <- as.data.frame(data)
     res@metadata$filename <- file
-    res@metadata$dataNamesOriginal <- dataNamesOriginal
+    res@metadata$dataNamesOriginal <- dataNamesOriginal[inData]
     gliderDebug(debug, "} # read.glider.netcdf.ioos", unindent=1, sep="")
     ncdf4::nc_close(f)
     res@metadata$type <- "ioos"
