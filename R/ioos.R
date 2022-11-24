@@ -80,10 +80,22 @@ read.glider.netcdf.ioos <- function(file, debug)
     # TO-DO : look into dimensions of variables
     dataNamesOriginal <- list()
     gliderDebug(debug, "reading and renaming data\n")
-    fixVector <- function(x)
+    fixVector <- function(x, fillValue=NULL)
     {
+        # check for nan's
         nan <- is.nan(x)
+        gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" has \"", length(which(nan == TRUE)), "\" NaN values \n", sep="")
         x[nan] <- NA
+        # check for fillValues (if provided)
+        if(!is.null(fillValue)){
+          isFillValue <- x == fillValue
+          gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" has \"", length(which(isFillValue == TRUE)), "\"", fillValue, " values \n", sep="")
+          x[isFillValue] <- NA
+        }
+        # check for 9999.00 values
+        is9999 <- x == 9999.00
+        gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" has \"", length(which(is9999 == TRUE)), "\" 9999.00 values \n", sep="")
+        x[is9999] <- NA
         as.vector(x)
     }
     for (i in seq_along(dataNames))  {
@@ -95,6 +107,7 @@ read.glider.netcdf.ioos <- function(file, debug)
         #   f$var[[ok]][['dim']][['len']]
         # }
         capture.output(d <- try(ncdf4::ncvar_get(f, dataNames[i]), silent = TRUE))
+        capture.output(fillValue <- try(ncdf4::ncatt_get(f, dataNames[i])$`_FillValue`, silent = TRUE))
         gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" try-error logical is \"", inherits(d, "try-error"), "\"\n", sep="")
 
         # check if it's a time variable,
@@ -103,10 +116,10 @@ read.glider.netcdf.ioos <- function(file, debug)
         if(!inherits(d, "try-error")){
           isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
           if (isTime) {
-              data[[newName]] <- numberAsPOSIXct(fixVector(d))
+              data[[newName]] <- numberAsPOSIXct(fixVector(d, fillValue = fillValue))
               gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
           } else {
-              data[[newName]] <- fixVector(d)
+              data[[newName]] <- fixVector(d, fillValue = fillValue)
               gliderDebug(debug, "i=", i, " ... length of \"", dataNames[i], "\" is \"", length(data[[newName]]), "\"\n", sep="")
               gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
               # Handle units. Note that ncatt_get() prints a message for things that
