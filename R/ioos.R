@@ -116,7 +116,7 @@ read.glider.netcdf.ioos <- function(file, debug)
               if (!inherits(unit, "try-error") && !is.null(unit)) {
                 if(unit != "1"){
                   newUnit <- switch(unit,
-                                    "Celcius" = list(unit = expression(degree*C), scale="ITS-90"),
+                                    "Celsius" = list(unit = expression(degree*C), scale="ITS-90"),
                                     "kg m-3" = list(unit = expression(kg/m^3), scale=""),
                                     "ug l-1" = list(unit=expression(mu*g/l), scale=""),
                                     "S m-1" = list(unit=expression(S/m), scale=""),
@@ -132,18 +132,24 @@ read.glider.netcdf.ioos <- function(file, debug)
                                     "percent" = list(unit=expression("%"), scale=""),
                                     "rad" = list(unit=expression(rad), scale=""),
                                     "mg m-3" = list(unit=expression(mg/m^3), scale=""),
-                                    "ppb" = list(unit=expression(ppb), scale="")
+                                    "ppb" = list(unit=expression(ppb), scale=""),
+                                    "Hz" = list(unit=expression(Hz), scale=""),
+                                    "km" = list(unit=expression(km), scale="")
                                   )
                 } else {
                   # for unit == 1
                   newUnit <- switch(newName,
-                                    'salinity' = list(unit="", scale="PSS-78") # need to check on scale
+                                    "salinity" = list(unit="", scale="PSS-78"), # need to check on scale
+                                    "backscatter700" = list(unit="", scale=""),
+                                    "profileIndex" = list(unit="", scale=""),
+                                    "profileDirection" = list(unit="", scale="")
                                     )
                 }
                 if(is.null(newUnit)){
+                  newUnit <- list(unit="", scale="")
                   message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
                 }
-                res@metadata$units[[newName]] <- newUnits
+                res@metadata$units[[newName]] <- newUnit
               }
           }
         } else {
