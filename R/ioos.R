@@ -114,52 +114,36 @@ read.glider.netcdf.ioos <- function(file, debug)
               # we discard the output.
               capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
               if (!inherits(unit, "try-error") && !is.null(unit)) {
-                  if (unit == "Celsius") {
-                      # Gliders are new, so perhaps this scale guess is OK. In any case,
-                      # the test file used to write this code had no information beyond
-                      # the word "Celcius".
-                      res@metadata$units[[newName]] <- list(unit=expression(degree*C), scale="ITS-90")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "kg m-3") {
-                      res@metadata$units[[newName]] <- list(unit=expression(kg/m^3), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "ug l-1") {
-                      res@metadata$units[[newName]] <- list(unit=expression(mu*g/l), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "S m-1") {
-                      res@metadata$units[[newName]] <- list(unit=expression(S/m), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "degrees_north") {
-                      res@metadata$units[[newName]] <- list(unit=expression(degree*N), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "degrees_east") {
-                      res@metadata$units[[newName]] <- list(unit=expression(degree*E), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "m"){
-                      res@metadata$units[[newName]] <- list(unit=expression(m), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "m-1") {
-                      res@metadata$units[[newName]] <- list(unit=expression(m^-1), scale="") # not sure...
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "degrees") {
-                      res@metadata$units[[newName]] <- list(unit=expression(degree), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "m s-1"){
-                      res@metadata$units[[newName]] <- list(unit=expression(m/s), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "dbar") {
-                      res@metadata$units[[newName]] <- list(unit=expression(dbar), scale="")
-                      gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                  } else if (unit == "1") {
-                      if(newName == 'salinity'){
-                        res@metadata$units[[newName]] <- list(unit="", scale="PSS-78") # need to check on scale
-                        gliderDebug(debug, "set units for \"", newName, "\"\n", sep="")
-                      } else {
-                        message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
-                      }
-                  } else {
-                      message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
-                  }
+                if(unit != "1"){
+                  newUnit <- switch(unit,
+                                    "Celcius" = list(unit = expression(degree*C), scale="ITS-90"),
+                                    "kg m-3" = list(unit = expression(kg/m^3), scale=""),
+                                    "ug l-1" = list(unit=expression(mu*g/l), scale=""),
+                                    "S m-1" = list(unit=expression(S/m), scale=""),
+                                    "degrees_north" = list(unit=expression(degree*N), scale=""),
+                                    "degrees_east" = list(unit=expression(degree*E), scale=""),
+                                    "m" = list(unit=expression(m), scale=""),
+                                    "m-1" = list(unit=expression(m^-1), scale=""), # or should it be 1/m?
+                                    "degrees" = list(unit=expression(degree), scale=""),
+                                    "m s-1" = list(unit=expression(m/s), scale=""),
+                                    "dbar" = list(unit=expression(dbar), scale=""),
+                                    "nm" = list(unit=expression(nm), scale=""),
+                                    "umol kg-1" = list(unit=expression(mu*mol/kg), scale=""),
+                                    "percent" = list(unit=expression("%"), scale=""),
+                                    "rad" = list(unit=expression(rad), scale=""),
+                                    "mg m-3" = list(unit=expression(mg/m^3), scale=""),
+                                    "ppb" = list(unit=expression(ppb), scale="")
+                                  )
+                } else {
+                  # for unit == 1
+                  newUnit <- switch(newName,
+                                    'salinity' = list(unit="", scale="PSS-78") # need to check on scale
+                                    )
+                }
+                if(is.null(newUnit)){
+                  message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
+                }
+                res@metadata$units[[newName]] <- newUnits
               }
           }
         } else {
