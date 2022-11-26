@@ -52,6 +52,8 @@ read.glider.netcdf.ioos <- function(file, debug)
     # make space for units and flags in metadata
     res@metadata$units <- list()
     res@metadata$flags <- list()
+    res@metadata$flagScheme <- list()
+    knowFlagScheme <- FALSE # change this if we find any _qc variables
 
     # get all data, including dimensions
     data <- list()
@@ -121,6 +123,25 @@ read.glider.netcdf.ioos <- function(file, debug)
             } else {
                 #message(newName)
                 if (grepl("^.*Qc$", newName)) {
+                    # infer flagScheme once, assuming (FIXME) all are equal
+                    if (!knowFlagScheme) {
+                        res@metadata$flagScheme$name <- "IOOS"
+                        res@metadata$flagScheme$mapping <- list()
+                        ftypes <- strsplit(ncatt_get(f,
+                                gsub("Qc$", "_qc", newName))$flag_meaning," ")[[1]]
+                        for (i in seq_along(ftypes))
+                            res@metadata$flagScheme$mapping[[ftypes[i]]] <- as.numeric(i)
+                        # recognize, or guess, the good code
+                        res@metadata$flagScheme$default <- as.numeric(seq_along(ftypes))
+                        w <- which("good_data" == ftypes)
+                        if (length(w) == 1L) {
+                            res@metadata$flagScheme$default <- res@metadata$flagScheme$default[-w]
+                        } else {
+                            res@metadata$flagScheme$default <- res@metadata$flagScheme$default[-2L]
+                            warning("assuming flag=2 means 'good data'")
+                        }
+                        knowFlagScheme <- TRUE
+                    }
                     #message(" <", gsub("Qc$", "", newName), ">")
                     res@metadata$flags[[gsub("Qc$", "", newName)]] <- fixVector(d, fillValue=fillValue)
                 } else {
@@ -166,7 +187,7 @@ read.glider.netcdf.ioos <- function(file, debug)
                         }
                         if(is.null(newUnit)){
                             newUnit <- list(unit=expression(), scale="")
-                            message("FIXME: write code to store unit for for newName=\"", newName, "\" given unit string \"", unit, "\"")
+                            message("FIXME: store \"", newName, " unit \"", unit, "\"")
                         }
                         res@metadata$units[[newName]] <- newUnit
                     }

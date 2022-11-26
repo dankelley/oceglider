@@ -1116,7 +1116,8 @@ setMethod(f="summary",
                 cat("* Data-quality Flag Scheme\n\n")
                 cat("    name    \"", object@metadata$flagScheme$name, "\"\n", sep="")
                 cat("    mapping ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$mapping,
-                                width.cutoff=400))), "\n\n", sep="")
+                                width.cutoff=400))), "\n", sep="")
+                cat("    default ", gsub(" = ", "=", as.character(deparse(object@metadata$flagScheme$default, width.cutoff=400))), "\n\n", sep="")
             }
             flagNames <- names(flags)
             if (is.null(flagNames)) {
