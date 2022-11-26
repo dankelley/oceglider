@@ -114,60 +114,60 @@ read.glider.netcdf.ioos <- function(file, debug)
         #   IOOS glider ERDDAP has 'flag' and 'qc' variables for time, so don't convert those to POSIX
         #   the qc check might be fragile, watch out for it. Debug statements will help in future
         if(!inherits(d, "try-error")){
-          isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
-          if (isTime) {
-              data[[newName]] <- numberAsPOSIXct(fixVector(d, fillValue = fillValue))
-              gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
-          } else {
-              data[[newName]] <- fixVector(d, fillValue = fillValue)
-              gliderDebug(debug, "i=", i, " ... length of \"", dataNames[i], "\" is \"", length(data[[newName]]), "\"\n", sep="")
-              gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
-              # Handle units. Note that ncatt_get() prints a message for things that
-              # lack attributes, and its 'quiet' argument does not silence them, so
-              # we discard the output.
-              capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
-              if (!inherits(unit, "try-error") && !is.null(unit)) {
-                if(unit != "1"){
-                  newUnit <- switch(unit,
-                                    "Celsius" = list(unit = expression(degree*C), scale="ITS-90"),
-                                    "kg m-3" = list(unit = expression(kg/m^3), scale=""),
-                                    "ug l-1" = list(unit=expression(mu*g/l), scale=""),
-                                    "S m-1" = list(unit=expression(S/m), scale=""),
-                                    "degrees_north" = list(unit=expression(degree*N), scale=""),
-                                    "degrees_east" = list(unit=expression(degree*E), scale=""),
-                                    "m" = list(unit=expression(m), scale=""),
-                                    "m-1" = list(unit=expression(m^-1), scale=""), # or should it be 1/m?
-                                    "degrees" = list(unit=expression(degree), scale=""),
-                                    "m s-1" = list(unit=expression(m/s), scale=""),
-                                    "dbar" = list(unit=expression(dbar), scale=""),
-                                    "nm" = list(unit=expression(nm), scale=""),
-                                    "umol kg-1" = list(unit=expression(mu*mol/kg), scale=""),
-                                    "percent" = list(unit=expression("%"), scale=""),
-                                    "rad" = list(unit=expression(rad), scale=""),
-                                    "mg m-3" = list(unit=expression(mg/m^3), scale=""),
-                                    "ppb" = list(unit=expression(ppb), scale=""),
-                                    "Hz" = list(unit=expression(Hz), scale=""),
-                                    "km" = list(unit=expression(km), scale="")
-                                  )
-                } else {
-                  # for unit == 1
-                  newUnit <- switch(newName,
-                                    "salinity" = list(unit="", scale="PSS-78"), # need to check on scale
-                                    "backscatter700" = list(unit="", scale=""),
-                                    "profileIndex" = list(unit="", scale=""),
-                                    "profileDirection" = list(unit="", scale="")
-                                    )
+            isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
+            if (isTime) {
+                data[[newName]] <- numberAsPOSIXct(fixVector(d, fillValue = fillValue))
+                gliderDebug(debug, "i=", i, " ... time name \"", dataNames[i], "\" converted to \"", newName, "\" converted from integer to POSIXct\n", sep="")
+            } else {
+                data[[newName]] <- fixVector(d, fillValue = fillValue)
+                gliderDebug(debug, "i=", i, " ... length of \"", dataNames[i], "\" is \"", length(data[[newName]]), "\"\n", sep="")
+                gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
+                # Handle units. Note that ncatt_get() prints a message for things that
+                # lack attributes, and its 'quiet' argument does not silence them, so
+                # we discard the output.
+                capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
+                if (!inherits(unit, "try-error") && !is.null(unit)) {
+                    if(unit != "1"){
+                        newUnit <- switch(unit,
+                            "Celsius" = list(unit = expression(degree*C), scale="ITS-90"),
+                            "kg m-3" = list(unit = expression(kg/m^3), scale=""),
+                            "ug l-1" = list(unit=expression(mu*g/l), scale=""),
+                            "S m-1" = list(unit=expression(S/m), scale=""),
+                            "degrees_north" = list(unit=expression(degree*N), scale=""),
+                            "degrees_east" = list(unit=expression(degree*E), scale=""),
+                            "m" = list(unit=expression(m), scale=""),
+                            "m-1" = list(unit=expression(m^-1), scale=""), # or should it be 1/m?
+                            "degrees" = list(unit=expression(degree), scale=""),
+                            "m s-1" = list(unit=expression(m/s), scale=""),
+                            "dbar" = list(unit=expression(dbar), scale=""),
+                            "nm" = list(unit=expression(nm), scale=""),
+                            "umol kg-1" = list(unit=expression(mu*mol/kg), scale=""),
+                            "percent" = list(unit=expression("%"), scale=""),
+                            "rad" = list(unit=expression(rad), scale=""),
+                            "mg m-3" = list(unit=expression(mg/m^3), scale=""),
+                            "ppb" = list(unit=expression(ppb), scale=""),
+                            "Hz" = list(unit=expression(Hz), scale=""),
+                            "km" = list(unit=expression(km), scale="")
+                            )
+                    } else {
+                        # for unit == 1
+                        newUnit <- switch(newName,
+                            "salinity" = list(unit=expression(), scale="PSS-78"), # need to check on scale
+                            "backscatter700" = list(unit=expression(), scale=""),
+                            "profileIndex" = list(unit=expression(), scale=""),
+                            "profileDirection" = list(unit=expression(), scale="")
+                            )
+                    }
+                    if(is.null(newUnit)){
+                        newUnit <- list(unit=expression(), scale="")
+                        message("FIXME: write code to store unit for for newName=\"", newName, "\" given unit string \"", unit, "\"")
+                    }
+                    res@metadata$units[[newName]] <- newUnit
                 }
-                if(is.null(newUnit)){
-                  newUnit <- list(unit="", scale="")
-                  message("FIXME: write code for newName=\"", newName, "\" ... unit=\"", unit, "\"")
-                }
-                res@metadata$units[[newName]] <- newUnit
-              }
-          }
+            }
         } else {
-          #data[[newName]] <- NULL # not sure if I need this
-          message("Could not read \"", newName, "\", proceeding to next variable\"")
+            #data[[newName]] <- NULL # not sure if I need this
+            message("Could not read \"", newName, "\", proceeding to next variable\"")
         }
     }
     #res@data <- data # try leaving it as a list ?
