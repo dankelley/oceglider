@@ -1107,7 +1107,10 @@ setMethod(f="summary",
         # Get flags specifically from metadata; using [["flags"]] could extract
         # it from data, if present there and not in metadata (as e.g. with
         # the data("glider") that is provided with oce).
-        flags <- object@metadata$flags[["payload1"]]
+        flags <- if (object@metadata$type == "ioos")
+            object@metadata$flags
+        else
+            object@metadata$flags[["payload1"]]
         if (length(flags)) {
             if (!is.null(object@metadata$flagScheme)) {
                 cat("* Data-quality Flag Scheme\n\n")
@@ -1141,6 +1144,8 @@ setMethod(f="summary",
                                 if (i != flagTableLength) cat(", ") else cat("\n")
                             }
                         }
+                    } else {
+                        cat("    ", name, ":", padding, "\"NA\" ", length(flags[[name]]), "\n", sep="")
                     }
                 }
             }
