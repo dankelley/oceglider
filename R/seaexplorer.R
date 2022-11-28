@@ -62,11 +62,11 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceangl
 #' 1.Teledyne Webb Research. \emph{Slocum G2 Glider Operators Manual}, January 2012.
 #' \url{https://gliderfs2.coas.oregonstate.edu/gliderweb/docs/slocum_manuals/Slocum_G2_Glider_Operators_Manual.pdf}.
 #'
-#' @export
-#'
 #' @author Dan Kelley
 #'
 #' @md
+#'
+#' @export
 navStateCodes <- function(g)
 {
     type <- if (is.character(g)) g else g@metadata$type
@@ -162,11 +162,11 @@ navStateCodes <- function(g)
 #' @importFrom oce swSCTp processingLogAppend initializeFlagScheme
 ## @importFrom shiny incProgress setProgress
 #'
-#' @export
-#'
 #' @author Dan Kelley and Clark Richards
 #'
 #' @md
+#'
+#' @export
 read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive(), missingValue=9999, debug)
 {
     if (missing(debug))
@@ -630,11 +630,11 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
 ## @importFrom shiny incProgress setProgress
 #'
-#' @export
-#'
 #' @author Clark Richards and Dan Kelley
 #'
 #' @md
+#'
+#' @export
 read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpolateToCTD=TRUE, removeTimeSincePowerOn=0, progressBar=interactive(), debug)
 {
     if (missing(debug))

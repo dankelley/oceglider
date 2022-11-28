@@ -59,11 +59,11 @@
 #' @importFrom methods new
 #' @importFrom oce numberAsPOSIXct swSCTp
 #'
-#' @export
-#'
 #' @author Dan Kelley
 #'
 #' @md
+#'
+#' @export
 read.glider.slocum <- function(file, debug,
     nameMap=list(conductivity="sci_water_cond",
         temperature="sci_water_temp",

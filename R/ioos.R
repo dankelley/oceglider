@@ -25,9 +25,9 @@
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get nc_close
 #' @importFrom utils capture.output
-#' @export
 #'
 #' @md
+#' @export
 read.glider.netcdf.ioos <- function(file, debug)
 {
     if (missing(debug))

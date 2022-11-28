@@ -7,7 +7,6 @@
 #' as more datasets are examined by the author.
 #'
 #' @importFrom methods new
-#' @import knitr
 #' @importFrom oce handleFlags setFlags subset summary vectorShow
 #' @docType package
 #' @name oceanglider-class
@@ -369,9 +368,9 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 #'
 #' @author Dan Kelley
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 setMethod("setFlags",
     c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
     function(object, name=NULL, i=NULL, value=NULL, debug=0) {
@@ -903,9 +902,9 @@ setMethod(f="[[",
 #' drawPalette(colormap=cm)
 #' plotGlider(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 plotGlider <- function(x, which, type="o", debug, ...)
 {
     dots <- list(...)
@@ -1167,9 +1166,9 @@ setMethod(f="summary",
 #'
 #' @author Dan Kelley
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 toCamelCase <- function(s)
 {
     s <- strsplit(s, "")[[1]]
@@ -1208,9 +1207,9 @@ toCamelCase <- function(s)
 #'
 #' @author Dan Kelley
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 degreeMinute <- function(x)
 {
     s <- sign(x)
@@ -1242,9 +1241,9 @@ degreeMinute <- function(x)
 #'
 #' @importFrom utils flush.console
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 gliderDebug <- function(debug=0, ..., unindent=0)
 {
     debug <- if (debug > 4) 4 else max(0, floor(debug + 0.5))
@@ -1277,9 +1276,10 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #' @author Dan Kelley
 #'
 #' @importFrom RCurl url.exists
-#' @export
 #'
 #' @md
+#'
+#' @export
 urlExists <- function(url, quiet=FALSE)
 {
     # tack a '/' on the end, if not there already
@@ -1374,9 +1374,10 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #'
 #' @family functions to read glider data
 #' @importFrom ncdf4 nc_open ncatt_get ncvar_get
-#' @export
 #'
 #' @md
+#'
+#' @export
 read.glider.netcdf <- function(file, debug)
 {
     if (missing(debug))
@@ -1448,9 +1449,9 @@ read.glider.netcdf <- function(file, debug)
 #'
 #' @return A `glider` object, i.e. one inheriting from [glider-class].
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 read.glider <- function(file, debug, ...)
 {
     if (missing(debug))
@@ -1511,9 +1512,9 @@ read.glider <- function(file, debug, ...)
 #'
 #' @author Dan Kelley
 #'
-#' @export
-#'
 #' @md
+#'
+#' @export
 as.glider <- function(type, data, units)
 {
     if (missing(type))

@@ -5,7 +5,7 @@
 \title{Handle Flags in glider Objects}
 \usage{
 \S4method{handleFlags}{glider}(
-  object,
+  object = "oce",
   flags = NULL,
   actions = NULL,
   where = "payload1",
