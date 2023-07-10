@@ -9,9 +9,12 @@ Maintainer: Dan Kelley <dan.kelley@dal.ca>
 Depends: R (>= 2.15), utils, oce, gsw
 Suggests:
     knitr,
+    ncdf4,
+    RCurl,
+    rmarkdown,
     shiny,
     testthat
-Imports: methods, ncdf4, RCurl
+Imports: methods
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)
 Encoding: UTF-8

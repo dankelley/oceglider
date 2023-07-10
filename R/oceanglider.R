@@ -1275,7 +1275,7 @@ gliderDebug <- function(debug=0, ..., unindent=0)
 #'
 #' @author Dan Kelley
 #'
-#' @importFrom RCurl url.exists
+## @importFrom RCurl url.exists
 #'
 #' @md
 #'
@@ -1286,6 +1286,8 @@ urlExists <- function(url, quiet=FALSE)
     urlOrig <- url
     if (0 == length(grep("/$", url)))
         url <- paste(url, "/", sep="")
+    if (!requireNamespace("RCurl", quietly=TRUE))
+        stop("must install.packages(\"RCurl\") to read this data type")
     exists <- RCurl::url.exists(url)
     if (exists) {
         return(TRUE)
@@ -1311,7 +1313,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
     if (is.null(attname))
         stop("must give attname")
     # message(attname)
-    t <- try(ncatt_get(f, varid=varid, attname=attname), silent=TRUE)
+    t <- try(ncdf4::ncatt_get(f, varid=varid, attname=attname), silent=TRUE)
     if (inherits(t, "try-error")) {
         NULL
     } else {
@@ -1373,7 +1375,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #'}
 #'
 #' @family functions to read glider data
-#' @importFrom ncdf4 nc_open ncatt_get ncvar_get
+## @importFrom ncdf4 nc_open ncatt_get ncvar_get
 #'
 #' @md
 #'
@@ -1387,7 +1389,9 @@ read.glider.netcdf <- function(file, debug)
         stop("must provide `file'")
     if (length(file) != 1)
         stop("file must have length 1")
-    f <- nc_open(file)
+    capture.output({
+        f <- ncdf4::nc_open(file)
+    })
     res <- new("glider")
 
     # Next demonstrates how to detect this filetype.
@@ -1402,7 +1406,7 @@ read.glider.netcdf <- function(file, debug)
     # FIXME get units
     # FIXME change some variable names from snake-case to camel-case
     dataNames <- names(f$var)
-    data$time <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
+    data$time <- numberAsPOSIXct(as.vector(ncdf4::ncvar_get(f, "time")))
     dataNamesOriginal <- list()
     #? if (!"time" %in% dataNames)
     #?     dataNamesOriginal$time <- "-"
@@ -1412,10 +1416,10 @@ read.glider.netcdf <- function(file, debug)
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         if (dataNames[i] == "time") {
-            data[["time"]] <- numberAsPOSIXct(as.vector(ncvar_get(f, "time")))
+            data[["time"]] <- numberAsPOSIXct(as.vector(ncdf4::ncvar_get(f, "time")))
             gliderDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
         } else {
-            data[[newName]] <- as.vector(ncvar_get(f, dataNames[i]))
+            data[[newName]] <- as.vector(ncdf4::ncvar_get(f, dataNames[i]))
             gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
         }

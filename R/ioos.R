@@ -23,7 +23,9 @@
 #' @author Chantelle Layton and Dan Kelley
 #'
 #' @family functions to read glider data
-#' @importFrom ncdf4 nc_open ncatt_get ncvar_get nc_close
+#' @family functions to read netcdf glider data
+#'
+## @importFrom ncdf4 nc_open ncatt_get ncvar_get nc_close
 #' @importFrom utils capture.output
 #'
 #' @md
@@ -127,7 +129,7 @@ read.glider.netcdf.ioos <- function(file, debug)
                     if (!knowFlagScheme) {
                         res@metadata$flagScheme$name <- "IOOS"
                         res@metadata$flagScheme$mapping <- list()
-                        ftypes <- strsplit(ncatt_get(f,
+                        ftypes <- strsplit(ncdf4::ncatt_get(f,
                                 gsub("Qc$", "_qc", newName))$flag_meaning," ")[[1]]
                         for (i in seq_along(ftypes))
                             res@metadata$flagScheme$mapping[[ftypes[i]]] <- as.numeric(i)
