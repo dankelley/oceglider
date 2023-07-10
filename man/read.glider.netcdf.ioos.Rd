@@ -48,6 +48,7 @@ Other functions to read glider data:
 \code{\link{read.glider.slocum}()}
 
 Other functions to read netcdf glider data: 
+\code{\link{read.glider.netcdf}()},
 \code{\link{read.glider.slocum.netcdf}()}
 }
 \author{

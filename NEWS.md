@@ -1,5 +1,6 @@
 # oceanglider 0.1.4
 
+* add `read.glider.slocum.netcdf()`
 * revamp README badges
 
 # oceanglider 0.1.3

@@ -75,8 +75,13 @@ Other functions to read glider data:
 \code{\link{read.glider.seaexplorer.realtime}()},
 \code{\link{read.glider.slocum.netcdf}()},
 \code{\link{read.glider.slocum}()}
+
+Other functions to read netcdf glider data: 
+\code{\link{read.glider.netcdf.ioos}()},
+\code{\link{read.glider.slocum.netcdf}()}
 }
 \author{
 Dan Kelley
 }
 \concept{functions to read glider data}
+\concept{functions to read netcdf glider data}

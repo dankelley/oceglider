@@ -1375,6 +1375,8 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #'}
 #'
 #' @family functions to read glider data
+#' @family functions to read netcdf glider data
+#'
 ## @importFrom ncdf4 nc_open ncatt_get ncvar_get
 #'
 #' @md

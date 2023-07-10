@@ -69,7 +69,8 @@ Other functions to read glider data:
 \code{\link{read.glider.slocum}()}
 
 Other functions to read netcdf glider data: 
-\code{\link{read.glider.netcdf.ioos}()}
+\code{\link{read.glider.netcdf.ioos}()},
+\code{\link{read.glider.netcdf}()}
 }
 \author{
 Dan Kelley with help from Chantelle Layton and Cameron Richardson.
