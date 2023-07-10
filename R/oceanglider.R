@@ -1198,7 +1198,7 @@ toCamelCase <- function(s)
 #' format, in which e.g. 45deg 30.1min is saved as 4530.100, as
 #' illustrated in the example.
 #'
-#' @param x Numerical value in degree+minute notation, e.g.
+#' @param x Numerical value in degree+minute notation (see \dQuote{Examples}).
 #'
 #' @return Numerical value in decimal degrees.
 #'

@@ -7,7 +7,7 @@
 degreeMinute(x)
 }
 \arguments{
-\item{x}{Numerical value in degree+minute notation, e.g.}
+\item{x}{Numerical value in degree+minute notation (see \dQuote{Examples}.}
 }
 \value{
 Numerical value in decimal degrees.
