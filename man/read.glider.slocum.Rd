@@ -15,16 +15,8 @@ read.glider.slocum(
 \arguments{
 \item{file}{A connection or a character string giving the name of the file to load.}
 
-\item{debug}{an integer specifying whether debugging information is
-to be printed during processing. If this is not provided, then
-the value of \code{\link{getOption}("gliderDebug",0)} is used.
-The printing is done by a call to \code{\link{gliderDebug}}.
-Setting \code{debug=0} turns off this form of debugging, while
-higher values may yield more information, depending on the
-function. If one \code{glider} function calls another, it
-passes the value of \code{debug} but decreased by 1, which means
-that the value of \code{debug} controls not just the breadth
-of debugging, but also the depth.}
+\item{debug}{an integer controlling how much information is printed during
+processing.}
 
 \item{nameMap}{List used to rename data columns. See \dQuote{Details}.}
 }
@@ -64,9 +56,9 @@ if (file.exists("~/slocum.csv")) {
     mtext(paste("Temperature, from", t[1]), cex=3/4)
 
     # 2. Plot distance-depth trace, colour-coded for temperature
-    dist <- geodDist(g[['longitude']],g[['latitude']],alongPath=TRUE)
+    dist <- geodDist(g[["longitude"]],g[["latitude"]],alongPath=TRUE)
     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
-    cm <- colormap(z=g[['temperature']])
+    cm <- colormap(z=g[["temperature"]])
     drawPalette(colormap=cm, cex.axis=3/4)
     p <- g[["depth"]]
     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
