@@ -17,12 +17,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-<!-- HOW TO BUILD THE VIGNETTE. -->
-<!-- 1. edit this file in vignettes/oceanglider.Rmd -->
-<!-- 2. devtools::build_vignettes() -->
-<!-- 3. devtools::install(build_vignettes=TRUE) -->
-
-
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
