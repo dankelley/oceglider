@@ -1,0 +1,41 @@
+---
+title: "Slocum Gliders"
+author: "Dan Kelley (https://orcid.org/0000-0001-7808-5911)"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    fig_caption: yes
+    fig_width: 5
+    fig_height: 5
+    dpi: 72
+    dev.args: list(pointsize=11)
+vignette: >
+  %\VignetteIndexEntry{Slocum Gliders}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+**Abstract.** This vignette explains the basics of using the oceanglider package
+on Slocum data. It is \emph{very much} a work in progress, because the functions
+provided by this package are under active development.
+
+```{r fig.cap="Glider surfaced locations (red dots) with 500m depth contour (black line)."}
+library(oceanglider)
+file <- "~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc"
+g <- read.glider.slocum.netcdf(file)
+lon <- g[["longitude"]]
+lat <- g[["latitude"]]
+data("coastlineWorldFine", package="ocedata")
+plot(coastlineWorldFine, span=450,
+    clatitude=mean(lat, na.rm=TRUE), clongitude=mean(lon, na.rm=TRUE))
+points(lon, lat, cex=0.5, pch=20, col=2)
+data(topoWorld)
+contour(topoWorld[["longitude"]], topoWorld[["latitude"]],
+    -topoWorld[["z"]], level=500, add=TRUE, labcex=0.9)
+```

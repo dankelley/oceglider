@@ -28,7 +28,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
 **Abstract.** This vignette explains the basics of using the oceanglider
-package on Seaexplorer and Slocum data. It is \emph{very much} a work in
+package. It is \emph{very much} a work in
 progress, because the functions provided by this package are under active
 development.
 
@@ -65,8 +65,6 @@ these directories holds "raw" data, i.e. the full datasets as downloaded a
 glider after recovery, and the second holds "sub" data, i.e. subsets provided
 by the glider during its transmissions while underway on a mission.
 
-A similar scheme might be employed for other glider types, replacing
-`seaexplorer` with `slocum`, for example.
 
 Examples of some of these data files are stored within this R package, and are
 available using the `system.file` function, as shown throughout this vignette.
@@ -253,11 +251,6 @@ At this stage, readers will likely have some ideas for doing more with this
 sample dataset, and ought to be aware that many of the steps here might not
 be appropriate for other datasets, e.g. those in which data were acquired on
 both ascent and descent, or only on descent.
-
-# Slocum gliders
-
-**FIXME:** write a few pages here \cdots but this cannot be done until the data
-formats are better known, and code is updated.
 
 
 # References

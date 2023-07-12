@@ -11,3 +11,4 @@ sea*gz
 vignettes/*_files
 *.out
 Rplot.png
+*.pdf
