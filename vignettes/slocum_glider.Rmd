@@ -25,7 +25,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 on Slocum data. It is \emph{very much} a work in progress, because the functions
 provided by this package are under active development.
 
-```{r fig.cap="Glider surfaced locations (red dots) with 500m depth contour (black line)."}
+```{r eval=FALSE}
 library(oceanglider)
 file <- "~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc"
 g <- read.glider.slocum.netcdf(file)
@@ -39,3 +39,5 @@ data(topoWorld)
 contour(topoWorld[["longitude"]], topoWorld[["latitude"]],
     -topoWorld[["z"]], level=500, add=TRUE, labcex=0.9)
 ```
+![Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum.png)
+
