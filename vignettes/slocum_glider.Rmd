@@ -129,28 +129,29 @@ table(is.na(g[["O2"]]))
 ```
 However, it seems that all the hydrographic variables are finite or NA together, since
 ```{r eval=FALSE}
-identical(is.na(g[["O2"]]), is.na(g[["pressure"]]))
-identical(is.na(g[["O2"]]), is.na(g[["time"]]))
+identical(is.na(g[["salinity"]]), is.na(g[["pressure"]]))
+identical(is.na(g[["pressure"]]), is.na(g[["time"]]))
 ```
-so we can construct a time-depth plot colour-coded for oxygen with
+so we can construct a time-depth plot colour-coded for salinity with
 ```{r eval=FALSE}
-O2 <- g[["O2"]]
+S <- g[["salinity"]]
 t <- g[["time"]]
 p <- g[["pressure"]]
 # Construct Figure 2
 par(mar=c(2, 3.3, 1, 1))
-cm <- colormap(O2, col=oceColorsTurbo)
+cm <- colormap(S, col=oceColorsTurbo)
 drawPalette(colormap=cm)
-oce.plot.ts(time, pressure, ylim=rev(range(pressure, na.rm=TRUE)),
-    ylab=resizableLabel("pressure"),
+oce.plot.ts(t, p, ylim=rev(range(p, na.rm=TRUE)),
+    ylab="Pressure [dbar]",
     col=cm$zcol, type="p", pch=20, cex=0.3, mar=c(2, 3.3, 1, 4))
+mtext("Salinity", adj=1)
 ```
 
 
 # Figures
 
 
-![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum_map.png)
+![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line). The initial and final locations are at the northwest end of the dot cloud.](slocum_map.png)
 
-![Figure 2. Depth dependence of O$_2$ as sampled by the glider whose path southward and then northward is illustrated in Figure 1.](slocum_tz.png)
+![Figure 2. Dependence of salinity with depth, as sampled along the path shown in Figure 1.](slocum_tz.png)
 
