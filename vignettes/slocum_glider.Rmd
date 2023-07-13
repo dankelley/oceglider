@@ -51,18 +51,21 @@ yields
 [5] "lat_qc"                  "glider_record/c_wpt_lat"
 [7] "glider_record/m_gps_lat" "glider_record/m_lat"
 ```
-of these, clearly the fourth is not related to latitude, but the others seem to be.
-After inspection of this particular file, the best choice seemed to be
-`"glider_record/m_gps_lat"`, and so this is why the default `nameMap` for
-`read.glider.slocum.netcdf() sets `latitude="glider_record/m_gps_lat"`.
+
+All but the fourth of the items seems to be related to latitude.  The one ending
+`"_qc"` is a quality-control flag, so that can also be discounted.  Still, there
+are six possibilities from which to choose.  Inspection of the data file, along
+with some experiments with all the choices, suggests, somewhat tentatively, that
+best choice may be `"glider_record/m_gps_lat"` (which is used in the default
+value of `nameMap`).
 
 Similar study, and a fair bit of testing and discussion, led to hypotheses for
-other data items that ought to be a primary focus, and this is how the default
-`nameMap` value was devised.
+other data items of primary focus, as incorporated in the `nameMap` default.
 
 Continuing along this line of reasoning, we may extract location data and make
 a simple plot with the following, producing Figure 1.
 ```{r eval=FALSE}
+g <- read.glider.slocum.netcdf(file)
 lon <- g[["longitude"]]
 lat <- g[["latitude"]]
 data("coastlineWorldFine", package="ocedata")
@@ -114,8 +117,38 @@ Glider Summary
     - 2023-07-13 12:07:18.668 UTC: `create 'glider' object`
 ```
 
+A challenge in working through the data, for this file at least, is that so many
+items hold NA values, e.g.
+```{r eval=FALSE}
+table(is.na(g[["O2"]]))
+```
+```
+ FALSE   TRUE
+867751 955126
+```
+However, it seems that all the hydrographic variables are finite or NA together, since
+```{r eval=FALSE}
+identical(is.na(g[["O2"]]), is.na(g[["pressure"]]))
+identical(is.na(g[["O2"]]), is.na(g[["time"]]))
+```
+so we can construct a time-depth plot colour-coded for oxygen with
+```{r eval=FALSE}
+O2 <- g[["O2"]]
+t <- g[["time"]]
+p <- g[["pressure"]]
+par(mar=c(2, 3.3, 1, 1))
+cm <- colormap(O2, col=oceColorsTurbo)
+drawPalette(colormap=cm)
+oce.plot.ts(time, pressure, ylim=rev(range(pressure, na.rm=TRUE)),
+    ylab=resizableLabel("pressure"),
+    col=cm$zcol, type="p", pch=20, cex=0.3, mar=c(2, 3.3, 1, 4))
+```
+
+
 # Figures
 
 
-![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum.png)
+![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum_map.png)
+
+![Figure 2. Variation of O$_2$ with time and pressure.](slocum_tz.png)
 
