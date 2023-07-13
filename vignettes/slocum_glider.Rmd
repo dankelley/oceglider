@@ -73,7 +73,6 @@ data(topoWorld)
 contour(topoWorld[["longitude"]], topoWorld[["latitude"]],
     -topoWorld[["z"]], level=500, add=TRUE, labcex=0.9)
 ```
-![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum.png)
 
 A hint at other things that might be explored is given by the output from
 ```{r eval=FALSE}
@@ -114,4 +113,9 @@ Glider Summary
 
     - 2023-07-13 12:07:18.668 UTC: `create 'glider' object`
 ```
+
+# Figures
+
+
+![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum.png)
 
