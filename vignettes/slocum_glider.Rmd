@@ -69,6 +69,7 @@ g <- read.glider.slocum.netcdf(file)
 lon <- g[["longitude"]]
 lat <- g[["latitude"]]
 data("coastlineWorldFine", package="ocedata")
+# Construct Figure 1
 plot(coastlineWorldFine, span=450,
     clatitude=mean(lat, na.rm=TRUE), clongitude=mean(lon, na.rm=TRUE))
 points(lon, lat, cex=0.5, pch=20, col=2)
@@ -136,6 +137,7 @@ so we can construct a time-depth plot colour-coded for oxygen with
 O2 <- g[["O2"]]
 t <- g[["time"]]
 p <- g[["pressure"]]
+# Construct Figure 2
 par(mar=c(2, 3.3, 1, 1))
 cm <- colormap(O2, col=oceColorsTurbo)
 drawPalette(colormap=cm)
@@ -150,5 +152,5 @@ oce.plot.ts(time, pressure, ylim=rev(range(pressure, na.rm=TRUE)),
 
 ![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)](slocum_map.png)
 
-![Figure 2. Variation of O$_2$ with time and pressure.](slocum_tz.png)
+![Figure 2. Depth dependence of O$_2$ as sampled by the glider whose path southward and then northward is illustrated in Figure 1.](slocum_tz.png)
 
