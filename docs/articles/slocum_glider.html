@@ -77,7 +77,7 @@
       <h1 data-toc-skip>Slocum Gliders</h1>
                         <h4 data-toc-skip class="author">Dan Kelley (<a href="https://orcid.org/0000-0001-7808-5911" class="external-link uri">https://orcid.org/0000-0001-7808-5911</a>)</h4>
             
-            <h4 data-toc-skip class="date">2023-07-12</h4>
+            <h4 data-toc-skip class="date">2023-07-13</h4>
       
       
       <div class="hidden name"><code>slocum_glider.Rmd</code></div>
@@ -90,11 +90,42 @@
 the oceanglider package on Slocum data. It is a work in progress,
 because the functions provided by this package are under active
 development.</p>
+<div class="section level2">
+<h2 id="non-netcdf-files">Non-netcdf files<a class="anchor" aria-label="anchor" href="#non-netcdf-files"></a>
+</h2>
+<p>This section has yet to been written.</p>
+</div>
+<div class="section level2">
+<h2 id="netcdf-files">Netcdf files<a class="anchor" aria-label="anchor" href="#netcdf-files"></a>
+</h2>
+<p>A good first step in working with a glider file is to find the names
+of the variables, as follows.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">oceanglider</span><span class="op">)</span></span>
 <span><span class="va">file</span> <span class="op">&lt;-</span> <span class="st">"~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc"</span></span>
-<span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.glider.slocum.netcdf.html">read.glider.slocum.netcdf</a></span><span class="op">(</span><span class="va">file</span><span class="op">)</span></span>
-<span><span class="va">lon</span> <span class="op">&lt;-</span> <span class="va">g</span><span class="op">[[</span><span class="st">"longitude"</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">names</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read.glider.slocum.netcdf.html">read.glider.slocum.netcdf</a></span><span class="op">(</span><span class="va">file</span>, nameMap<span class="op">=</span><span class="st">"?"</span><span class="op">)</span></span></code></pre></div>
+<p>This yields 144 character values, many of which are quite similar.
+For example, it might make sense that there only be one variable for
+latitude, but we find</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">names</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="va">names</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p>yields</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>[<span class="dv">1</span>] <span class="st">"lat"</span>                     <span class="st">"lat_uv"</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>[<span class="dv">3</span>] <span class="st">"profile_lat"</span>             <span class="st">"platform"</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>[<span class="dv">5</span>] <span class="st">"lat_qc"</span>                  <span class="st">"glider_record/c_wpt_lat"</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>[<span class="dv">7</span>] <span class="st">"glider_record/m_gps_lat"</span> <span class="st">"glider_record/m_lat"</span></span></code></pre></div>
+<p>of these, clearly the fourth is not related to latitude, but the
+others seem to be. After inspection of this particular file, the best
+choice seemed to be <code>"glider_record/m_gps_lat"</code>, and so this
+is why the default <code>nameMap</code> for
+<code>read.glider.slocum.netcdf() sets</code>latitude=“glider_record/m_gps_lat”`.</p>
+<p>Similar study, and a fair bit of testing and discussion, led to
+hypotheses for other data items that ought to be a primary focus, and
+this is how the default <code>nameMap</code> value was devised.</p>
+<p>Continuing along this line of reasoning, we may extract location data
+and make a simple plot with the following, producing Figure 1.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lon</span> <span class="op">&lt;-</span> <span class="va">g</span><span class="op">[[</span><span class="st">"longitude"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">lat</span> <span class="op">&lt;-</span> <span class="va">g</span><span class="op">[[</span><span class="st">"latitude"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"coastlineWorldFine"</span>, package<span class="op">=</span><span class="st">"ocedata"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">coastlineWorldFine</span>, span<span class="op">=</span><span class="fl">450</span>,</span>
@@ -104,14 +135,54 @@ development.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/contour.html" class="external-link">contour</a></span><span class="op">(</span><span class="va">topoWorld</span><span class="op">[[</span><span class="st">"longitude"</span><span class="op">]</span><span class="op">]</span>, <span class="va">topoWorld</span><span class="op">[[</span><span class="st">"latitude"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>    <span class="op">-</span><span class="va">topoWorld</span><span class="op">[[</span><span class="st">"z"</span><span class="op">]</span><span class="op">]</span>, level<span class="op">=</span><span class="fl">500</span>, add<span class="op">=</span><span class="cn">TRUE</span>, labcex<span class="op">=</span><span class="fl">0.9</span><span class="op">)</span></span></code></pre></div>
 <div class="float">
-<img src="slocum.png" alt="Glider surfaced locations (red dots) with 500m depth contour (black line)"><div class="figcaption">Glider surfaced locations (red dots) with 500m
-depth contour (black line)</div>
+<img src="slocum.png" alt="Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line)"><div class="figcaption">Figure 1. Glider surfaced locations (red dots)
+with 500m depth contour (black line)</div>
+</div>
+<p>A hint at other things that might be explored is given by the output
+from</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></code></pre></div>
+<p>which is</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>Glider Summary</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="sc">--------------</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="er">*</span> Input file<span class="sc">:</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="er">~/</span>data<span class="sc">/</span>gass<span class="sc">/</span>sbloom2023<span class="sc">/</span>batray<span class="dv">-2023-03-17</span><span class="sc">-</span>delayed_trajectory_file.nc</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="sc">*</span> Type<span class="sc">:</span>    slocum</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="sc">*</span> Time ranges from <span class="dv">2023-03-17</span> <span class="dv">16</span><span class="sc">:</span><span class="dv">10</span><span class="sc">:</span><span class="fl">55.232</span> to <span class="dv">2023-04-05</span> <span class="dv">17</span><span class="sc">:</span><span class="dv">36</span><span class="sc">:</span><span class="fl">13.112</span> with <span class="dv">1822877</span> samples and mean increment <span class="fl">0.9999643</span> s</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="sc">*</span> Data Overview<span class="sc">:</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>                        Min.      Mean    Max.    Dim.                             OriginalName</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    conductivity      <span class="fl">26.555</span>    <span class="fl">33.818</span>  <span class="fl">40.192</span> <span class="dv">1822877</span> glider_record<span class="sc">/</span>sci_rbrctd_conductivity_00</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    CT               <span class="fl">0.71915</span>    <span class="fl">6.8498</span>  <span class="fl">11.945</span> <span class="dv">1822877</span>                 conservative_temperature</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    density [kg<span class="sc">/</span>m³]   <span class="fl">1024.8</span>    <span class="fl">1026.4</span>  <span class="fl">1028.4</span> <span class="dv">1822877</span>                                  density</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>    id                     <span class="dv">2</span>    <span class="fl">88.343</span>     <span class="dv">147</span> <span class="dv">1822877</span>                               profile_id</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>    latitude          <span class="fl">42.935</span>    <span class="fl">43.703</span>  <span class="fl">44.387</span> <span class="dv">1822877</span>                  glider_record<span class="sc">/</span>m_gps_lat</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>    longitude        <span class="sc">-</span><span class="fl">63.396</span>   <span class="sc">-</span><span class="fl">62.752</span> <span class="sc">-</span><span class="fl">62.096</span> <span class="dv">1822877</span>                  glider_record<span class="sc">/</span>m_gps_lon</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>    O2                <span class="fl">121.47</span>    <span class="fl">260.14</span>  <span class="fl">350.11</span> <span class="dv">1822877</span>                     oxygen_concentration</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    pressure         <span class="sc">-</span><span class="fl">0.2229</span>     <span class="fl">74.03</span>  <span class="fl">257.36</span> <span class="dv">1822877</span>  glider_record<span class="sc">/</span>sci_rbrctd_seapressure_00</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>    profileLat [°N]   <span class="fl">42.936</span>    <span class="fl">43.769</span>  <span class="fl">44.387</span> <span class="dv">1822877</span>                              profile_lat</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>    profileLon [°E]  <span class="sc">-</span><span class="fl">63.395</span>   <span class="sc">-</span><span class="fl">62.805</span> <span class="sc">-</span><span class="fl">62.098</span> <span class="dv">1822877</span>                              profile_lon</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>    SA                <span class="fl">31.069</span>     <span class="fl">33.53</span>  <span class="fl">35.481</span> <span class="dv">1822877</span>                        absolute_salinity</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>    salinity          <span class="fl">30.922</span>    <span class="fl">33.372</span>  <span class="fl">35.312</span> <span class="dv">1822877</span>     glider_record<span class="sc">/</span>sci_rbrctd_salinity_00</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>    temperature       <span class="fl">0.7013</span>    <span class="fl">6.8473</span>  <span class="fl">11.979</span> <span class="dv">1822877</span>  glider_record<span class="sc">/</span>sci_rbrctd_temperature_00</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    u [m<span class="sc">/</span>s]         <span class="sc">-</span><span class="fl">0.29098</span> <span class="sc">-</span><span class="fl">0.044992</span> <span class="fl">0.19447</span> <span class="dv">1822877</span>                                        u</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>    v [m<span class="sc">/</span>s]         <span class="sc">-</span><span class="fl">0.26387</span> <span class="sc">-</span><span class="fl">0.012287</span> <span class="fl">0.15855</span> <span class="dv">1822877</span>                                        v</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>    vx              <span class="sc">-</span><span class="fl">0.29347</span>  <span class="sc">-</span><span class="fl">0.04552</span> <span class="fl">0.19611</span> <span class="dv">1822877</span>                 glider_record<span class="sc">/</span>m_water_vx</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>    vxi             <span class="sc">-</span><span class="fl">0.29347</span> <span class="sc">-</span><span class="fl">0.047374</span> <span class="fl">0.19611</span> <span class="dv">1822877</span>         glider_record<span class="sc">/</span>m_initial_water_vx</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>    vy              <span class="sc">-</span><span class="fl">0.26742</span> <span class="sc">-</span><span class="fl">0.012923</span> <span class="fl">0.15966</span> <span class="dv">1822877</span>                 glider_record<span class="sc">/</span>m_water_vy</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>    vyi             <span class="sc">-</span><span class="fl">0.26742</span> <span class="sc">-</span><span class="fl">0.012613</span> <span class="fl">0.15966</span> <span class="dv">1822877</span>         glider_record<span class="sc">/</span>m_initial_water_vy</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a><span class="sc">*</span> Processing Log</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>    <span class="sc">-</span> <span class="dv">2023-07-13</span> <span class="dv">12</span><span class="sc">:</span><span class="dv">07</span><span class="sc">:</span><span class="fl">18.668</span> UTC<span class="sc">:</span> <span class="st">`</span><span class="at">create 'glider' object</span><span class="st">`</span></span></code></pre></div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 

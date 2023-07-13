@@ -6,6 +6,7 @@
 \usage{
 read.glider.slocum.netcdf(
   file,
+  readAll = FALSE,
   nameMap = list(salinity = "glider_record/sci_rbrctd_salinity_00", SA =
     "absolute_salinity", temperature = "glider_record/sci_rbrctd_temperature_00", CT =
     "conservative_temperature", pressure = "glider_record/sci_rbrctd_seapressure_00",
@@ -23,9 +24,22 @@ read.glider.slocum.netcdf(
 \arguments{
 \item{file}{Name of a netcdf file.}
 
-\item{nameMap}{List used to rename data columns. The default is tailored
-to a particular file, and is subject to change without notice, as that
-file is explored.}
+\item{readAll}{logical value indicating whether to read all the data
+columns in the file.  The default, FALSE, means to only
+read columns that appear in \code{nameMap}.  Using FALSE can yield significate
+decreases in processing time and memory usage.  For the 2 Gb test file
+used during the coding of this function (which, admittedly, seems
+to have a great deal of duplication or near-duplication of data),
+setting \code{readAll} to FALSE drops the reading time from 12 s to 1.5s,
+and the size of the resultant value from 2.0Gb to 0.28 Gb.}
+
+\item{nameMap}{either a character value or a list.  In the first case,
+the only permitted possibility is \code{nameMap="?"}, which instructs the funtion
+to return a vector of variable names.  This can be handy for a first
+exploration of a file.  Once the variables are known, it makes
+sense to use the list form of \code{nameMap}; the default might provide
+a useful starting point, but please note that it is designed just for
+one particular data file.}
 
 \item{debug}{an integer controlling how much information is printed during
 processing.  If this is 0, then only errors and warnings will be printed.  If it
@@ -39,20 +53,20 @@ A glider object, i.e. one inheriting from \linkS4class{glider}.
 \CRANpkg{oce} package.)
 }
 \description{
-\strong{This is an unsupported and provisional function}, written to handle a particular
+This is a provisional function, written to handle a particular
 file created in Spring of 2023 by MUN researchers, as part of an OTN
-project.
+project.  Please consult the \dQuote{Slocum Gliders} vignette for more
+information about this file.
 }
 \details{
-The sample file does not use standard names for variables, but
-the \code{nameMap} argument facilitates renaming for storage
-in the returned object. (Renaming simplifies later analysis, e.g.
-permitting direct use of algorithms in the \code{oce} package,
-which assume that salinity is named \code{"salinity"}, etc.)
-The original names of data items are retained in the metadata
-of the returned object, so that the \code{[[} operator in the \code{oce}
-package can retrieve the data using either the original name
-or the more standard name.
+Since different files might use different naming conventions for data,
+it is helpful to establish a mapping between names in the file and the
+names that are to be stored in the return object.  This is what the
+\code{nameMap} argument is for.  The file may contain information that
+will guide the user as to which of various possibilities to use,
+although reference to other documents, on consultation with the
+data provider may be required.  Again, see the \dQuote{Slocum Gliders}
+vignette for more on this topic.
 }
 \seealso{
 Other functions to read glider data: 
@@ -67,7 +81,7 @@ Other functions to read netcdf glider data:
 \code{\link{read.glider.netcdf}()}
 }
 \author{
-Dan Kelley with help from Chantelle Layton and Cameron Richardson.
+Dan Kelley, aided by Cameron Richardson on data names.
 }
 \concept{functions to read glider data}
 \concept{functions to read netcdf glider data}

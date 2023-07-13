@@ -2,25 +2,38 @@
 
 #' Read a glider file in a Slocum netcdf format
 #'
-#' \strong{This is an unsupported and provisional function}, written to handle a particular
+#' This is a provisional function, written to handle a particular
 #' file created in Spring of 2023 by MUN researchers, as part of an OTN
-#' project.
+#' project.  Please consult the \dQuote{Slocum Gliders} vignette for more
+#' information about this file.
 #'
-#' The sample file does not use standard names for variables, but
-#' the `nameMap` argument facilitates renaming for storage
-#' in the returned object. (Renaming simplifies later analysis, e.g.
-#' permitting direct use of algorithms in the `oce` package,
-#' which assume that salinity is named `"salinity"`, etc.)
-#' The original names of data items are retained in the metadata
-#' of the returned object, so that the `[[` operator in the `oce`
-#' package can retrieve the data using either the original name
-#' or the more standard name.
+#' Since different files might use different naming conventions for data,
+#' it is helpful to establish a mapping between names in the file and the
+#' names that are to be stored in the return object.  This is what the
+#' `nameMap` argument is for.  The file may contain information that
+#' will guide the user as to which of various possibilities to use,
+#' although reference to other documents, on consultation with the
+#' data provider may be required.  Again, see the \dQuote{Slocum Gliders}
+#' vignette for more on this topic.
 #'
 #' @param file Name of a netcdf file.
 #'
-#' @param nameMap List used to rename data columns. The default is tailored
-#' to a particular file, and is subject to change without notice, as that
-#' file is explored.
+#' @param nameMap either a character value or a list.  In the first case,
+#' the only permitted possibility is `nameMap="?"`, which instructs the funtion
+#' to return a vector of variable names.  This can be handy for a first
+#' exploration of a file.  Once the variables are known, it makes
+#' sense to use the list form of `nameMap`; the default might provide
+#' a useful starting point, but please note that it is designed just for
+#' one particular data file.
+#'
+#' @param readAll logical value indicating whether to read all the data
+#' columns in the file.  The default, FALSE, means to only
+#' read columns that appear in `nameMap`.  Using FALSE can yield significate
+#' decreases in processing time and memory usage.  For the 2 Gb test file
+#' used during the coding of this function (which, admittedly, seems
+#' to have a great deal of duplication or near-duplication of data),
+#' setting `readAll` to FALSE drops the reading time from 12 s to 1.5s,
+#' and the size of the resultant value from 2.0Gb to 0.28 Gb.
 #'
 #' @param debug an integer controlling how much information is printed during
 #' processing.  If this is 0, then only errors and warnings will be printed.  If it
@@ -32,7 +45,7 @@
 #' (This class inherits from [oce::oce-class] in the
 #' \CRANpkg{oce} package.)
 #'
-#' @author Dan Kelley with help from Chantelle Layton and Cameron Richardson.
+#' @author Dan Kelley, aided by Cameron Richardson on data names.
 #'
 #' @family functions to read glider data
 #' @family functions to read netcdf glider data
@@ -44,6 +57,7 @@
 #'
 #' @export
 read.glider.slocum.netcdf <- function(file,
+    readAll=FALSE,
     nameMap=list(
         salinity="glider_record/sci_rbrctd_salinity_00",
         SA="absolute_salinity",
@@ -121,8 +135,19 @@ read.glider.slocum.netcdf <- function(file,
         }
         as.vector(x)
     }
+    if (identical(nameMap, "?"))
+        return(dataNames)
     pb <- NULL
+    if (!readAll) {
+        if (length(nameMap) < 1L)
+            stop("if readAll is FALSE, then nameMap must contain at least one item")
+        gliderDebug(debug-1, "only reading the ", length(nameMap), " items named in the nameMap argument\n")
+        willRead <- unname(unlist(nameMap))
+        keep <- names(f$var) %in% willRead
+        dataNames <- dataNames[keep]
+    }
     ndataNames <- length(dataNames)
+
     if (debug == 1)
         pb <- txtProgressBar(min=1, max=ndataNames, style=3)
     for (i in seq_len(ndataNames)) {
