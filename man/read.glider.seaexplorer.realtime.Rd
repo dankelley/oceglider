@@ -149,8 +149,8 @@ authors, if you need to handle such files.
 }
 
 \examples{
-library(oceanglider)
-directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+library(oceGlider)
+directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
 g <- read.glider.seaexplorer.realtime(directory)
 plotGlider(g, which="navState")
 plotGlider(g, which="S")

@@ -1,4 +1,4 @@
-#' oceanglider: A Package for Processing Ocean Glider Data
+#' oceGlider: A Package for Processing Ocean Glider Data
 #'
 #' This package was written with two particular dataset types
 #' in mind, from SeaExplorer and Slocum devices. There is a good
@@ -9,7 +9,7 @@
 #' @importFrom methods new
 #' @importFrom oce handleFlags setFlags subset summary vectorShow
 #' @docType package
-#' @name oceanglider-class
+#' @name oceGlider-class
 NULL
 
 
@@ -113,8 +113,8 @@ setMethod(f="initialize",
 #' `\link{getOption}("gliderDebug",0)`.
 #'
 #' @examples
-#' library(oceanglider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' library(oceGlider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #'
 #' # The histogram motivates a crude limit for anomalously low salinity.
@@ -164,8 +164,8 @@ setMethod("handleFlags",
 
 ## NOT EXPORTED #' Low-level function to handle flags
 ## NOT EXPORTED #'
-## NOT EXPORTED #' @param object An `oceanglider` object, i.e. an object inheriting
-## NOT EXPORTED #' from [oceanglider-class].
+## NOT EXPORTED #' @param object An `oceGlider` object, i.e. an object inheriting
+## NOT EXPORTED #' from [oceGlider-class].
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param flags A `list` that associates integer values
 ## NOT EXPORTED #" with names, e.g. `list(good=1, bad=2)`.
@@ -179,7 +179,7 @@ setMethod("handleFlags",
 ## NOT EXPORTED #' `object`.  If `object[["type"]]` is `"seaexplorer"`, this will
 ## NOT EXPORTED #' default to `payload1`; otherwise, it defaults to `NULL`. Users
 ## NOT EXPORTED #' are advised *not* to set `where`, and it is only included here
-## NOT EXPORTED #' so that `handleFlagsOceanglider` behaves like [oce::handleFlags()].
+## NOT EXPORTED #' so that `handleFlagsoceGlider` behaves like [oce::handleFlags()].
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param debug An integer specifying the debugging level, with value
 ## NOT EXPORTED #' `0` meaning to act silently, and higher values meaning to print
@@ -215,8 +215,8 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 ##OLD #' of the oce package does not export \code{handleFlagsInternal}. Once a
 ##OLD #' the CRAN oce is updated, this function will be removed.
 ##OLD #'
-##OLD #' @param object An `oceanglider` object, i.e. an object inheriting
-##OLD #' from [oceanglider-class].
+##OLD #' @param object An `oceGlider` object, i.e. an object inheriting
+##OLD #' from [oceGlider-class].
 ##OLD #'
 ##OLD #' @param flags A `list` that associates integer values
 ##OLD #" with names, e.g. `list(good=1, bad=2)`.
@@ -239,7 +239,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 ##OLD #'
 ##OLD #' @export
 ##OLD #' @md
-##OLD handleFlagsInternalOceanglider <- function(object, flags, actions, where, debug) {
+##OLD handleFlagsInternaloceGlider <- function(object, flags, actions, where, debug) {
 ##OLD     gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
 ##OLD     if (missing(flags)) {
 ##OLD         warning("no flags supplied (internal error; report to developer)")
@@ -332,7 +332,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 ##OLD                                                       ", actions=",
 ##OLD                                                       substitute(actions, parent.frame()),
 ##OLD                                                       ")", collapse=" ", sep=""))
-##OLD     gliderDebug(debug, "} # handleFlagsInternalOceanglider()\n", sep="", unindent=1)
+##OLD     gliderDebug(debug, "} # handleFlagsInternaloceGlider()\n", sep="", unindent=1)
 ##OLD     object
 ##OLD }
 
@@ -374,13 +374,13 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 setMethod("setFlags",
     c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
     function(object, name=NULL, i=NULL, value=NULL, debug=0) {
-        setFlagsInternalOceanglider(object, name, i, value, debug-1)
+        setFlagsInternaloceGlider(object, name, i, value, debug-1)
     })
 
 
-setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
+setFlagsInternaloceGlider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
 {
-    gliderDebug(debug, "setFlagsInternalOceanglider(object, name='", name, "', value=", value,
+    gliderDebug(debug, "setFlagsInternaloceGlider(object, name='", name, "', value=", value,
         ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
         unindent=1)
     res <- object
@@ -424,7 +424,7 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
         paste("setFlags(object, name=\"", name, "\",",
             "i=c(", paste(head(i, collapse=",")), "...),",
             "value=", valueOrig, ")", collapse="", sep=""))
-    gliderDebug(debug, "} # setFlagsInternalOceanglider\n", sep="", unindent=1)
+    gliderDebug(debug, "} # setFlagsInternaloceGlider\n", sep="", unindent=1)
     res
 }
 
@@ -458,7 +458,7 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
 #' by selecting for `navState==100` in both the `glider`
 #' and `payload1` streams of the `data` slot of the object.
 #'
-#' @param x an oceanglider object, i.e. one inheriting from the [glider-class].
+#' @param x an oceGlider object, i.e. one inheriting from the [glider-class].
 #'
 #' @param subset a logical expression or a character string that indicates
 #' how to take the subset. See \dQuote{Details}.
@@ -467,13 +467,13 @@ setFlagsInternalOceanglider <- function(object, name=NULL, i=NULL, value=NULL, d
 #' moment is `debug`, an integer indicating the level of debugging information
 #' to be permitted.
 #'
-#' @return An oceanglider object.
+#' @return An oceGlider object.
 #'
 #' @examples
 #'\dontrun{
 #'
 #' # Example 1. remove wild salinities
-#' library(oceanglider)
+#' library(oceGlider)
 #' g <- read.glider(filename)
 #' gg <- subset(g, 0 < salinity & salinity < 40)
 #' par(mfrow=c(2, 1))
@@ -543,13 +543,13 @@ setMethod(f="subset",
                 if (!"payload1" %in% names(x@data))
                     stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
                 s <- split(x@data$payload1, x[["yoNumber"]])
-                # warning removed for issue (https://github.com/dankelley/oceanglider/issues/41)
+                # warning removed for issue (https://github.com/dankelley/oceGlider/issues/41)
                 # warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
                 thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
                 keepYo <- eval(substitute(subset), list(yolength=thisYolength))
                 # message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
                 res <- x
-                # 44 https://github.com/dankelley/oceanglider/issues/44
+                # 44 https://github.com/dankelley/oceGlider/issues/44
                 # 44 res@metadata$yo <- x@metadata$yo[keepYo]
                 keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
                 # NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)
@@ -674,8 +674,8 @@ setMethod(f="subset",
 #' @author Dan Kelley
 #'
 #' @examples
-#' library(oceanglider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' library(oceGlider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' hist(g[["salinity"]])
 #'
@@ -876,10 +876,10 @@ setMethod(f="[[",
 #' @importFrom graphics abline par plot text
 #'
 #' @examples
-#' library(oceanglider)
+#' library(oceGlider)
 #'
 #' # Examples 1: a single yo of low-resolution real-time data
-#' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+#' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceGlider")
 #' g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
 #' plotGlider(g, which="p")
 #' plotGlider(g, which="S")
@@ -891,7 +891,7 @@ setMethod(f="[[",
 #' # Example 2: navState and pressure history of some delayed-mode yos,
 #' # from a deployment in which sampling was supposed to be
 #' # suppressed during the descending phases of motion.
-#' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(dirRaw)
 #' plotGlider(g, which="navState")
 #'
@@ -991,7 +991,7 @@ setMethod(f="summary",
         cat("* Type:    ", type, "\n", sep="")
         if ("subtype" %in% metadataNames)
             cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
-        # 44 https://github.com/dankelley/oceanglider/issues/44
+        # 44 https://github.com/dankelley/oceGlider/issues/44
         # 44 nyo <- length(object@metadata$yo)
         # 44 if (nyo == 1)
         # 44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))
@@ -1347,7 +1347,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #'
 #' @examples
 #'\dontrun{
-#' library(oceanglider)
+#' library(oceGlider)
 #'
 #' # NOTE: these files are of order 100Meg, so they are
 #' # not provided with the package as samples. In both
@@ -1502,8 +1502,8 @@ read.glider <- function(file, debug, ...)
 #' dataset that are not given units, in this example.
 #'
 #' @examples
-#' library(oceanglider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+#' library(oceGlider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' data <- g[["payload"]]
 #' units <- list(temperature=list(unit=expression(degree*C), scale="ITS-90"),
@@ -1537,3 +1537,26 @@ as.glider <- function(type, data, units)
     }
     res
 }
+
+#' Plot an oceGlider Object
+#'
+#' FIXME: write more documentation here.
+#'
+#' @param x an [oceGlider-class] object.
+#'
+#' @param which an integer FIXME: write more here
+#'
+## @param colorby character value naming item from which colour-coding
+## will be based. This works only for certain plot types.
+## The default, NULL, means to use the `col` argument.
+#'
+#' @md
+#'
+#' @author Dan Kelley
+setMethod(f="plot",
+    signature=signature("glider"),
+    definition=function(x, which)
+    {
+        message("FIXME: plot now (which=", which, "). NOTE: recode plotGlider()")
+    })
+ 

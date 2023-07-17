@@ -198,8 +198,8 @@ authors, if you need to handle such files.
 }
 
 \examples{
-library(oceanglider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+library(oceGlider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 g <- read.glider.seaexplorer.delayed(directory)
 plotGlider(g, which="p")
 

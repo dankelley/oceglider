@@ -40,7 +40,7 @@ package can retrieve the data using either the original name
 name (e.g. \code{x[["temperature"]]}).
 }
 \examples{
-library(oceanglider)
+library(oceGlider)
 if (file.exists("~/slocum.csv")) {
     g <- read.glider.slocum("~/slocum.csv")
     summary(g)

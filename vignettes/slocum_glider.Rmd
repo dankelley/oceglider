@@ -21,7 +21,7 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-**Abstract.** This vignette explains the basics of using the oceanglider package
+**Abstract.** This vignette explains the basics of using the oceGlider package
 on Slocum data. It is \emph{very much} a work in progress, because the functions
 provided by this package are under active development.
 
@@ -35,7 +35,7 @@ A good first step in working with a glider file is to find the names of the
 variables, as follows.
 
 ```{r eval=FALSE}
-library(oceanglider)
+library(oceGlider)
 file <- "~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc"
 names <- read.glider.slocum.netcdf(file, nameMap="?")
 ```
