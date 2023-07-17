@@ -1,10 +1,10 @@
 # vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
-library(oceanglider)
+library(oceGlider)
 
 context("reading data files (seaexplorer)")
 
 test_that("read.glider.seaexplorer.realtime", {
-    directory <- system.file("extdata/seaexplorer/sub", package="oceanglider")
+    directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
     expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=101, progressBar=FALSE))
     expect_output(summary(g), "Input file:")
     expect_equal(c("glider", "payload1"), names(g[["data"]]))
@@ -32,7 +32,7 @@ test_that("read.glider.seaexplorer.realtime", {
 })
 
 test_that("read.glider.seaexplorer.delayed", {
-    directory <- system.file("extdata/seaexplorer/raw", package="oceanglider")
+    directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
     expect_silent(g <- read.glider.seaexplorer.delayed(directory=directory, progressBar=FALSE))
     # Note that this data structure does not have a "glider" component.
     # The purpose in testing for this is to ensure that if that component
