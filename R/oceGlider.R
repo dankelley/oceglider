@@ -1608,13 +1608,13 @@ as.glider <- function(type, data, units)
 #'
 #' @param x A `glider` object, i.e. one inheriting from [glider-class].
 #'
-#' @param which Integer or character value specifying which style is
+#' @param which either an integer or character value specifying which style is
 #' to be used; see \dQuote{Details}.
 #'
-#' @param type Type of plot, as defined in [par()], e.g. `"p"` (the
-#' default) for points, `"l"` for connected line segments, or `"o"`
-#' for an overlay of points and lines, etc. The default is `"o"`, which is
-#' perhaps the best for short sequences.
+## @param type Type of plot, as defined in [par()], e.g. `"p"` (the
+## default) for points, `"l"` for connected line segments, or `"o"`
+## for an overlay of points and lines, etc. The default is `"o"`, which is
+## perhaps the best for short sequences.
 #'
 #' @template debug
 #'
