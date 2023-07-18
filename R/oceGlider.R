@@ -1486,8 +1486,8 @@ as.glider <- function(type, data, units)
 #'
 #' @md
 #'
-#'
 #' @aliases plot.glider
+#'
 #' @export
 setMethod(f="plot",
     signature=signature("glider"),
