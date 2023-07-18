@@ -509,37 +509,45 @@ setMethod(f="subset",
             stop("must give 'subset'")
         dots <- list(...)
         debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
-        subsetString <- paste(deparse(substitute(subset)), collapse=" ")
         oce::oceDebug(debug, "subset,glider-method() {\n", unindent=1)
-        oce::oceDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
-
-        oce::oceDebug(debug, "type is seaexplorer\n")
-        if (!"payload1" %in% names(x@data))
-            stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
+        subsetString <- paste(deparse(substitute(subset)), collapse=" ")
+        oce::oceDebug(debug, "subsetString: \"", subsetString, "\"\n", sep="")
+        xtype <- x@metadata$type # direct lookup, to guard against 'type' being in data
+        oce::oceDebug(debug, "object type: \"", xtype, "\"\n", sep="")
         if (is.character(substitute(subset))) {
-            oce::oceDebug(debug, "subset is character\n")
+            oce::oceDebug(debug, "handling a character-valued subset\n")
             # subset is a character string
             if (subset == "ascending") {
-                res <- x
-                keep <- res@data$glider$navState == 117
-                res@data$glider <- subset(res@data$glider, keep)
-                res@data$payload1 <- subset(res@data$payload1, keep)
-                for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                if (xtype == "seaexplorer") {
+                    res <- x
+                    keep <- res@data$glider$navState == 117
+                    res@data$glider <- subset(res@data$glider, keep)
+                    res@data$payload1 <- subset(res@data$payload1, keep)
+                    for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                        res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                    }
+                } else {
+                    stop("subset to 'ascending' only works for seaexplorer objects (please report)")
                 }
             } else if (subset == "descending") {
-                res <- x
-                keep <- res@data$glider$navState == 100
-                res@data$glider <- subset(res@data$glider, keep)
-                res@data$payload1 <- subset(res@data$payload1, keep)
-                for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                if (xtype == "seaexplorer") {
+                    res <- x
+                    keep <- res@data$glider$navState == 100
+                    res@data$glider <- subset(res@data$glider, keep)
+                    res@data$payload1 <- subset(res@data$payload1, keep)
+                    for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                        res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                    }
+                } else {
+                    stop("subset to 'desscending' only works for seaexplorer objects (please report)")
                 }
             }
         } else {
-            oce::oceDebug(debug, "subset is a logical expression\n")
-            # subset is a logical expression
+            oce::oceDebug(debug, "subset is not a character value\n")
             if (1 == length(grep("yolength", subsetString))) {
+                oce::oceDebug(debug, "subset relates to yolength\n")
+                if (xtype != "seaexplorer")
+                    stop("subset by 'yolength' only works for seaexplorer objects (please report)")
                 if (!"payload1" %in% names(x@data))
                     stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
                 s <- split(x@data$payload1, x[["yoNumber"]])
@@ -560,14 +568,22 @@ setMethod(f="subset",
                     res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keepData]
                 }
             } else {
-                # warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
-                keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
-                keep[is.na(keep)] <- FALSE
-                oce::oceDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
-                res <- x
-                res@data[["payload1"]] <- x@data[["payload1"]][keep,]
-                for (i in seq_along(x@metadata$flags[["payload1"]])) {
-                    res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                oce::oceDebug(debug, "subset does not relate to yolength\n")
+                if (xtype == "seaexplorer") {
+                    keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
+                    keep[is.na(keep)] <- FALSE
+                    oce::oceDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
+                    res <- x
+                    res@data[["payload1"]] <- x@data[["payload1"]][keep, ]
+                    for (i in seq_along(x@metadata$flags[["payload1"]])) {
+                        res@metadata$flags[["payload1"]][[i]] <- res@metadata$flag[["payload1"]][[i]][keep]
+                    }
+                } else {
+                    keep <- eval(substitute(subset), x@data, parent.frame())
+                    keep[is.na(keep)] <- FALSE
+                    oce::oceDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
+                    res <- x
+                    res@data <- res@data[keep, ]
                 }
             }
         }
