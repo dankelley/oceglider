@@ -75,7 +75,7 @@ directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
 ```
 finds the names of a few selected `"sub"` files (these are files transmitted by
 the glider when it is underway; think of the "sub" as an abbreviation for
-subset).  Reading these files is done with the
+subset).  Reading these files is done with
 [`read.glider.seaexplorer.realtime`](../help/read.glider.seaexplorer.realtime) function,
 e.g.
 ```{r}
@@ -92,7 +92,6 @@ these are called delayed-mode data, so the function to read them is called
 ```{r}
 directory2 <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 g2 <- read.glider.seaexplorer.delayed(directory2, level=1)
-message(class(g2))
 ```
 
 Here is how to plot a time-series of pressure from this dataset:

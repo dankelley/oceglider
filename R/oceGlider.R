@@ -1657,7 +1657,6 @@ setMethod(f="plot",
     signature=signature("glider"),
     definition=function(x, which, debug, ...)
     {
-        message("DAN 1")
         dots <- list(...)
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
         gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
@@ -1666,14 +1665,22 @@ setMethod(f="plot",
             latitude <- x[["latitude"]]
             longitude <- x[["longitude"]]
             asp <- 1 / cos(mean(latitude*pi/180))
-            plot(longitude, latitude, asp=asp,
-                xlab=resizableLabel("longitude"),
-                ylab=resizableLabel("latitude"), type=type, ...)
+            if ("type" %in% names(dots)) {
+                plot(longitude, latitude, asp=asp,
+                    xlab=resizableLabel("longitude"),
+                    ylab=resizableLabel("latitude"), ...)
+            } else {
+                plot(longitude, latitude, asp=asp,
+                    xlab=resizableLabel("longitude"),
+                    ylab=resizableLabel("latitude"), type="p", ...)
+            }
         } else if (which == 1 || which == "p") {
             oceDebug(debug, "pressure time-series plot\n", sep="")
             p <- x[["pressure"]]
-            if ("ylim" %in% names(dots)) oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, ...)
-            else oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, ...)
+            if ("ylim" %in% names(dots))
+                oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, ...)
+            else
+                oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, ...)
         } else if (which == 2 || which == "T") {
             oceDebug(debug, "temperature time-series plot\n", sep="")
             oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, ...)
