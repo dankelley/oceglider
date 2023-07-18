@@ -97,12 +97,12 @@ message(class(g2))
 
 Here is how to plot a time-series of pressure from this dataset:
 ```{r}
-plotGlider(g2, which="p")
+plot(g2, which="p")
 ```
 
 Here is how to see locations in space:
 ```{r}
-plotGlider(g2, which="map")
+plot(g2, which="map")
 ```
 
 The points are on a line because

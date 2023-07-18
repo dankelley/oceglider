@@ -152,9 +152,9 @@ authors, if you need to handle such files.
 library(oceGlider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
 g <- read.glider.seaexplorer.realtime(directory)
-plotGlider(g, which="navState")
-plotGlider(g, which="S")
-plotGlider(g, which="T")
+plot(g, which="navState")
+plot(g, which="S")
+plot(g, which="T")
 
 }
 \references{

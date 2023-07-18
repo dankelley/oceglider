@@ -51,7 +51,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceGlid
 #' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' ns <- navStateCodes(g)
-#' plotGlider(g, which="p")
+#' plot(g, which="p")
 #' ga <- subset(g, navState == ns$ascending)
 #' points(ga[["time"]], ga[["pressure"]], col=3, pch=20)
 #' giu <- subset(g, navState == ns$inflecting_upwards)
@@ -142,9 +142,9 @@ navStateCodes <- function(g)
 #' library(oceGlider)
 #' directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
 #' g <- read.glider.seaexplorer.realtime(directory)
-#' plotGlider(g, which="navState")
-#' plotGlider(g, which="S")
-#' plotGlider(g, which="T")
+#' plot(g, which="navState")
+#' plot(g, which="S")
+#' plot(g, which="T")
 ## ctd <- as.ctd(g[['salinity']], g[['temperature']], g[['pressure']],
 ##               longitude=g[['longitude']], latitude=g[['latitude']])
 ## plot(ctd)
@@ -619,7 +619,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' library(oceGlider)
 #' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 #' g <- read.glider.seaexplorer.delayed(directory)
-#' plotGlider(g, which="p")
+#' plot(g, which="p")
 #'
 #' @family functions for seaexplorer gliders
 #' @family functions to read glider data

@@ -1,6 +1,7 @@
 # oceGlider 0.1.5
 
-* rename from `oceanglider` to `oceGlider`
+* rename from `oceanglider` to `oceGlider`.
+* add `plot,glider-method()`.
 
 # oceGlider 0.1.4
 

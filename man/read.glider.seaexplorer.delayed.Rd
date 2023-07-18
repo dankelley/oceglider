@@ -201,7 +201,7 @@ authors, if you need to handle such files.
 library(oceGlider)
 directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
 g <- read.glider.seaexplorer.delayed(directory)
-plotGlider(g, which="p")
+plot(g, which="p")
 
 }
 \seealso{

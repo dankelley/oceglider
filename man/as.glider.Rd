@@ -41,8 +41,8 @@ units <- list(temperature=list(unit=expression(degree*C), scale="ITS-90"),
      latitude=list(unit=expression(degree*N), scale=""))
 gg <- as.glider("seaexplorer", data, units)
 par(mfrow=c(2, 1))
-plotGlider(g, which="p")
-plotGlider(gg, which="p")
+plot(g, which="p")
+plot(gg, which="p")
 
 }
 \author{
