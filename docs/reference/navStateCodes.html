@@ -19,12 +19,15 @@ write self-explantory code (see &amp;#8220;Examples&amp;#8221;)."><!-- mathjax -
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">oceGlider</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.5</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav"><li>
+  <a href="../articles/oceGlider.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -34,9 +37,6 @@ write self-explantory code (see &amp;#8220;Examples&amp;#8221;)."><!-- mathjax -
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/oceanglider.html">Introduction to oceGlider</a>
-    </li>
-    <li>
       <a href="../articles/slocum_glider.html">Slocum Gliders</a>
     </li>
   </ul></li>
@@ -110,7 +110,7 @@ see pages 1-24 of reference 1.)</p><table class="table table"><tr><td><strong>Na
 <span class="r-in"><span><span class="va">directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/seaexplorer/raw"</span>, package<span class="op">=</span><span class="st">"oceGlider"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="read.glider.seaexplorer.delayed.html">read.glider.seaexplorer.delayed</a></span><span class="op">(</span><span class="va">directory</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ns</span> <span class="op">&lt;-</span> <span class="fu">navStateCodes</span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="plotGlider.html">plotGlider</a></span><span class="op">(</span><span class="va">g</span>, which<span class="op">=</span><span class="st">"p"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span>, which<span class="op">=</span><span class="st">"p"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ga</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">g</span>, <span class="va">navState</span> <span class="op">==</span> <span class="va">ns</span><span class="op">$</span><span class="va">ascending</span><span class="op">)</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(substitute(subset), x@data[["payload1"]], parent.frame()):</span> object 'ns' not found</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/points.html" class="external-link">points</a></span><span class="op">(</span><span class="va">ga</span><span class="op">[[</span><span class="st">"time"</span><span class="op">]</span><span class="op">]</span>, <span class="va">ga</span><span class="op">[[</span><span class="st">"pressure"</span><span class="op">]</span><span class="op">]</span>, col<span class="op">=</span><span class="fl">3</span>, pch<span class="op">=</span><span class="fl">20</span><span class="op">)</span></span></span>

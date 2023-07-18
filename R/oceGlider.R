@@ -7,7 +7,7 @@
 #' as more datasets are examined by the author.
 #'
 #' @importFrom methods new
-#' @importFrom oce handleFlags setFlags subset summary vectorShow
+#' @importFrom oce handleFlags oceDebug setFlags subset summary vectorShow
 #' @docType package
 #' @name oceGlider-class
 NULL
@@ -193,7 +193,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 {
     if (missing(debug))
         debug <- 0
-    gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
+    oceDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
     if (missing(flags)) {
         warning("no flags supplied (internal error; report to developer)")
         return(object)
@@ -380,7 +380,7 @@ setMethod("setFlags",
 
 setFlagsInternaloceGlider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
 {
-    gliderDebug(debug, "setFlagsInternaloceGlider(object, name='", name, "', value=", value,
+    oceDebug(debug, "setFlagsInternaloceGlider(object, name='", name, "', value=", value,
         ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
         unindent=1)
     res <- object
@@ -424,7 +424,7 @@ setFlagsInternaloceGlider <- function(object, name=NULL, i=NULL, value=NULL, deb
         paste("setFlags(object, name=\"", name, "\",",
             "i=c(", paste(head(i, collapse=",")), "...),",
             "value=", valueOrig, ")", collapse="", sep=""))
-    gliderDebug(debug, "} # setFlagsInternaloceGlider\n", sep="", unindent=1)
+    oceDebug(debug, "} # setFlagsInternaloceGlider\n", sep="", unindent=1)
     res
 }
 
@@ -510,14 +510,14 @@ setMethod(f="subset",
         dots <- list(...)
         debug <- if ("debug" %in% names(dots)) dots$debug else getOption("gliderDebug",0)
         subsetString <- paste(deparse(substitute(subset)), collapse=" ")
-        gliderDebug(debug, "subset,glider-method() {\n", unindent=1)
-        gliderDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
+        oceDebug(debug, "subset,glider-method() {\n", unindent=1)
+        oceDebug(debug, "subsetString is \"", subsetString, "\"\n", sep="")
 
-        gliderDebug(debug, "type is seaexplorer\n")
+        oceDebug(debug, "type is seaexplorer\n")
         if (!"payload1" %in% names(x@data))
             stop("In subset,glider-method() : cannot subset seaexplorer objects that lack a 'payload1' item in the data slot", call.=FALSE)
         if (is.character(substitute(subset))) {
-            gliderDebug(debug, "subset is character\n")
+            oceDebug(debug, "subset is character\n")
             # subset is a character string
             if (subset == "ascending") {
                 res <- x
@@ -537,7 +537,7 @@ setMethod(f="subset",
                 }
             }
         } else {
-            gliderDebug(debug, "subset is a logical expression\n")
+            oceDebug(debug, "subset is a logical expression\n")
             # subset is a logical expression
             if (1 == length(grep("yolength", subsetString))) {
                 if (!"payload1" %in% names(x@data))
@@ -563,7 +563,7 @@ setMethod(f="subset",
                 # warning("evaluating in the context of payload1 only; cannot evaluate in glider context yet")
                 keep <- eval(substitute(subset), x@data[["payload1"]], parent.frame())
                 keep[is.na(keep)] <- FALSE
-                gliderDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
+                oceDebug(debug, "keeping", sum(keep), "of", length(keep), "elements\n")
                 res <- x
                 res@data[["payload1"]] <- x@data[["payload1"]][keep,]
                 for (i in seq_along(x@metadata$flags[["payload1"]])) {
@@ -574,7 +574,7 @@ setMethod(f="subset",
         res@processingLog <- processingLogAppend(res@processingLog,
             paste(deparse(match.call(call=sys.call(sys.parent(1)))),
                 sep="", collapse=""))
-        gliderDebug(debug, "} # subset,glider-method\n", sep="", unindent=1)
+        oceDebug(debug, "} # subset,glider-method\n", sep="", unindent=1)
         res
     })
 
@@ -1386,7 +1386,7 @@ read.glider.netcdf <- function(file, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
+    oceDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
     if (missing(file))
         stop("must provide `file'")
     if (length(file) != 1)
@@ -1413,16 +1413,16 @@ read.glider.netcdf <- function(file, debug)
     #? if (!"time" %in% dataNames)
     #?     dataNamesOriginal$time <- "-"
     # Get all variables, except time, which is not listed in f$var
-    gliderDebug(debug, "reading and renaming data\n")
+    oceDebug(debug, "reading and renaming data\n")
     for (i in seq_along(dataNames))  {
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         if (dataNames[i] == "time") {
             data[["time"]] <- numberAsPOSIXct(as.vector(ncdf4::ncvar_get(f, "time")))
-            gliderDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
+            oceDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
         } else {
             data[[newName]] <- as.vector(ncdf4::ncvar_get(f, dataNames[i]))
-            gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
+            oceDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
         }
     }
@@ -1432,7 +1432,7 @@ read.glider.netcdf <- function(file, debug)
     # head(res@data$payload1$time)
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- list(payload1=dataNamesOriginal)
-    gliderDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
+    oceDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
     res
 }
 
@@ -1462,7 +1462,7 @@ read.glider <- function(file, debug, ...)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    gliderDebug(debug, 'read.glider() {', unindent=1, sep="")
+    oceDebug(debug, 'read.glider() {', unindent=1, sep="")
     if (!is.character(file))
         stop("'file' must be a character value (or values) giving filename(s)")
     if (length(file) == 1 && length(grep(".nc$", file))) {
@@ -1474,7 +1474,7 @@ read.glider <- function(file, debug, ...)
     } else {
         stop("only .nc and .gz files handled")
     }
-    gliderDebug(debug, '} # read.glider()', unindent=1, sep="")
+    oceDebug(debug, '} # read.glider()', unindent=1, sep="")
     res
 }
 
@@ -1659,7 +1659,7 @@ setMethod(f="plot",
     {
         dots <- list(...)
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
-        gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
+        oceDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
         if (which == 0 || which == "map") {
             oceDebug(debug, "map plot\n", sep="")
             latitude <- x[["latitude"]]
