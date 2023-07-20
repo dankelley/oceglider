@@ -5,13 +5,26 @@
 \alias{plot.glider}
 \title{Plot a glider Object}
 \usage{
-\S4method{plot}{glider}(x, which, debug, ...)
+\S4method{plot}{glider}(x, which, col = 1, colorby = NULL, debug, ...)
 }
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \linkS4class{glider}.}
 
 \item{which}{either an integer or character value specifying which style is
 to be used; see \dQuote{Details}.}
+
+\item{col}{colour to be used for lines or characters. Note that if
+\code{colorby} is provided, then it will be used for point plots, instead
+of \code{col}.}
+
+\item{colorby}{character value, ignored for line plots, that
+names a data variable to be indicated on the plot through the colourization
+of individual plotted points (i.e. \code{type="p"} must be governing the plot for
+\code{colorby} to have an effect).
+For example, a form of a temperature section plot
+can be created by plotting glider depth versus time, coloured by temperature.
+For reference, a colour palette (using \code{\link[=oceColorsTurbo]{oceColorsTurbo()}} is displayed
+to the right of the plot.  See Example 3.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
@@ -56,7 +69,8 @@ which also makes the other time-series plots listed below.
 with dots for data and labels indicating density anomaly; see
 \code{\link[oce:plotTS]{oce::plotTS()}} for details.
 
-\item \code{which=5} or \code{which="navState"}: time-series of the
+\item \code{which=5} or \code{which="navState"}: ignored except
+for seaexplorer data, this means to plot a time-series of the
 navigation state, stored as the \code{navState} item within
 the \code{payload1} element of the \code{data} slot. The meanings
 of the \code{navState} values for \code{seaexplorer} data
@@ -97,28 +111,30 @@ numerically and with phrases, as inferred by
 \examples{
 library(oceGlider)
 
-# Examples 1: a single yo of low-resolution real-time data
+# Example 1: various plot types
 dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceGlider")
-g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
-plot(g, which="p")
-plot(g, which="S")
-plot(g, which="T")
-plot(g, which="TS") # note odd connections between points
-plot(g, which="map")
-plot(g, which="navState")
+gr <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
+plot(gr, which="p")
+plot(gr, which="S")
+plot(gr, which="T")
+plot(gr, which="TS")
+plot(gr, which="map")
+plot(gr, which="navState")
 
-# Example 2: navState and pressure history of some delayed-mode yos,
+# Example 2: colour-code p by chlorophyll
+plot(gr, which="p", type="p", colorby="chlorophyll", pch=20, cex=2)
+
+# Example 3: navState and pressure history of some delayed-mode yos,
 # from a deployment in which sampling was supposed to be
 # suppressed during the descending phases of motion.
 dirRaw <- system.file("extdata/seaexplorer/raw", package="oceGlider")
-g <- read.glider.seaexplorer.delayed(dirRaw)
-plot(g, which="navState")
+gd <- read.glider.seaexplorer.delayed(dirRaw)
+plot(gd, which="navState")
 
-# Note: colormap and drawPalette are oce functions.
-cm <- colormap(g[["temperature"]])
-# Note the setting of mar, here and in th plot.
+# Example 4: colourizing by temperature, with fine-grained control.
+cm <- colormap(gd[["temperature"]], col=oceColorsTurbo)
 par(mar=c(2, 3.5, 2, 4))
 drawPalette(colormap=cm)
-plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
+plot(gd, which="p", type="p", col=cm$zcol, mar=c(2, 3.5, 2, 4), pch=20)
 
 }

@@ -28,7 +28,8 @@
 #' with dots for data and labels indicating density anomaly; see
 #' [oce::plotTS()] for details.
 #'
-#' \item `which=5` or `which="navState"`: time-series of the
+#' \item `which=5` or `which="navState"`: ignored except
+#' for seaexplorer data, this means to plot a time-series of the
 #' navigation state, stored as the `navState` item within
 #' the `payload1` element of the `data` slot. The meanings
 #' of the `navState` values for `seaexplorer` data
@@ -71,39 +72,54 @@
 #' @param which either an integer or character value specifying which style is
 #' to be used; see \dQuote{Details}.
 #'
+#' @param col colour to be used for lines or characters. Note that if
+#' `colorby` is provided, then it will be used for point plots, instead
+#' of `col`.
+#'
+#' @param colorby character value, ignored for line plots, that
+#' names a data variable to be indicated on the plot through the colourization
+#' of individual plotted points (i.e. `type="p"` must be governing the plot for
+#' `colorby` to have an effect).
+#' For example, a form of a temperature section plot
+#' can be created by plotting glider depth versus time, coloured by temperature.
+#' For reference, a colour palette (using [oceColorsTurbo()] is displayed
+#' to the right of the plot.  See Example 3.
+#'
 #' @template debug
 #'
 #' @param ... ignored.
 #'
-#' @importFrom oce oce.plot.ts plotTS resizableLabel
+#' @importFrom oce as.ctd colormap drawPalette oceColorsTurbo oce.plot.ts plotTS resizableLabel
 #' @importFrom graphics abline par plot text
 #'
 #' @examples
 #' library(oceGlider)
 #'
-#' # Examples 1: a single yo of low-resolution real-time data
+#' # Example 1: various plot types
 #' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceGlider")
-#' g <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
-#' plot(g, which="p")
-#' plot(g, which="S")
-#' plot(g, which="T")
-#' plot(g, which="TS") # note odd connections between points
-#' plot(g, which="map")
-#' plot(g, which="navState")
+#' gr <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
+#' plot(gr, which="p")
+#' plot(gr, which="S")
+#' plot(gr, which="T")
+#' plot(gr, which="TS")
+#' plot(gr, which="map")
+#' plot(gr, which="navState")
 #'
-#' # Example 2: navState and pressure history of some delayed-mode yos,
+#' # Example 2: colour-code p by chlorophyll
+#' plot(gr, which="p", type="p", colorby="chlorophyll", pch=20, cex=2)
+#'
+#' # Example 3: navState and pressure history of some delayed-mode yos,
 #' # from a deployment in which sampling was supposed to be
 #' # suppressed during the descending phases of motion.
 #' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceGlider")
-#' g <- read.glider.seaexplorer.delayed(dirRaw)
-#' plot(g, which="navState")
+#' gd <- read.glider.seaexplorer.delayed(dirRaw)
+#' plot(gd, which="navState")
 #'
-#' # Note: colormap and drawPalette are oce functions.
-#' cm <- colormap(g[["temperature"]])
-#' # Note the setting of mar, here and in th plot.
+#' # Example 4: colourizing by temperature, with fine-grained control.
+#' cm <- colormap(gd[["temperature"]], col=oceColorsTurbo)
 #' par(mar=c(2, 3.5, 2, 4))
 #' drawPalette(colormap=cm)
-#' plot(g, which="p", type="p", cex=1/3, col=cm$zcol, mar=c(2, 3.5, 2, 4))
+#' plot(gd, which="p", type="p", col=cm$zcol, mar=c(2, 3.5, 2, 4), pch=20)
 #'
 #' @md
 #'
@@ -112,50 +128,126 @@
 #' @export
 setMethod(f="plot",
     signature=signature("glider"),
-    definition=function(x, which, debug, ...)
+    definition=function(x, which, col=1, colorby=NULL, debug, ...)
     {
-        dots <- list(...)
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
         oce::oceDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
+        dots <- list(...)
+        dotsNames <- names(dots)
+        oce::oceDebug(debug, oce::vectorShow(dots))
+        cm <- NULL
+        if (!is.null(colorby)) {
+            z <- x[[colorby]]
+            if (is.null(z)) {
+                warning("In plot,glider-method() : there is no \"", colorby, "\" field, so ignoring 'colorby'", call.=FALSE)
+                colorby <- NULL
+            } else {
+                cm <- oce::colormap(x[[colorby]], col=oce::oceColorsTurbo)
+                oce::oceDebug(debug, "set col to indicate values of \"", colorby, "\"\n", sep="")
+            }
+        }
         if (which == 0 || which == "map") {
             oce::oceDebug(debug, "map plot\n", sep="")
-            latitude <- x[["latitude"]]
             longitude <- x[["longitude"]]
-            asp <- 1 / cos(mean(latitude*pi/180))
-            if ("type" %in% names(dots)) {
-                plot(longitude, latitude, asp=asp,
-                    xlab=resizableLabel("longitude"),
-                    ylab=resizableLabel("latitude"), ...)
-            } else {
-                plot(longitude, latitude, asp=asp,
-                    xlab=resizableLabel("longitude"),
-                    ylab=resizableLabel("latitude"), type="p", ...)
+            latitude <- x[["latitude"]]
+            args <- list(
+                x=latitude,
+                y=longitude,
+                asp=1.0/cos(mean(latitude*pi/180)),
+                xlab=resizableLabel("longitude"),
+                ylab=resizableLabel("latitude"))
+            if (!"type" %in% dotsNames)
+                dots$type <- "p"
+            args <- c(args, dots)
+            omar <- par("mar")
+            if (!is.null(colorby)) {
+                if (length(cm$zcol) != length(longitude)) {
+                    stop("cannot colour-code location by ", colorby, "because there are", length(latitude), "locations, but ", length(cm$zcol), "values for", colorby)
+                } else {
+                    oce::drawPalette(colormap=cm)
+                    args$col <- cm$zcol
+                    par(mar=omar)
+                }
             }
+            mar <- omar
+            mar[4] <- mar[4] + 2
+            par(mar=mar)
+            do.call("plot", args)
+            par(mar=omar)
         } else if (which == 1 || which == "p") {
             oce::oceDebug(debug, "pressure time-series plot\n", sep="")
+            t <- x[["time"]]
             p <- x[["pressure"]]
-            if ("ylim" %in% names(dots))
-                oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), debug=debug-1, ...)
-            else
-                oce.plot.ts(x[["time"]], p, ylab=resizableLabel("p"), ylim=rev(range(p, na.rm=TRUE)), debug=debug-1, ...)
+            args <- list(x=t, y=p, xlab="", ylab="Pressure [dbar]", col=col)
+            if (!"ylim" %in% dotsNames)
+                dots$ylim <- rev(range(p, na.rm=TRUE))
+            omar <- par("mar")
+            if (!is.null(colorby)) { # we know 'col' cannot be in dots, from earlier tests
+                oce::drawPalette(colormap=cm)
+                args$col <- cm$zcol
+                args$marginsAsImage <- TRUE
+            }
+            args <- c(args, dots)
+            par(mar=omar)
+            do.call("oce.plot.ts", args)
+            par(mar=omar)
         } else if (which == 2 || which == "T") {
             oce::oceDebug(debug, "temperature time-series plot\n", sep="")
-            oce.plot.ts(x[["time"]], x[["temperature"]], ylab=resizableLabel("T"), debug=debug-1, ...)
+            t <- x[["time"]]
+            T <- x[["temperature"]]
+            args <- list(x=t, y=T, xlab="", ylab=expression("Temperature ["*degree*"C]"))
+            omar <- par("mar")
+            if (!is.null(colorby)) { # we know 'col' cannot be in dots, from earlier tests
+                oce::drawPalette(colormap=cm)
+                args$col <- cm$zcol
+                args$marginsAsImage <- TRUE
+            }
+            args <- c(args, dots)
+            par(mar=omar)
+            do.call("oce.plot.ts", args)
+            par(mar=omar)
         } else if (which == 3 || which == "S") {
             oce::oceDebug(debug, "salinity time-series plot\n", sep="")
-            oce.plot.ts(x[["time"]], x[["salinity"]], ylab=resizableLabel("S"), debug=debug-1, ...)
+            t <- x[["time"]]
+            S <- x[["salinity"]]
+            args <- list(x=t, y=S, xlab="", ylab="Practical Salinity")
+            omar <- par("mar")
+            if (!is.null(colorby)) { # we know 'col' cannot be in dots, from earlier tests
+                oce::drawPalette(colormap=cm)
+                args$col <- cm$zcol
+                args$marginsAsImage <- TRUE
+            }
+            args <- c(args, dots)
+            par(mar=omar)
+            do.call("oce.plot.ts", args)
+            par(mar=omar)
         } else if (which == 4 || which == "TS") {
             oce::oceDebug(debug, "TS plot\n", sep="")
-            plotTS(x, debug=debug-1, ...)
+            oce::oceDebug(debug, "salinity time-series plot\n", sep="")
+            S <- x[["salinity"]]
+            T <- x[["temperature"]]
+            p <- x[["pressure"]]
+            longitude <- x[["longitude"]]
+            latitude <- x[["latitude"]]
+            ctd <- oce::as.ctd(S, T, p, longitude=longitude, latitude=latitude)
+            args <- list(x=ctd)
+            omar <- par("mar")
+            if (!is.null(colorby)) { # we know 'col' cannot be in dots, from earlier tests
+                oce::drawPalette(colormap=cm)
+                args$col <- cm$zcol
+                args$mar <- omar + c(0, 0, 0, 2)
+                par(mar=omar)
+            }
+            args <- c(args, dots)
+            do.call("plotTS", args)
+            par(mar=omar)
         } else if (which == 5 || which == "navState") {
             oce::oceDebug(debug, "navState plot\n", sep="")
             ns <- navStateCodes(x)
             oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
                 mar=c(2, 3, 1, 9), ...)
-            for (ii in seq_along(ns)) {
+            for (ii in seq_along(ns))
                 abline(h=ns[[ii]], col="blue")
-            }
-            # labels in margin, not rotated so we can read them.
             oxpd <- par("xpd")
             par(xpd=NA)
             tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])

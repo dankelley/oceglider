@@ -34,12 +34,12 @@ setting \code{readAll} to FALSE drops the reading time from 12 s to 1.5s,
 and the size of the resultant value from 2.0Gb to 0.28 Gb.}
 
 \item{nameMap}{either a character value or a list.  In the first case,
-the only permitted possibility is \code{nameMap="?"}, which instructs the funtion
-to return a vector of variable names.  This can be handy for a first
-exploration of a file.  Once the variables are known, it makes
-sense to use the list form of \code{nameMap}; the default might provide
-a useful starting point, but please note that it is designed just for
-one particular data file.}
+the only permitted possibility is \code{nameMap="?"}, which instructs
+\code{read.glider.slocum.netcdf()} to return a vector of variable names
+as determined by scanning the file. Examining this list can be a useful
+first step in the exploration of data file.  Once the variables are known, it makes
+sense to use the list form of \code{nameMap}, perhaps starting with the default
+value.}
 
 \item{debug}{an integer controlling how much information is printed during
 processing.  If this is 0, then only errors and warnings will be printed.  If it

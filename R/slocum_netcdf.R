@@ -19,12 +19,12 @@
 #' @param file Name of a netcdf file.
 #'
 #' @param nameMap either a character value or a list.  In the first case,
-#' the only permitted possibility is `nameMap="?"`, which instructs the funtion
-#' to return a vector of variable names.  This can be handy for a first
-#' exploration of a file.  Once the variables are known, it makes
-#' sense to use the list form of `nameMap`; the default might provide
-#' a useful starting point, but please note that it is designed just for
-#' one particular data file.
+#' the only permitted possibility is `nameMap="?"`, which instructs
+#' `read.glider.slocum.netcdf()` to return a vector of variable names
+#' as determined by scanning the file. Examining this list can be a useful
+#' first step in the exploration of data file.  Once the variables are known, it makes
+#' sense to use the list form of `nameMap`, perhaps starting with the default
+#' value.
 #'
 #' @param readAll logical value indicating whether to read all the data
 #' columns in the file.  The default, FALSE, means to only
