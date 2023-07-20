@@ -103,12 +103,12 @@ and the size of the resultant value from 2.0Gb to 0.28 Gb.</p></dd>
 
 <dt>nameMap</dt>
 <dd><p>either a character value or a list.  In the first case,
-the only permitted possibility is <code>nameMap="?"</code>, which instructs the funtion
-to return a vector of variable names.  This can be handy for a first
-exploration of a file.  Once the variables are known, it makes
-sense to use the list form of <code>nameMap</code>; the default might provide
-a useful starting point, but please note that it is designed just for
-one particular data file.</p></dd>
+the only permitted possibility is <code>nameMap="?"</code>, which instructs
+<code>read.glider.slocum.netcdf()</code> to return a vector of variable names
+as determined by scanning the file. Examining this list can be a useful
+first step in the exploration of data file.  Once the variables are known, it makes
+sense to use the list form of <code>nameMap</code>, perhaps starting with the default
+value.</p></dd>
 
 
 <dt>debug</dt>
