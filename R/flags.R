@@ -120,7 +120,7 @@ setMethod("handleFlags",
 ## NOT EXPORTED #' Low-level function to handle flags
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param object An `oceGlider` object, i.e. an object inheriting
-## NOT EXPORTED #' from [oceGlider-class].
+## NOT EXPORTED #' from [glider-class].
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param flags A `list` that associates integer values
 ## NOT EXPORTED #" with names, e.g. `list(good=1, bad=2)`.

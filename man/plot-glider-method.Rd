@@ -57,17 +57,16 @@ a larger view, including a coastline, with functions provided for
 \code{coastline} objects in the \CRANpkg{oce} package.
 
 \item \code{which=1} or \code{which="p"}: time-series plot
-of pressure versus time. This
-is done using \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}},
-which also makes the other time-series plots listed below.
+of pressure, produced with \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}}.
 
-\item \code{which=2} or \code{which="T"}: time-series temperature plot
+\item \code{which=2} or \code{which="T"}: time-series plot
+of temperature , produced with \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}}.
 
-\item \code{which=3} or \code{which="S"}: time-series salinity plot
+\item \code{which=3} or \code{which="S"}: time-series plot
+of salinity, produced with \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}}.
 
 \item \code{which=4} or \code{which="TS"}: temperature-salinity diagram,
-with dots for data and labels indicating density anomaly; see
-\code{\link[oce:plotTS]{oce::plotTS()}} for details.
+with dots for data produced with \code{\link[oce:plotTS]{oce::plotTS()}}.
 
 \item \code{which=5} or \code{which="navState"}: ignored except
 for seaexplorer data, this means to plot a time-series of the

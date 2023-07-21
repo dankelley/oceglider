@@ -16,17 +16,16 @@
 #' `coastline` objects in the \CRANpkg{oce} package.
 #'
 #' \item `which=1` or `which="p"`: time-series plot
-#' of pressure versus time. This
-#' is done using [oce::oce.plot.ts()],
-#' which also makes the other time-series plots listed below.
+#' of pressure, produced with [oce::oce.plot.ts()].
 #'
-#'\item `which=2` or `which="T"`: time-series temperature plot
+#'\item `which=2` or `which="T"`: time-series plot
+#' of temperature , produced with [oce::oce.plot.ts()].
 #'
-#'\item `which=3` or `which="S"`: time-series salinity plot
+#'\item `which=3` or `which="S"`: time-series plot
+#' of salinity, produced with [oce::oce.plot.ts()].
 #'
 #'\item `which=4` or `which="TS"`: temperature-salinity diagram,
-#' with dots for data and labels indicating density anomaly; see
-#' [oce::plotTS()] for details.
+#' with dots for data produced with [oce::plotTS()].
 #'
 #' \item `which=5` or `which="navState"`: ignored except
 #' for seaexplorer data, this means to plot a time-series of the

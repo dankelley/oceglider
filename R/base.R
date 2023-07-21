@@ -9,10 +9,8 @@
 #' @importFrom methods new
 #' @importFrom oce handleFlags oceDebug setFlags subset summary
 #' @docType package
-#' @name oceGlider-class
+#' @name oceGlider
 NULL
-
-
 
 #' A class to hold glider information
 #' @export
