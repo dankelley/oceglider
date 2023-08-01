@@ -1,3 +1,8 @@
+# oceGlider 0.1.6
+
+* fix `plot,glider-method()` bug of axis mixup for `which="map"` (issue 98)
+* require R version 4.1.0 or later (for pipes)
+
 # oceGlider 0.1.5
 
 * rename from `oceanglider` to `oceGlider`.

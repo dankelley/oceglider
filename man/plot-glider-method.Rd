@@ -50,11 +50,13 @@ The form of the plot is set by the \code{which} argument, as follows.
 \itemize{
 
 \item \code{which=0} or \code{which="map"}: plot a map of sampling locations. This
-can be quite slow with the default plot type, so try e.g.
-\code{plot(g, type="l")} to speed things up for a quick look at the data.
-In many cases, that quick look might be followed by the drawing of
-a larger view, including a coastline, with functions provided for
-\code{coastline} objects in the \CRANpkg{oce} package.
+can be quite slow with the default plot type (using points), so you
+may find it helpful to use \code{plot(g, type="l")} to get a quick
+plot. If you want to change the view, e.g. expanding it so coastline
+are visible, start by drawing a coastline using the \CRANpkg{oce} package,
+and then add dots with \verb{points(g[["longitude"]], g[["latitude"]]}
+or similar.  This method is more flexible than the present
+\code{plot()} function.
 
 \item \code{which=1} or \code{which="p"}: time-series plot
 of pressure, produced with \code{\link[oce:oce.plot.ts]{oce::oce.plot.ts()}}.

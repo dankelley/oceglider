@@ -19,7 +19,7 @@ graphical methods best suit the task at hand."><!-- mathjax --><script src="http
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">oceGlider</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.6</span>
       </span>
     </div>
 
@@ -43,7 +43,13 @@ graphical methods best suit the task at hand."><!-- mathjax --><script src="http
 <li>
   <a href="../news/index.html">Changelog</a>
 </li>
-      </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
+      </ul><ul class="nav navbar-nav navbar-right"><li>
+  <a href="https://github.com/dankelley/oceGlider/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
@@ -53,7 +59,7 @@ graphical methods best suit the task at hand."><!-- mathjax --><script src="http
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Plot a glider Object</h1>
-    
+    <small class="dont-index">Source: <a href="https://github.com/dankelley/oceGlider/blob/HEAD/R/plot.R" class="external-link"><code>R/plot.R</code></a></small>
     <div class="hidden name"><code>plot-glider-method.Rd</code></div>
     </div>
 
@@ -117,11 +123,13 @@ of debugging, but also the depth.</p></dd>
     <h2>Details</h2>
     <p>The form of the plot is set by the <code>which</code> argument, as follows.</p>
 <ul><li><p><code>which=0</code> or <code>which="map"</code>: plot a map of sampling locations. This
-can be quite slow with the default plot type, so try e.g.
-<code>plot(g, type="l")</code> to speed things up for a quick look at the data.
-In many cases, that quick look might be followed by the drawing of
-a larger view, including a coastline, with functions provided for
-<code>coastline</code> objects in the <a href="https://CRAN.R-project.org/package=oce" class="external-link"><span class="pkg">oce</span></a> package.</p></li>
+can be quite slow with the default plot type (using points), so you
+may find it helpful to use <code>plot(g, type="l")</code> to get a quick
+plot. If you want to change the view, e.g. expanding it so coastline
+are visible, start by drawing a coastline using the <a href="https://CRAN.R-project.org/package=oce" class="external-link"><span class="pkg">oce</span></a> package,
+and then add dots with <code>points(g[["longitude"]], g[["latitude"]]</code>
+or similar.  This method is more flexible than the present
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> function.</p></li>
 <li><p><code>which=1</code> or <code>which="p"</code>: time-series plot
 of pressure, produced with <code><a href="https://dankelley.github.io/oce/reference/oce.plot.ts.html" class="external-link">oce::oce.plot.ts()</a></code>.</p></li>
 <li><p><code>which=2</code> or <code>which="T"</code>: time-series plot

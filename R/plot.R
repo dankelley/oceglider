@@ -9,11 +9,13 @@
 #'\itemize{
 #'
 #' \item `which=0` or `which="map"`: plot a map of sampling locations. This
-#' can be quite slow with the default plot type, so try e.g.
-#' `plot(g, type="l")` to speed things up for a quick look at the data.
-#' In many cases, that quick look might be followed by the drawing of
-#' a larger view, including a coastline, with functions provided for
-#' `coastline` objects in the \CRANpkg{oce} package.
+#' can be quite slow with the default plot type (using points), so you
+#' may find it helpful to use `plot(g, type="l")` to get a quick
+#' plot. If you want to change the view, e.g. expanding it so coastline
+#' are visible, start by drawing a coastline using the \CRANpkg{oce} package,
+#' and then add dots with `points(g[["longitude"]], g[["latitude"]]`
+#' or similar.  This method is more flexible than the present
+#' `plot()` function.
 #'
 #' \item `which=1` or `which="p"`: time-series plot
 #' of pressure, produced with [oce::oce.plot.ts()].
@@ -127,7 +129,7 @@
 #' @export
 setMethod(f="plot",
     signature=signature("glider"),
-    definition=function(x, which, col=1, colorby=NULL, debug, ...)
+    definition=function(x, which, col=1, colorby=NULL, debug, ...) # plot,glider-method
     {
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
         oce::oceDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
@@ -150,9 +152,9 @@ setMethod(f="plot",
             longitude <- x[["longitude"]]
             latitude <- x[["latitude"]]
             args <- list(
-                x=latitude,
-                y=longitude,
-                asp=1.0/cos(mean(latitude*pi/180)),
+                x=longitude,
+                y=latitude,
+                asp=1.0/cos(mean(range(latitude, na.rm=TRUE)*pi/180)),
                 xlab=resizableLabel("longitude"),
                 ylab=resizableLabel("latitude"))
             if (!"type" %in% dotsNames)
