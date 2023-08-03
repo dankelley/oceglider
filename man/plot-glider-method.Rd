@@ -5,7 +5,7 @@
 \alias{plot.glider}
 \title{Plot a glider Object}
 \usage{
-\S4method{plot}{glider}(x, which, col = 1, colorby = NULL, debug, ...)
+\S4method{plot}{glider}(x, which, col = 1, colorby = NULL, colorbylim, debug, ...)
 }
 \arguments{
 \item{x}{A \code{glider} object, i.e. one inheriting from \linkS4class{glider}.}
@@ -25,6 +25,10 @@ For example, a form of a temperature section plot
 can be created by plotting glider depth versus time, coloured by temperature.
 For reference, a colour palette (using \code{\link[=oceColorsTurbo]{oceColorsTurbo()}} is displayed
 to the right of the plot.  See Example 3.}
+
+\item{colorbylim}{optional value, used only if \code{colorby} is provided,
+to set the limits of the colorizing limits.  It does this by being
+provided as the \code{zlim} argument to \code{\link[=colormap]{colormap()}}.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then

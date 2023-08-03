@@ -1,17 +1,21 @@
+# oceGlider 0.1.7
+
+* Change to `plot,glider-method()` fix map axis mixup (issue 98).
+
 # oceGlider 0.1.6
 
-* fix `plot,glider-method()` bug of axis mixup for `which="map"` (issue 98)
-* require R version 4.1.0 or later (for pipes)
+* Change `plot,glider-method()` by adding `colorbylim` argument.
+* Require R version 4.1.0 or later (for pipes).
 
 # oceGlider 0.1.5
 
-* rename from `oceanglider` to `oceGlider`.
-* add `plot,glider-method()`.
+* Rename from `oceanglider` to `oceGlider`.
+* Add `plot,glider-method()`.
 
 # oceGlider 0.1.4
 
-* add `read.glider.slocum.netcdf()`
-* revamp README badges
+* Add `read.glider.slocum.netcdf()`
+* Revamp README badges
 
 # oceGlider 0.1.3
 

@@ -1,7 +1,7 @@
 Package: oceGlider
 Type: Package
 Title: Analysis of Oceanographic Glider Data
-Version: 0.1.6
+Version: 0.1.7
 Authors@R: c(person(given="Dan", family="Kelley", email="dan.kelley@dal.ca", role=c("aut", "cre"), comment=c(ORCID="https://orcid.org/0000-0001-7808-5911")),
         person(given="Clark", family="Richards", email="clark.richards@gmail.com", role=c("aut"), comment=c(ORCID="https://orcid.org/0000-0002-7833-206X")),
         person(given="Chantelle", family="Layton", email="layton.chantelle@gmail.com", role=c("aut"), comment=c(ORCID="https://orcid.org/0000-0002-3199-5763")))

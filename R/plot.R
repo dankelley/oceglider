@@ -86,6 +86,10 @@
 #' For reference, a colour palette (using [oceColorsTurbo()] is displayed
 #' to the right of the plot.  See Example 3.
 #'
+#' @param colorbylim optional value, used only if `colorby` is provided,
+#' to set the limits of the colorizing limits.  It does this by being
+#' provided as the `zlim` argument to [colormap()].
+#'
 #' @template debug
 #'
 #' @param ... ignored.
@@ -129,7 +133,7 @@
 #' @export
 setMethod(f="plot",
     signature=signature("glider"),
-    definition=function(x, which, col=1, colorby=NULL, debug, ...) # plot,glider-method
+    definition=function(x, which, col=1, colorby=NULL, colorbylim, debug, ...) # plot,glider-method
     {
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
         oce::oceDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
@@ -143,7 +147,11 @@ setMethod(f="plot",
                 warning("In plot,glider-method() : there is no \"", colorby, "\" field, so ignoring 'colorby'", call.=FALSE)
                 colorby <- NULL
             } else {
-                cm <- oce::colormap(x[[colorby]], col=oce::oceColorsTurbo)
+                cm <- if (missing(colorbylim)) {
+                    oce::colormap(x[[colorby]], col=oce::oceColorsTurbo, debug=debug-1)
+                } else {
+                    oce::colormap(x[[colorby]], col=oce::oceColorsTurbo, zlim=colorbylim, debug=debug-1)
+                }
                 oce::oceDebug(debug, "set col to indicate values of \"", colorby, "\"\n", sep="")
             }
         }

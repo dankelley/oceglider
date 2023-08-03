@@ -37,8 +37,10 @@ read.glider.netcdf.ioos <- function(file, debug)
     gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
     if (missing(file))
         stop("must provide `file'")
-    if (length(file) != 1)
-        stop("file must have length 1")
+    if (length(file) != 1L)
+        stop("can only work with one 'file' at a time")
+    if (!requireNamespace("ncdf4", quietly=TRUE))
+        stop('must install.packages("ncdf4") to read NetCDF-format IOOS files')
     f <- ncdf4::nc_open(file)
     res <- new("glider")
 
@@ -70,12 +72,8 @@ read.glider.netcdf.ioos <- function(file, debug)
     # if the length of the dim/var isn't the same, we'll do something different with it below
     # tlen <- table(c(unlist(dimlen), unlist(varlen)))
     # primarylen <- as.numeric(names(tlen)[which.max(tlen)])
-    dataNames <- c(names(f$var),
-                   names(f$dim)
-                   )
-    dataType <- c(rep('var', length(f$var)),
-                  rep('dim', length(f$dim))
-                  )
+    dataNames <- c(names(f$var), names(f$dim))
+    dataType <- c(rep('var', length(f$var)), rep('dim', length(f$dim)))
     # NOTE : nc file downloaded from IOOS glider ERDDAP has multiple time variables
     #        and actually, the dimension variables are very strange
     # FIXME : we'll need to decide on a hierarchy for which 'time' variable should be denoted as 'time'
@@ -91,7 +89,7 @@ read.glider.netcdf.ioos <- function(file, debug)
         gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" has \"", length(which(nan == TRUE)), "\" NaN values \n", sep="")
         x[nan] <- NA
         # check for fillValues (if provided)
-        if(!is.null(fillValue)){
+        if (!is.null(fillValue)) {
           isFillValue <- x == fillValue
           gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" has \"", length(which(isFillValue == TRUE)), "\"", fillValue, " values \n", sep="")
           x[isFillValue] <- NA
@@ -106,7 +104,7 @@ read.glider.netcdf.ioos <- function(file, debug)
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         # get data length
-        # if(dataType[i] == 'var'){
+        # if (dataType[i] == 'var') {
         #   ok <- which(names(f$var) == dataNames[i])
         #   f$var[[ok]][['dim']][['len']]
         # }
@@ -117,7 +115,7 @@ read.glider.netcdf.ioos <- function(file, debug)
         # check if it's a time variable,
         #   IOOS glider ERDDAP has 'flag' and 'qc' variables for time, so don't convert those to POSIX
         #   the qc check might be fragile, watch out for it. Debug statements will help in future
-        if(!inherits(d, "try-error")){
+        if (!inherits(d, "try-error")) {
             isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
             if (isTime) {
                 data[[newName]] <- numberAsPOSIXct(fixVector(d, fillValue = fillValue))
@@ -156,22 +154,26 @@ read.glider.netcdf.ioos <- function(file, debug)
                     # we discard the output.
                     capture.output(unit <- try(ncdf4::ncatt_get(f, dataNames[i])$units, silent=TRUE))
                     if (!inherits(unit, "try-error") && !is.null(unit)) {
-                        if(unit != "1"){
+                        #message(oce::vectorShow(unit))
+                        if (unit != "1") {
                             newUnit <- switch(unit,
                                 "Celsius" = list(unit = expression(degree*C), scale="ITS-90"),
                                 "kg m-3" = list(unit = expression(kg/m^3), scale=""),
                                 "ug l-1" = list(unit=expression(mu*g/l), scale=""),
                                 "S m-1" = list(unit=expression(S/m), scale=""),
-                                "degrees_north" = list(unit=expression(degree*N), scale=""),
-                                "degrees_east" = list(unit=expression(degree*E), scale=""),
+                                "degree_north" = list(unit=expression(degree*N), scale=""),
+                                "degree_east" = list(unit=expression(degree*E), scale=""),
                                 "m" = list(unit=expression(m), scale=""),
                                 "m-1" = list(unit=expression(m^-1), scale=""), # or should it be 1/m?
+                                "degree" = list(unit=expression(degree), scale=""),
                                 "degrees" = list(unit=expression(degree), scale=""),
                                 "m s-1" = list(unit=expression(m/s), scale=""),
                                 "dbar" = list(unit=expression(dbar), scale=""),
                                 "nm" = list(unit=expression(nm), scale=""),
                                 "umol kg-1" = list(unit=expression(mu*mol/kg), scale=""),
                                 "percent" = list(unit=expression("%"), scale=""),
+                                "psu" = list(unit=expression(), scale=""),
+                                "PSU" = list(unit=expression(), scale=""),
                                 "rad" = list(unit=expression(rad), scale=""),
                                 "mg m-3" = list(unit=expression(mg/m^3), scale=""),
                                 "ppb" = list(unit=expression(ppb), scale=""),
@@ -187,9 +189,10 @@ read.glider.netcdf.ioos <- function(file, debug)
                                 "profileDirection" = list(unit=expression(), scale="")
                                 )
                         }
-                        if(is.null(newUnit)){
+                        #message(oce::vectorShow(newName))
+                        if (is.null(newUnit)) {
                             newUnit <- list(unit=expression(), scale="")
-                            message("FIXME: store \"", newName, " unit \"", unit, "\"")
+                            message("FIXME: store \"", newName, "\" unit \"", unit, "\"")
                         }
                         res@metadata$units[[newName]] <- newUnit
                     }
