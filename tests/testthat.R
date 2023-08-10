@@ -1,3 +1,4 @@
-library(oceanglider)
+library(testthat)
+library(oceglider)
 
-test_check("oceanglider")
+test_check("oceglider")

@@ -11,4 +11,6 @@ man-roxygen
 ^vignettes/*.html$
 Rplot.png
 ^create_data$
-
+.github
+^docs$
+^.*\.pdf$

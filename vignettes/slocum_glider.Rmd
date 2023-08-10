@@ -1,0 +1,157 @@
+---
+title: "Slocum Gliders"
+author: "Dan Kelley (https://orcid.org/0000-0001-7808-5911)"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    fig_caption: yes
+    fig_width: 5
+    fig_height: 5
+    dpi: 72
+    dev.args: list(pointsize=11)
+vignette: >
+  %\VignetteIndexEntry{Slocum Gliders}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+**Abstract.** This vignette explains the basics of using the oceglider package
+on Slocum data. It is \emph{very much} a work in progress, because the functions
+provided by this package are under active development.
+
+# Non-netcdf files
+
+This section has yet to been written.
+
+# Netcdf files
+
+A good first step in working with a glider file is to find the names of the
+variables, as follows.
+
+```{r eval=FALSE}
+library(oceglider)
+file <- "~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc"
+names <- read.glider.slocum.netcdf(file, nameMap="?")
+```
+This yields 144 character values, many of which are quite similar.  For example, it
+might make sense that there only be one variable for latitude, but we find
+```{r eval=FALSE}
+names[grep("lat", names)]
+```
+yields
+```{r eval=FALSE}
+[1] "lat"                     "lat_uv"
+[3] "profile_lat"             "platform"
+[5] "lat_qc"                  "glider_record/c_wpt_lat"
+[7] "glider_record/m_gps_lat" "glider_record/m_lat"
+```
+
+All but the fourth of the items seems to be related to latitude.  The one ending
+`"_qc"` is a quality-control flag, so that can also be discounted.  Still, there
+are six possibilities from which to choose.  Inspection of the data file, along
+with some experiments with all the choices, suggests, somewhat tentatively, that
+best choice may be `"glider_record/m_gps_lat"` (which is used in the default
+value of `nameMap`).
+
+Similar study, and a fair bit of testing and discussion, led to hypotheses for
+other data items of primary focus, as incorporated in the `nameMap` default.
+
+Continuing along this line of reasoning, we may extract location data and make
+a simple plot with the following, producing Figure 1.
+```{r eval=FALSE}
+g <- read.glider.slocum.netcdf(file)
+lon <- g[["longitude"]]
+lat <- g[["latitude"]]
+data("coastlineWorldFine", package="ocedata")
+# Construct Figure 1
+plot(coastlineWorldFine, span=450,
+    clatitude=mean(lat, na.rm=TRUE), clongitude=mean(lon, na.rm=TRUE))
+points(lon, lat, cex=0.5, pch=20, col=2)
+data(topoWorld)
+contour(topoWorld[["longitude"]], topoWorld[["latitude"]],
+    -topoWorld[["z"]], level=500, add=TRUE, labcex=0.9)
+```
+
+A hint at other things that might be explored is given by the output from
+```{r eval=FALSE}
+summary(g)
+```
+which is
+```{r eval=FALSE}
+Glider Summary
+--------------
+
+* Input file:
+    ~/data/gass/sbloom2023/batray-2023-03-17-delayed_trajectory_file.nc
+* Type:    slocum
+* Time ranges from 2023-03-17 16:10:55.232 to 2023-04-05 17:36:13.112 with 1822877 samples and mean increment 0.9999643 s
+* Data Overview:
+                        Min.      Mean    Max.    Dim.                             OriginalName
+    conductivity      26.555    33.818  40.192 1822877 glider_record/sci_rbrctd_conductivity_00
+    CT               0.71915    6.8498  11.945 1822877                 conservative_temperature
+    density [kg/m³]   1024.8    1026.4  1028.4 1822877                                  density
+    id                     2    88.343     147 1822877                               profile_id
+    latitude          42.935    43.703  44.387 1822877                  glider_record/m_gps_lat
+    longitude        -63.396   -62.752 -62.096 1822877                  glider_record/m_gps_lon
+    O2                121.47    260.14  350.11 1822877                     oxygen_concentration
+    pressure         -0.2229     74.03  257.36 1822877  glider_record/sci_rbrctd_seapressure_00
+    profileLat [°N]   42.936    43.769  44.387 1822877                              profile_lat
+    profileLon [°E]  -63.395   -62.805 -62.098 1822877                              profile_lon
+    SA                31.069     33.53  35.481 1822877                        absolute_salinity
+    salinity          30.922    33.372  35.312 1822877     glider_record/sci_rbrctd_salinity_00
+    temperature       0.7013    6.8473  11.979 1822877  glider_record/sci_rbrctd_temperature_00
+    u [m/s]         -0.29098 -0.044992 0.19447 1822877                                        u
+    v [m/s]         -0.26387 -0.012287 0.15855 1822877                                        v
+    vx              -0.29347  -0.04552 0.19611 1822877                 glider_record/m_water_vx
+    vxi             -0.29347 -0.047374 0.19611 1822877         glider_record/m_initial_water_vx
+    vy              -0.26742 -0.012923 0.15966 1822877                 glider_record/m_water_vy
+    vyi             -0.26742 -0.012613 0.15966 1822877         glider_record/m_initial_water_vy
+
+* Processing Log
+
+    - 2023-07-13 12:07:18.668 UTC: `create 'glider' object`
+```
+
+A challenge in working through the data, for this file at least, is that so many
+items hold NA values, e.g.
+```{r eval=FALSE}
+table(is.na(g[["O2"]]))
+```
+```
+ FALSE   TRUE
+867751 955126
+```
+However, it seems that all the hydrographic variables are finite or NA together, since
+```{r eval=FALSE}
+identical(is.na(g[["salinity"]]), is.na(g[["pressure"]]))
+identical(is.na(g[["pressure"]]), is.na(g[["time"]]))
+```
+so we can construct a time-depth plot colour-coded for salinity with
+```{r eval=FALSE}
+S <- g[["salinity"]]
+t <- g[["time"]]
+p <- g[["pressure"]]
+# Construct Figure 2
+par(mar=c(2, 3.3, 1, 1))
+cm <- colormap(S, col=oceColorsTurbo)
+drawPalette(colormap=cm)
+oce.plot.ts(t, p, ylim=rev(range(p, na.rm=TRUE)),
+    ylab="Pressure [dbar]",
+    col=cm$zcol, type="p", pch=20, cex=0.3, mar=c(2, 3.3, 1, 4))
+mtext("Salinity", adj=1)
+```
+
+
+# Figures
+
+
+![Figure 1. Glider surfaced locations (red dots) with 500m depth contour (black line). The initial and final locations are at the northwest end of the dot cloud.](slocum_map.png)
+
+![Figure 2. Dependence of salinity with depth, as sampled along the path shown in Figure 1.](slocum_tz.png)
+

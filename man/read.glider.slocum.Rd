@@ -4,31 +4,26 @@
 \alias{read.glider.slocum}
 \title{Read a Slocum Glider file}
 \usage{
-read.glider.slocum(file, debug, nameMap = list(conductivity =
-  "sci_water_cond", temperature = "sci_water_temp", pressure =
-  "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
-  "i_depth"))
+read.glider.slocum(
+  file,
+  debug,
+  nameMap = list(conductivity = "sci_water_cond", temperature = "sci_water_temp",
+    pressure = "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
+    "i_depth")
+)
 }
 \arguments{
 \item{file}{A connection or a character string giving the name of the file to load.}
 
-\item{debug}{an integer specifying whether debugging information is
-to be printed during processing. If this is not provided, then
-the value of \code{\link{getOption}("gliderDebug",0)} is used.
-The printing is done by a call to \code{\link{gliderDebug}}.
-Setting \code{debug=0} turns off this form of debugging, while
-higher values may yield more information, depending on the
-function. If one \code{glider} function calls another, it
-passes the value of \code{debug} but decreased by 1, which means
-that the value of \code{debug} controls not just the breadth
-of debugging, but also the depth.}
+\item{debug}{an integer controlling how much information is printed during
+processing.}
 
 \item{nameMap}{List used to rename data columns. See \dQuote{Details}.}
 }
 \value{
 An oce object holding the data, with variables renamed as
 described in \dQuote{Details}, and with \code{salinity} added,
-as calculated by \code{oce::\link[oce]{swSCTp}} which uses the UNESCO
+as calculated by \code{\link[oce:swSCTp]{oce::swSCTp()}} which uses the UNESCO
 algorithm and assumes that the conductivity values are stored in S/m
 units.
 }
@@ -45,7 +40,7 @@ package can retrieve the data using either the original name
 name (e.g. \code{x[["temperature"]]}).
 }
 \examples{
-library(oceanglider)
+library(oceglider)
 if (file.exists("~/slocum.csv")) {
     g <- read.glider.slocum("~/slocum.csv")
     summary(g)
@@ -53,7 +48,7 @@ if (file.exists("~/slocum.csv")) {
     # 1. Plot time-depth trace, colour-coded for temperature
     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
     cm <- colormap(z=g[['temperature']])
-    drawPalette(colormap=cm, cex=3/4)
+    drawPalette(colormap=cm, cex.axis=3/4)
     t <- g[["time"]]
     p <- g[["depth"]]
     plot(t, p, ylim=rev(range(p)), xlab="Time", ylab="Pressure [dbar]",
@@ -61,20 +56,24 @@ if (file.exists("~/slocum.csv")) {
     mtext(paste("Temperature, from", t[1]), cex=3/4)
 
     # 2. Plot distance-depth trace, colour-coded for temperature
-    dist <- geodDist(g[['longitude']],g[['latitude']],alongPath=TRUE)
+    dist <- geodDist(g[["longitude"]],g[["latitude"]],alongPath=TRUE)
     par(mar=c(3, 3, 1, 1), mgp=c(2, 0.7, 0)) # thin margins
-    cm <- colormap(z=g[['temperature']])
-    drawPalette(colormap=cm, cex=3/4)
+    cm <- colormap(z=g[["temperature"]])
+    drawPalette(colormap=cm, cex.axis=3/4)
     p <- g[["depth"]]
     plot(dist, p, ylim=rev(range(p)), xlab="Distance [km]", ylab="Pressure [dbar]",
          col=cm$zcol, cex=1/2, pch=20)
     mtext(paste("Temperature, from", t[1]), cex=3/4)
 }
+
 }
 \seealso{
-Other functions to read glider data: \code{\link{read.glider.netcdf}},
-  \code{\link{read.glider.seaexplorer.delayed}},
-  \code{\link{read.glider.seaexplorer.realtime}}
+Other functions to read glider data: 
+\code{\link{read.glider.netcdf.ioos}()},
+\code{\link{read.glider.netcdf}()},
+\code{\link{read.glider.seaexplorer.delayed}()},
+\code{\link{read.glider.seaexplorer.realtime}()},
+\code{\link{read.glider.slocum.netcdf}()}
 }
 \author{
 Dan Kelley
