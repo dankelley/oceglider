@@ -1,4 +1,4 @@
-issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceGlider/issues/40)
+issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglider/issues/40)
 
 #' Possible navState values of a glider object
 #'
@@ -48,7 +48,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceGlid
 #'
 #' @examples
 #' # Use codes to identify upcasts, at least roughly (note the stray points)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' ns <- navStateCodes(g)
 #' plot(g, which="p")
@@ -139,8 +139,8 @@ navStateCodes <- function(g)
 #' @template seaexplorer_names
 #'
 #' @examples
-#' library(oceGlider)
-#' directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+#' library(oceglider)
+#' directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
 #' g <- read.glider.seaexplorer.realtime(directory)
 #' plot(g, which="navState")
 #' plot(g, which="S")
@@ -301,7 +301,7 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
     res <- initializeFlagScheme(res, name="IOOS",
         mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$filename <- paste0(glifiles, ";", pld1files)
-    ##44 https://github.com/dankelley/oceGlider/issues/44
+    ##44 https://github.com/dankelley/oceglider/issues/44
     ##44 res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
     for (name in names(gliData))
@@ -616,8 +616,8 @@ read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar
 #' @template seaexplorer_names
 #'
 #' @examples
-#' library(oceGlider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' library(oceglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' plot(g, which="p")
 #'
@@ -678,7 +678,7 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpolateT
                                 mapping=list(pass=1, not_evaluated=2, suspect=3, fail=4, missing=9))
     res@metadata$level <- level
     res@metadata$filename <- directory
-    ##44 https://github.com/dankelley/oceGlider/issues/44
+    ##44 https://github.com/dankelley/oceglider/issues/44
     ##44 res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
 

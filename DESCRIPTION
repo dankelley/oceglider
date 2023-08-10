@@ -1,4 +1,4 @@
-Package: oceGlider
+Package: oceglider
 Type: Package
 Title: Analysis of Oceanographic Glider Data
 Version: 0.1.7
@@ -15,7 +15,7 @@ Suggests:
     shiny,
     testthat
 Imports: methods
-BugReports: https://github.com/dankelley/oceGlider
+BugReports: https://github.com/dankelley/oceglider
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)
 Encoding: UTF-8

@@ -1,5 +1,5 @@
 # vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
-library(oceGlider)
+library(oceglider)
 
 test_that("degreeMinute() works as expected", {
     x <- 1234.56
@@ -9,14 +9,14 @@ test_that("degreeMinute() works as expected", {
 })
 
 test_that("subset seaexplorer by 'ascending' and descending", {
-    directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
     expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=101, progressBar=FALSE))
     expect_silent(ga <- subset(g, "ascending"))
     expect_silent(gd <- subset(g, "descending"))
 })
 
 test_that("subset seaexplorer by pressure", {
-    directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
     expect_silent(g <- read.glider.seaexplorer.realtime(directory, yo=101, progressBar=FALSE))
     deep <- g[["pressure"]] > 20
     deep[is.na(deep)] <- FALSE
@@ -28,7 +28,7 @@ test_that("subset seaexplorer by pressure", {
 # test_that("ascending subset", {
 #           files <- system.file("extdata/seaexplorer/sub",
 #                                c("sea021.49.gli.sub.100.gz",
-#                                  "sea021.49.pld1.sub.100.gz"), package="oceGlider")
+#                                  "sea021.49.pld1.sub.100.gz"), package="oceglider")
 #           g <- read.glider.seaexplorer.sub(files)
 #           print(class(g))
 #           ### ## capture_output(ascending <- subset(g, "ascending"), print=TRUE)
@@ -44,7 +44,7 @@ test_that("subset seaexplorer by pressure", {
 # test_that("descending subset", {
 #           files <- system.file("extdata/seaexplorer/sub",
 #                                c("sea024.32.gli.sub.200.gz",
-#                                  "sea024.32.pld1.sub.200.gz"), package="oceGlider")
+#                                  "sea024.32.pld1.sub.200.gz"), package="oceglider")
 #           g <- read.glider.seaexplorer.sub(files)
 #           capture_output(print(class(g)), print=TRUE)
 #           ### ## capture_output(descending <- subset(g, "descending"), print=TRUE)

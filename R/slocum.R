@@ -27,7 +27,7 @@
 #' units.
 #'
 #' @examples
-#' library(oceGlider)
+#' library(oceglider)
 #' if (file.exists("~/slocum.csv")) {
 #'     g <- read.glider.slocum("~/slocum.csv")
 #'     summary(g)

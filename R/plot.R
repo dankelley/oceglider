@@ -98,10 +98,10 @@
 #' @importFrom graphics abline par plot text
 #'
 #' @examples
-#' library(oceGlider)
+#' library(oceglider)
 #'
 #' # Example 1: various plot types
-#' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+#' dirRealtime <- system.file("extdata/seaexplorer/sub", package="oceglider")
 #' gr <- read.glider.seaexplorer.realtime(dirRealtime, yo=100)
 #' plot(gr, which="p")
 #' plot(gr, which="S")
@@ -116,7 +116,7 @@
 #' # Example 3: navState and pressure history of some delayed-mode yos,
 #' # from a deployment in which sampling was supposed to be
 #' # suppressed during the descending phases of motion.
-#' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' dirRaw <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' gd <- read.glider.seaexplorer.delayed(dirRaw)
 #' plot(gd, which="navState")
 #'

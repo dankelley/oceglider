@@ -83,8 +83,8 @@ may be altered with \code{\link[=setFlags,glider-method]{setFlags,glider-method(
 illustrated in the \dQuote{Examples} section.
 }
 \examples{
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 
 # The histogram motivates a crude limit for anomalously low salinity.

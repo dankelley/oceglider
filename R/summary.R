@@ -38,7 +38,7 @@ setMethod(f="summary",
         cat("* Type:    ", type, "\n", sep="")
         if ("subtype" %in% metadataNames)
             cat("* Subtype: ", object@metadata[["subtype"]], "\n", sep="")
-        # 44 https://github.com/dankelley/oceGlider/issues/44
+        # 44 https://github.com/dankelley/oceglider/issues/44
         # 44 nyo <- length(object@metadata$yo)
         # 44 if (nyo == 1)
         # 44     cat(sprintf("* Yo:      %d\n", object@metadata$yo))

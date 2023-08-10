@@ -27,7 +27,7 @@
 #' by selecting for `navState==100` in both the `glider`
 #' and `payload1` streams of the `data` slot of the object.
 #'
-#' @param x an oceGlider object, i.e. one inheriting from the [glider-class].
+#' @param x an oceglider object, i.e. one inheriting from the [glider-class].
 #'
 #' @param subset a logical expression or a character string that indicates
 #' how to take the subset. See \dQuote{Details}.
@@ -36,13 +36,13 @@
 #' moment is `debug`, an integer indicating the level of debugging information
 #' to be permitted.
 #'
-#' @return An oceGlider object.
+#' @return An oceglider object.
 #'
 #' @examples
 #'\dontrun{
 #'
 #' # Example 1. remove wild salinities
-#' library(oceGlider)
+#' library(oceglider)
 #' g <- read.glider(filename)
 #' gg <- subset(g, 0 < salinity & salinity < 40)
 #' par(mfrow=c(2, 1))
@@ -120,13 +120,13 @@ setMethod(f="subset",
                 if (!"payload1" %in% names(x@data))
                     stop("In subset,glider-method() : only works for 'raw' datasets, not for 'sub' ones; contact package authors, if you need to handle sub data", call.=FALSE)
                 s <- split(x@data$payload1, x[["yoNumber"]])
-                # warning removed for issue (https://github.com/dankelley/oceGlider/issues/41)
+                # warning removed for issue (https://github.com/dankelley/oceglider/issues/41)
                 # warning("In subset,glider-method() : only subsetting 'payload1'; contact package authors, if your data have other streams", call.=FALSE)
                 thisYolength <- as.integer(lapply(s, function(ss) length(ss[["pressure"]])))
                 keepYo <- eval(substitute(subset), list(yolength=thisYolength))
                 # message("sum(keepYo)=", sum(keepYo), " length(keepYo)=", length(keepYo))
                 res <- x
-                # 44 https://github.com/dankelley/oceGlider/issues/44
+                # 44 https://github.com/dankelley/oceglider/issues/44
                 # 44 res@metadata$yo <- x@metadata$yo[keepYo]
                 keepData <- unlist(lapply(seq_along(s), function(si) rep(keepYo[si], thisYolength[si])))
                 # NOTE: the following was a much slower (10s of seconds compared to perhaps 1s or less)

@@ -40,7 +40,7 @@ mechanism works with either name, e.g. if \code{g} is a glider object, then
 }
 \examples{
 \dontrun{
-library(oceGlider)
+library(oceglider)
 
 # NOTE: these files are of order 100Meg, so they are
 # not provided with the package as samples. In both

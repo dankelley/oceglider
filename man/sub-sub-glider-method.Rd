@@ -100,8 +100,8 @@ e.g. \code{x[["yo",1]]} yields the first yo.
 }
 }
 \examples{
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 hist(g[["salinity"]])
 

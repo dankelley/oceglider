@@ -1,8 +1,8 @@
 # vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
-library(oceGlider)
+library(oceglider)
 
 test_that("read.glider.seaexplorer.realtime flag names", {
-    directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
     expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=101, progressBar=FALSE))
     expect_equal(g@metadata$flagScheme,
         list(name="IOOS",
@@ -11,7 +11,7 @@ test_that("read.glider.seaexplorer.realtime flag names", {
 })
 
 test_that("read.glider.seaexplorer.delayed flag names", {
-    directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
     expect_silent(g <- read.glider.seaexplorer.delayed(directory=directory, progressBar=FALSE))
     expect_equal(g@metadata$flagScheme,
         list(name="IOOS",
@@ -21,7 +21,7 @@ test_that("read.glider.seaexplorer.delayed flag names", {
 
 test_that("read.glider.seaexplorer.realtime flag setting and handling", {
     # This is based on the example given by ?"handleFlags,glider-method"
-    directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
     g <- read.glider.seaexplorer.realtime(directory)
     # NOTE: this test was more hard-wired before issue40, e.g. it
     # demanded that the number of data read be 2784, but that number
@@ -39,7 +39,7 @@ test_that("read.glider.seaexplorer.realtime flag setting and handling", {
 
 test_that("read.glider.seaexplorer.delayed flag setting and handling", {
     # This is based on the example given by ?"handleFlags,glider-method"
-    directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+    directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
     g <- read.glider.seaexplorer.delayed(directory)
     # NOTE: this test was more hard-wired before issue40, e.g. it
     # demanded that the number of data read be 2784, but that number

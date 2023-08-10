@@ -252,15 +252,15 @@ authors, if you need to handle such files.
 }
 
 \examples{
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
 g <- read.glider.seaexplorer.realtime(directory)
 plot(g, which="navState")
 plot(g, which="S")
 plot(g, which="T")
 
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
 g <- read.glider.seaexplorer.realtime(directory)
 plot(g, which="navState")
 plot(g, which="S")

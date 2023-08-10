@@ -1,4 +1,4 @@
-#' oceGlider: A Package for Processing Ocean Glider Data
+#' oceglider: A Package for Processing Ocean Glider Data
 #'
 #' This package was written with two particular dataset types
 #' in mind, from SeaExplorer and Slocum devices. There is a good
@@ -9,7 +9,7 @@
 #' @importFrom methods new
 #' @importFrom oce handleFlags oceDebug setFlags subset summary
 #' @docType package
-#' @name oceGlider
+#' @name oceglider
 NULL
 
 #' A class to hold glider information
@@ -124,8 +124,8 @@ setMethod(f="initialize",
 #' @author Dan Kelley
 #'
 #' @examples
-#' library(oceGlider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' library(oceglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' hist(g[["salinity"]])
 #'
@@ -432,7 +432,7 @@ getAtt <- function(f, varid=0, attname=NULL, default=NULL)
 #'
 #' @examples
 #'\dontrun{
-#' library(oceGlider)
+#' library(oceglider)
 #'
 #' # NOTE: these files are of order 100Meg, so they are
 #' # not provided with the package as samples. In both
@@ -587,8 +587,8 @@ read.glider <- function(file, debug, ...)
 #' dataset that are not given units, in this example.
 #'
 #' @examples
-#' library(oceGlider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' library(oceglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #' data <- g[["payload"]]
 #' units <- list(temperature=list(unit=expression(degree*C), scale="ITS-90"),

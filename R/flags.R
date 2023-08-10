@@ -68,8 +68,8 @@
 #' `\link{getOption}("gliderDebug",0)`.
 #'
 #' @examples
-#' library(oceGlider)
-#' directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+#' library(oceglider)
+#' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 #' g <- read.glider.seaexplorer.delayed(directory)
 #'
 #' # The histogram motivates a crude limit for anomalously low salinity.
@@ -119,7 +119,7 @@ setMethod("handleFlags",
 
 ## NOT EXPORTED #' Low-level function to handle flags
 ## NOT EXPORTED #'
-## NOT EXPORTED #' @param object An `oceGlider` object, i.e. an object inheriting
+## NOT EXPORTED #' @param object An `oceglider` object, i.e. an object inheriting
 ## NOT EXPORTED #' from [glider-class].
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param flags A `list` that associates integer values
@@ -134,7 +134,7 @@ setMethod("handleFlags",
 ## NOT EXPORTED #' `object`.  If `object[["type"]]` is `"seaexplorer"`, this will
 ## NOT EXPORTED #' default to `payload1`; otherwise, it defaults to `NULL`. Users
 ## NOT EXPORTED #' are advised *not* to set `where`, and it is only included here
-## NOT EXPORTED #' so that `handleFlagsoceGlider` behaves like [oce::handleFlags()].
+## NOT EXPORTED #' so that `handleFlagsoceglider` behaves like [oce::handleFlags()].
 ## NOT EXPORTED #'
 ## NOT EXPORTED #' @param debug An integer specifying the debugging level, with value
 ## NOT EXPORTED #' `0` meaning to act silently, and higher values meaning to print
@@ -200,13 +200,13 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 setMethod("setFlags",
     c(object="glider", name="ANY", i="ANY", value="ANY", debug="ANY"),
     function(object, name=NULL, i=NULL, value=NULL, debug=0) {
-        setFlagsInternaloceGlider(object, name, i, value, debug-1)
+        setFlagsInternaloceglider(object, name, i, value, debug-1)
     })
 
 
-setFlagsInternaloceGlider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
+setFlagsInternaloceglider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
 {
-    oce::oceDebug(debug, "setFlagsInternaloceGlider(object, name='", name, "', value=", value,
+    oce::oceDebug(debug, "setFlagsInternaloceglider(object, name='", name, "', value=", value,
         ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
         unindent=1)
     res <- object
@@ -250,7 +250,7 @@ setFlagsInternaloceGlider <- function(object, name=NULL, i=NULL, value=NULL, deb
         paste("setFlags(object, name=\"", name, "\",",
             "i=c(", paste(head(i, collapse=",")), "...),",
             "value=", valueOrig, ")", collapse="", sep=""))
-    oce::oceDebug(debug, "} # setFlagsInternaloceGlider\n", sep="", unindent=1)
+    oce::oceDebug(debug, "} # setFlagsInternaloceglider\n", sep="", unindent=1)
     res
 }
 

@@ -7,7 +7,7 @@
 \S4method{subset}{glider}(x, subset, ...)
 }
 \arguments{
-\item{x}{an oceGlider object, i.e. one inheriting from the \linkS4class{glider}.}
+\item{x}{an oceglider object, i.e. one inheriting from the \linkS4class{glider}.}
 
 \item{subset}{a logical expression or a character string that indicates
 how to take the subset. See \dQuote{Details}.}
@@ -17,7 +17,7 @@ moment is \code{debug}, an integer indicating the level of debugging information
 to be permitted.}
 }
 \value{
-An oceGlider object.
+An oceglider object.
 }
 \description{
 Select a portion of an glider object, specified according to one
@@ -59,7 +59,7 @@ into this.  DK 2019-03-28.
 \dontrun{
 
 # Example 1. remove wild salinities
-library(oceGlider)
+library(oceglider)
 g <- read.glider(filename)
 gg <- subset(g, 0 < salinity & salinity < 40)
 par(mfrow=c(2, 1))

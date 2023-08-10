@@ -342,13 +342,13 @@ authors, if you need to handle such files.
 }
 
 \examples{
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 plot(g, which="p")
 
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 plot(g, which="p")
 

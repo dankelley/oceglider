@@ -30,8 +30,8 @@ easy to use in interactive sessions, but production code ought to
 be written with units fully specified.
 }
 \examples{
-library(oceGlider)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+library(oceglider)
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 data <- g[["payload"]]
 units <- list(temperature=list(unit=expression(degree*C), scale="ITS-90"),

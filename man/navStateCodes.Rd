@@ -92,7 +92,7 @@ see pages 1-24 of reference 1.)
 }
 \examples{
 # Use codes to identify upcasts, at least roughly (note the stray points)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 ns <- navStateCodes(g)
 plot(g, which="p")
@@ -103,7 +103,7 @@ points(giu[["time"]], giu[["pressure"]], col=2, pch=20)
 mtext(" red=inflecting_upwards; green=ascending", side=3, line=-1, adj=0)
 
 # Use codes to identify upcasts, at least roughly (note the stray points)
-directory <- system.file("extdata/seaexplorer/raw", package="oceGlider")
+directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
 g <- read.glider.seaexplorer.delayed(directory)
 ns <- navStateCodes(g)
 plot(g, which="p")

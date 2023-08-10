@@ -1,4 +1,4 @@
 library(testthat)
-library(oceGlider)
+library(oceglider)
 
-test_check("oceGlider")
+test_check("oceglider")
