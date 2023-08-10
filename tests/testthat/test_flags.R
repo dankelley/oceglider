@@ -1,8 +1,6 @@
 # vim:textwidth=80:expandtab:shiftwidth=4:softtabstop=4
 library(oceGlider)
 
-context("flag handling (seaexplorer)")
-
 test_that("read.glider.seaexplorer.realtime flag names", {
     directory <- system.file("extdata/seaexplorer/sub", package="oceGlider")
     expect_silent(g <- read.glider.seaexplorer.realtime(directory=directory, yo=101, progressBar=FALSE))
