@@ -1,6 +1,6 @@
 # oceGlider 0.1.7
 
-* Change to `plot,glider-method()` fix map axis mixup (issue 98).
+* Change to `plot,glider-method()` fix map axis mix-up (issue 98).
 
 # oceGlider 0.1.6
 

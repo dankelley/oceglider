@@ -19,7 +19,7 @@ graphical methods best suit the task at hand."><!-- mathjax --><script src="http
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">oceGlider</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.7</span>
       </span>
     </div>
 
@@ -71,7 +71,7 @@ graphical methods best suit the task at hand.</p>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S4 method for glider</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">which</span>, col <span class="op">=</span> <span class="fl">1</span>, colorby <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">debug</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">which</span>, col <span class="op">=</span> <span class="fl">1</span>, colorby <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">colorbylim</span>, <span class="va">debug</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -100,6 +100,12 @@ For example, a form of a temperature section plot
 can be created by plotting glider depth versus time, coloured by temperature.
 For reference, a colour palette (using <code><a href="https://dankelley.github.io/oce/reference/oceColorsTurbo.html" class="external-link">oceColorsTurbo()</a></code> is displayed
 to the right of the plot.  See Example 3.</p></dd>
+
+
+<dt>colorbylim</dt>
+<dd><p>optional value, used only if <code>colorby</code> is provided,
+to set the limits of the colorizing limits.  It does this by being
+provided as the <code>zlim</code> argument to <code><a href="https://dankelley.github.io/oce/reference/colormap.html" class="external-link">colormap()</a></code>.</p></dd>
 
 
 <dt>debug</dt>

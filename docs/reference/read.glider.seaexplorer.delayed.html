@@ -5,6 +5,13 @@ Such delayed-mode data are the full resolution data stored on
 the glider and downloaded after recovery.
 (Use read.glider.seaexplorer.realtime() instead
 of this, to read data as transmitted by the glider while
+it is in the field.)
+Reads delayed-mode CSV files produced by a SeaExplorer glider,
+as detected by the presence of ".raw." in their names.
+Such delayed-mode data are the full resolution data stored on
+the glider and downloaded after recovery.
+(Use read.glider.seaexplorer.realtime() instead
+of this, to read data as transmitted by the glider while
 it is in the field.)'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -23,7 +30,7 @@ it is in the field.)'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">oceGlider</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.7</span>
       </span>
     </div>
 
@@ -63,7 +70,7 @@ it is in the field.)'><!-- mathjax --><script src="https://cdnjs.cloudflare.com/
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Read delayed-mode SeaExplorer glider data</h1>
-    <small class="dont-index">Source: <a href="https://github.com/dankelley/oceGlider/blob/HEAD/R/seaexplorer.R" class="external-link"><code>R/seaexplorer.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/dankelley/oceGlider/blob/HEAD/R/seaexplorer.R" class="external-link"><code>R/seaexplorer.R</code></a>, <a href="https://github.com/dankelley/oceGlider/blob/HEAD/R/seaexplorer_delayed.R" class="external-link"><code>R/seaexplorer_delayed.R</code></a></small>
     <div class="hidden name"><code>read.glider.seaexplorer.delayed.Rd</code></div>
     </div>
 
@@ -75,10 +82,27 @@ the glider and downloaded after recovery.
 (Use <code><a href="read.glider.seaexplorer.realtime.html">read.glider.seaexplorer.realtime()</a></code> instead
 of this, to read data as transmitted by the glider while
 it is in the field.)</p>
+<p>Reads delayed-mode CSV files produced by a SeaExplorer glider,
+as detected by the presence of <code>".raw."</code> in their names.
+Such delayed-mode data are the full resolution data stored on
+the glider and downloaded after recovery.
+(Use <code><a href="read.glider.seaexplorer.realtime.html">read.glider.seaexplorer.realtime()</a></code> instead
+of this, to read data as transmitted by the glider while
+it is in the field.)</p>
     </div>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read.glider.seaexplorer.delayed</span><span class="op">(</span></span>
+<span>  <span class="va">directory</span>,</span>
+<span>  <span class="va">yo</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  interpolateToCTD <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  removeTimeSincePowerOn <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  progressBar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  <span class="va">debug</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">read.glider.seaexplorer.delayed</span><span class="op">(</span></span>
 <span>  <span class="va">directory</span>,</span>
 <span>  <span class="va">yo</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -181,6 +205,38 @@ pressures to values measured by sensors not integrated into the CTD
 rows with duplicated times are removed.</p></li>
 <li><p>Calculate Practical salinity from conductivity, temperature
 and pressure using <code><a href="https://dankelley.github.io/oce/reference/swSCTp.html" class="external-link">swSCTp()</a></code>.</p></li>
+</ol><p>This function can output either "Level 0" or "Level 1" type
+data. Level 0 is simply the raw data as written in the CSV files
+with no processing done, other than to remove longitude and
+latitude for samples where the glider wasn't actually communicating
+with satellites and then interpolate between surface values.</p>
+<p>Level 1 processing performs a number of steps to give an
+"analysis ready" dataset, including</p>
+<ol><li><p>Interpolation of the surface longitude and latitude to give
+an estimate of the subsurface positions. This is a crude estimate of
+subsurface location and should be taken only as a first guess.</p></li>
+<li><p>Removal of the first few sensor values from when the glider
+is in <code>navState=118</code> (inflecting up) or <code>navState=110</code>
+(inflecting down). The reason for this is that when the glider is
+set to sample on alternating profiles, when the CTD is powered up
+the first sample output to the payload computer is the <em>last</em>
+sample recorded before power down.</p></li>
+<li><p>Interpolation, depending on the value of <code>interpolateToCTD</code>. If
+<code>interpolateToCTD</code> is <code>TRUE</code>, then any "extra" sensors are interpolated
+to the times for which there is CTD data. Otherwise, NAs for <em>all</em>
+the sensors are interpolated to a common time, corresponding to the
+raw time stamps output from the various sensors. A caution -- this
+will produce an apparent "upsampling" of each sensor, so that the
+apparent sample rate is higher. For example, if a Wetlabs FLBBCD
+sensor sampled, but there is no corresponding GP-CTD sample from
+the same time, the CTD parameters will be interpolated from the
+ones before and after. This has the disadvantage of interpolating
+values that were not measured, but has the advantage of assigning
+pressures to values measured by sensors not integrated into the CTD
+(e.g. Wetlabs FLBBCD, Rinko O2). Following the interpolation, any
+rows with duplicated times are removed.</p></li>
+<li><p>Calculate Practical salinity from conductivity, temperature
+and pressure using <code><a href="https://dankelley.github.io/oce/reference/swSCTp.html" class="external-link">swSCTp()</a></code>.</p></li>
 </ol></div>
     <div id="flag-scheme">
     <h2>Flag Scheme</h2>
@@ -188,10 +244,34 @@ and pressure using <code><a href="https://dankelley.github.io/oce/reference/swSC
 
 <p>A flag scheme is set up according to the IOOS classification system (see
 Table 2 of reference 1), as follows.</p>
+<table class="table table"><tr><td><strong>Name</strong></td><td><strong>Value</strong></td><td><strong>IOOS Name</strong></td><td><strong>Description</strong></td></tr><tr><td><code>pass</code></td><td>1</td><td>Pass</td><td>Data has passed quality control (QC) tests</td></tr><tr><td><code>not_evaluated</code></td><td>2</td><td>Not Evaluated</td><td>Data has not been QC tested</td></tr><tr><td><code>suspect</code></td><td>3</td><td>Suspect or of High Interest</td><td>Data is considered to be of suspect or high interest</td></tr><tr><td><code>fail</code></td><td>4</td><td>Fail</td><td>Data is considered to have failed on one or more QC tests</td></tr><tr><td><code>missing</code></td><td>9</td><td>Missing Data</td><td>Data are missing; using a palceholder</td></tr></table><p>A flag scheme is set up according to the IOOS classification system (see
+Table 2 of reference 1), as follows.</p>
 <table class="table table"><tr><td><strong>Name</strong></td><td><strong>Value</strong></td><td><strong>IOOS Name</strong></td><td><strong>Description</strong></td></tr><tr><td><code>pass</code></td><td>1</td><td>Pass</td><td>Data has passed quality control (QC) tests</td></tr><tr><td><code>not_evaluated</code></td><td>2</td><td>Not Evaluated</td><td>Data has not been QC tested</td></tr><tr><td><code>suspect</code></td><td>3</td><td>Suspect or of High Interest</td><td>Data is considered to be of suspect or high interest</td></tr><tr><td><code>fail</code></td><td>4</td><td>Fail</td><td>Data is considered to have failed on one or more QC tests</td></tr><tr><td><code>missing</code></td><td>9</td><td>Missing Data</td><td>Data are missing; using a palceholder</td></tr></table></div>
     <div id="renaming-of-data-in-seaexplorer-files">
     <h2>Renaming of data in seaexplorer files</h2>
     
+
+
+<p>FIXME: are the original names the same in both "raw" and "sub" datasets?</p>
+<p>Data in the <code>gli</code> files are stored in the <code>glider</code> item within
+the <code>data</code> slot of the returned object, renamed as follows.
+(Note that there is also an empty column in the seaexplorer data files,
+caused by a semicolon at the ends of the lines. This is read by R, but
+then discarded and not stored in the glider object.)</p>
+<p>Data in the <code>gli</code> files are stored in the <code>glider</code> item within
+the <code>data</code> slot of the returned object, renamed as follows. (If the
+new name is listed as <code>.</code> that means that the old name is retained,
+but bear in mind that a new name will likely be assigned at some later
+point in the development of this package.)</p>
+<table class="table table"><tr><td><strong>OriginalName</strong></td><td><strong>Name</strong></td><td><strong>Notes</strong></td></tr><tr><td><code>Timestamp</code></td><td><code>time</code></td><td>Converted to POSIXt time.</td></tr><tr><td><code>NavState</code></td><td><code>navState</code></td><td>-</td></tr><tr><td><code>SecurityLevel</code></td><td><code>alarm</code></td><td>-</td></tr><tr><td><code>Heading</code></td><td><code>heading</code></td><td>-</td></tr><tr><td><code>Pitch</code></td><td><code>pitch</code></td><td>-</td></tr><tr><td><code>Roll</code></td><td><code>roll</code></td><td>-</td></tr><tr><td><code>Depth</code></td><td><code>pressureNav</code></td><td>-</td></tr><tr><td><code>Temperature</code></td><td><code>temperatureInternal</code></td><td>-</td></tr><tr><td><code>Pa</code></td><td><code>pressureInternal</code></td><td>-</td></tr><tr><td><code>Lat</code></td><td><code>latitude</code></td><td>Converted to decimal degrees.</td></tr><tr><td><code>Lon</code></td><td><code>longitude</code></td><td>Converted to decimal degrees.</td></tr><tr><td><code>DesiredH</code></td><td><code>headingDesired</code></td><td>-</td></tr><tr><td><code>BallastCmd</code></td><td><code>ballastCmd</code></td><td>-</td></tr><tr><td><code>BallastPos</code></td><td><code>ballastPos</code></td><td>-</td></tr><tr><td><code>LinCmd</code></td><td><code>linCmd</code></td><td>-</td></tr><tr><td><code>LinPos</code></td><td><code>linPos</code></td><td>-</td></tr><tr><td><code>AngCmd</code></td><td><code>angCmd</code></td><td>-</td></tr><tr><td><code>AngPos</code></td><td><code>angPos</code></td><td>-</td></tr><tr><td><code>Voltage</code></td><td><code>voltage</code></td><td>-</td></tr><tr><td><code>Altitude</code></td><td><code>altitude</code></td><td>-</td></tr></table><p>Data in the <code>pld1</code> files are stored in the <code>payload1</code> item within
+the <code>data</code> slot of the returned object, renamed as follows. Where possible,
+the corresponding IOOS NetCDF file variable names are also listed [see
+Integrated Ocean Observing System (U.S.). “NGDAC NetCDF File Format Version
+2,” March 27, 2019.
+https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2].</p>
+<table class="table table"><tr><td><strong>OriginalName</strong></td><td><strong>Name</strong></td><td><strong>IOOS name</strong></td><td><strong>Notes</strong></td></tr><tr><td><code>PLD_REALTIMECLOCK</code></td><td><code>time</code></td><td><code>time</code></td><td>Converted to POSIXt time.</td></tr><tr><td><code>NAV_RESOURCE</code></td><td><code>navState</code></td><td>-</td><td>-</td></tr><tr><td><code>NAV_LONGITUDE</code></td><td><code>longitude</code></td><td><code>lon</code></td><td>Converted to decimal degrees.</td></tr><tr><td><code>NAV_LATITUDE</code></td><td><code>latitude</code></td><td><code>lat</code></td><td>Converted to decimal degrees.</td></tr><tr><td><code>NAV_DEPTH</code></td><td><code>pressureNav</code></td><td><code>depth</code></td><td>-</td></tr><tr><td><code>FLBBCD_CHL_COUNT</code></td><td><code>chlorophyllCount</code></td><td>-</td><td>-</td></tr><tr><td><code>FLBBCD_CHL_SCALED</code></td><td><code>chlorophyll</code></td><td>-</td><td>-</td></tr><tr><td><code>FLBBCD_BB_700_COUNT</code></td><td><code>backscatterCount</code></td><td>-</td><td>-</td></tr><tr><td><code>FLBBCD_BB_700_SCALED</code></td><td><code>backscatter</code></td><td>-</td><td>-</td></tr><tr><td><code>FLBBCD_CDOM_COUNT</code></td><td><code>cdomCount</code></td><td>-</td><td>-</td></tr><tr><td><code>FLBBCD_CDOM_SCALED</code></td><td><code>cdom</code></td><td>-</td><td>-</td></tr><tr><td><code>GPCTD_CONDUCTIVITY</code></td><td><code>conductivity</code></td><td>-</td><td>-</td></tr><tr><td><code>GPCTD_TEMPERATURE</code></td><td><code>temperature</code></td><td><code>temperature</code></td><td>degC</td></tr><tr><td><code>GPCTD_PRESSURE</code></td><td><code>pressure</code></td><td><code>pressure</code></td><td>dbar</td></tr><tr><td><code>GPCTD_DOF</code></td><td><code>oxygenFrequency</code></td><td>-</td><td>-</td></tr><tr><td>-</td><td><code>salinity</code></td><td><code>salinity</code></td><td>Practical Salinity (computed)</td></tr></table><p>Data in the <code>pld2</code> files (or others for additional payloads)
+are ignored in this version of the package. Please contact the
+authors, if you need to handle such files.</p>
 
 
 <p>FIXME: are the original names the same in both "raw" and "sub" datasets?</p>
@@ -224,6 +304,14 @@ authors, if you need to handle such files.</p>
 <code><a href="read.glider.netcdf.html">read.glider.netcdf</a>()</code>,
 <code><a href="read.glider.seaexplorer.realtime.html">read.glider.seaexplorer.realtime</a>()</code>,
 <code><a href="read.glider.slocum.netcdf.html">read.glider.slocum.netcdf</a>()</code>,
+<code><a href="read.glider.slocum.html">read.glider.slocum</a>()</code></p>
+<p>Other functions for seaexplorer gliders: 
+<code><a href="read.glider.seaexplorer.realtime.html">read.glider.seaexplorer.realtime</a>()</code></p>
+<p>Other functions to read glider data: 
+<code><a href="read.glider.netcdf.ioos.html">read.glider.netcdf.ioos</a>()</code>,
+<code><a href="read.glider.netcdf.html">read.glider.netcdf</a>()</code>,
+<code><a href="read.glider.seaexplorer.realtime.html">read.glider.seaexplorer.realtime</a>()</code>,
+<code><a href="read.glider.slocum.netcdf.html">read.glider.slocum.netcdf</a>()</code>,
 <code><a href="read.glider.slocum.html">read.glider.slocum</a>()</code></p></div>
     </div>
     <div id="author">
@@ -234,6 +322,11 @@ authors, if you need to handle such files.</p>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">oceGlider</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/seaexplorer/raw"</span>, package<span class="op">=</span><span class="st">"oceGlider"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">read.glider.seaexplorer.delayed</span><span class="op">(</span><span class="va">directory</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span>, which<span class="op">=</span><span class="st">"p"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">oceGlider</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/seaexplorer/raw"</span>, package<span class="op">=</span><span class="st">"oceGlider"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">read.glider.seaexplorer.delayed</span><span class="op">(</span><span class="va">directory</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">g</span>, which<span class="op">=</span><span class="st">"p"</span><span class="op">)</span></span></span>
