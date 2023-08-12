@@ -1,4 +1,4 @@
-library(oceanglider)
+library(oceglider)
 if (!exists("g0")) {
     file <- "~/Dropbox/sea021m49/netcdf/GLI2018_SEA021_049DM_L1.nc"
     ## file <- "/data/archive/glider/2019/sx/sea021m49/netcdf/GLI2018_SEA021_049DM_L1.nc"

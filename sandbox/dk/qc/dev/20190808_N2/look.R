@@ -1,4 +1,4 @@
-library(oceanglider)
+library(oceglider)
 options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let user choose.
 file <- "../../sea021m51_unedited.rda"
 if (!exists("g"))

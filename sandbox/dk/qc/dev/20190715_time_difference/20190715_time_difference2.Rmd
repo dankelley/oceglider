@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r dev.args=list(pointsize=9)}
-library(oceanglider)
+library(oceglider)
 ## library(shiny); runApp('~/git/glider/code/qc/02.R')
 load("../../sea021_m51_2019-07-16_11:32:33.rda")
 t <- as.numeric(g[["time"]])

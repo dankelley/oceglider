@@ -40,6 +40,9 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
+  <a href="../articles/oceglider.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -50,9 +53,6 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/oceGlider.html">Introduction to oceglider</a>
-    </li>
-    <li>
       <a href="../articles/slocum_glider.html">Slocum Gliders</a>
     </li>
   </ul>
@@ -84,10 +84,10 @@
       <h1 data-toc-skip>Introduction to oceglider</h1>
                         <h4 data-toc-skip class="author">Dan Kelley (<a href="https://orcid.org/0000-0001-7808-5911" class="external-link uri">https://orcid.org/0000-0001-7808-5911</a>)</h4>
             
-            <h4 data-toc-skip class="date">2023-08-10</h4>
+            <h4 data-toc-skip class="date">2023-08-12</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/dankelley/oceglider/blob/HEAD/vignettes/oceGlider.Rmd" class="external-link"><code>vignettes/oceGlider.Rmd</code></a></small>
-      <div class="hidden name"><code>oceGlider.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/dankelley/oceglider/blob/HEAD/vignettes/oceglider.Rmd" class="external-link"><code>vignettes/oceglider.Rmd</code></a></small>
+      <div class="hidden name"><code>oceglider.Rmd</code></div>
 
     </div>
 
@@ -210,20 +210,21 @@ plotting with functions from the package.</p>
 <span>   <span class="fu">oce</span><span class="fu">::</span><span class="fu"><a href="https://dankelley.github.io/oce/reference/plotProfile.html" class="external-link">plotProfile</a></span><span class="op">(</span><span class="va">ctd</span>, xtype<span class="op">=</span><span class="st">"salinity+temperature"</span>, eos<span class="op">=</span><span class="st">"unesco"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="oceGlider_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
-<p>(Here, the UNESCO equation of state is used, because the newer
+<p>In the above, the UNESCO equation of state is used, because the newer
 TEOS10/GSW version requires longitude and latitude information to be
 valid, which is not the case in the present version of the package at
-the end of a dataset, owing to how <a href="../help/read.glider.seaexplorer.delayed"><code>read.glider.seaexplorer.delayed</code></a>
-is works.)</p>
-<p>Note how there is a line connecting near-surface and deep data. To
-learn more about that, let’s use an function to create a
-`<code>scan'' plot, say with the last of these</code>ctd` objects just
-created.</p>
+the end of a dataset, owing to how
+[<code><a href="../reference/read.glider.seaexplorer.delayed.html">read.glider.seaexplorer.delayed()</a></code>]
+(../help/read.glider.seaexplorer.delayed) works.</p>
+<p>There is a problem with the graph just constructed, with a
+spurious-looking line connecting near-surface and deep data. To learn
+more about that, we may use an function to create a “scan” plot, say of
+the last of these <code>ctd</code> objects just created.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dankelley.github.io/oce/reference/plotScan.html" class="external-link">plotScan</a></span><span class="op">(</span><span class="va">ctd</span>, type<span class="op">=</span><span class="st">"p"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oceGlider_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
-<p>This makes it clear that the yo contains near-surface data, then
-skips to depth, and then returns to the surface. A more careful
+<p>The scan plot makes it clear that the yo contains near-surface data,
+then skips to depth, and then returns to the surface. A more careful
 examination with</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
@@ -233,16 +234,21 @@ examination with</p>
 <p>reveals that if the desire was to obtain a simple upcast, we might
 consider subsetting by the value of the <code>navState</code>
 variable.</p>
-<p>Noting that the <code>navState</code> values are as follows: * 105
-means the glider is not navigating yet; * 115 means the glider is
-surfacing in preparation for communication; * 116 means the glider is at
-the surface, acquiring a GPS signal, and is communicating; * 110 means
-the glider is inflecting downward; * 100 means the glider has ballast
-set to be descending; * 118 means the glider has ballast adjusted to
-reduce density, so will be inflecting upward; * 117 means the glider has
-ballast set to be ascending. it may be sensible to select for 117, if
-the desire is to focus on the ascent portion of the yo. So, retracing
-our steps, we have</p>
+<p>For reference, the <code>navState</code> values are as follows:</p>
+<ul>
+<li>105 means the glider is not navigating yet;</li>
+<li>115 means the glider is surfacing in preparation for
+communication;</li>
+<li>116 means the glider is at the surface, acquiring a GPS signal, and
+is communicating;</li>
+<li>110 means the glider is inflecting downward;</li>
+<li>100 means the glider has ballast set to be descending;</li>
+<li>118 means the glider has ballast adjusted to reduce density, so will
+be inflecting upward;</li>
+<li>117 means the glider has ballast set to be ascending.</li>
+</ul>
+<p>For example, a focus on the ascending portions may be accomplished
+with the following.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">g4</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">g3</span>, <span class="va">navState</span><span class="op">==</span><span class="fl">117</span><span class="op">)</span></span>
 <span><span class="va">payload</span> <span class="op">&lt;-</span> <span class="va">g4</span><span class="op">[[</span><span class="st">"payload"</span><span class="op">]</span><span class="op">]</span> <span class="co"># or [["payload1"]]</span></span>
@@ -297,14 +303,16 @@ and blue for the fourth, as explained in the legend.</p>
 <span>        <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">s</span>,<span class="kw">function</span><span class="op">(</span><span class="va">ss</span><span class="op">)</span> <span class="va">ss</span><span class="op">$</span><span class="va">yoNumber</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="oceGlider_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <p>At this stage, readers will likely have some ideas for doing more
-with this sample dataset, and ought to be aware that many of the steps
-here might not be appropriate for other datasets, e.g. those in which
-data were acquired on both ascent and descent, or only on descent.</p>
+with this sample dataset, but they ought to bear in mind that aspects of
+the dataset may be quite different from other datasets. It makes sense
+to explore things in detail, as has been done above, before moving on to
+final results. This applies not just to Sea Explorer datasets, but to
+Slocum datasets as well (see the vignette on that data type).</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<ul>
+<ol style="list-style-type: decimal">
 <li><p>Integrated Ocean Observing System (U.S.). “Manual for Quality
 Control of Temperature and Salinity Data Observations from Gliders.
 Version 1.0.” Report. U.S. Department of Commerce, National Oceanic and
@@ -313,7 +321,7 @@ Observing System, U.S. Integrated Ocean Observing System, Glider Data
 Assembly Center, 2016. <a href="https://www.oceanbestpractices.net/handle/11329/289" class="external-link uri">https://www.oceanbestpractices.net/handle/11329/289</a>.</p></li>
 <li><p>Integrated Ocean Observing System (U.S.). “NGDAC NetCDF File
 Format Version 2,” March 27, 2019. <a href="https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2" class="external-link uri">https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2</a>.</p></li>
-</ul>
+</ol>
 </div>
   </div>
 

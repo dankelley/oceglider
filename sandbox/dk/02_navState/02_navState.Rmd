@@ -11,7 +11,7 @@ yos. The code/plot given below suggests (quite emphatically) that it is not.
 ```{r fig.cap='Initial data for sea021 m54 (skipping first point); colours explained at top of plot.', fig.height=9}
 prefix <- "02_navState"
 library(oce)
-library(oceanglider)
+library(oceglider)
 rda <- paste(prefix, ".rda", sep="")
 ## Two-level caching for rapid turnaround in an interactive session
 if (!exists("g")) {                    # no need to read or load, if 'g' already exists

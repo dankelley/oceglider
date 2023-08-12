@@ -1,4 +1,4 @@
-library(oceanglider)
+library(oceglider)
 options(oceEOS="gsw") # A *lot* of code is hard-wired for this, so we don't let user choose.
 
 N2unstable <- function(pressure, sigma0, g=9.8, L=2, rho0=1025)

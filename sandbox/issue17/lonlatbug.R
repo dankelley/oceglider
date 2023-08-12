@@ -1,5 +1,5 @@
 library(oce)
-library(oceanglider)
+library(oceglider)
 
 dir  <- "/data/glider/2019/seaexplorer/sea019/m54/raw/"
 g <- read.glider.seaexplorer.raw(dir)

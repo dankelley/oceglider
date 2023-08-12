@@ -1,7 +1,7 @@
-## See if bad pressures align with bad conductivities. The output must be
-## viewed in a wide terminal or small font to fit on one line!
+# See if bad pressures align with bad conductivities. The output must be
+# viewed in a wide terminal or small font to fit on one line!
 
-library(oceanglider)
+library(oceglider)
 f <- "sea021m51.rda"
 if (file.exists(f)) {
     load(f) # defines g

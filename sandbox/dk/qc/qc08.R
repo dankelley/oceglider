@@ -65,7 +65,7 @@ keypressHelp <- "
 library(shiny)
 library(shinythemes)
 library(oce)
-library(oceanglider)
+library(oceglider)
 ##library(shinycssloaders)
 
 plotNoValid <- function(msg="No data to plot")

@@ -1,4 +1,4 @@
-library(oceanglider)
+library(oceglider)
 
 N2criterion <- 0.005
 trialSpikeDetection <- FALSE

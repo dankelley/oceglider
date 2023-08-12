@@ -1,6 +1,6 @@
 issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglider/issues/40)
 
-#' Read delayed-mode SeaExplorer glider data
+#' Read Delayed-Mode SeaExplorer Glider Data
 #'
 #' Reads delayed-mode CSV files produced by a SeaExplorer glider,
 #' as detected by the presence of `".raw."` in their names.
@@ -48,27 +48,26 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' rows with duplicated times are removed.
 #'
 #' \item Calculate Practical salinity from conductivity, temperature
-#' and pressure using `swSCTp()`.
+#' and pressure using [oce::swSCTp()].
 #'
 #' }
 #'
-#' @section Flag Scheme:
-#' A flag scheme is set up according to the IOOS classification system (see
+#' In any case, a flag scheme is set up according to the IOOS classification system (see
 #' Table 2 of reference 1), as follows.
 #'
 #' \tabular{llll}{
-#' \strong{Name}         \tab \strong{Value} \tab \strong{IOOS Name}            \tab \strong{Description}\cr
-#' `pass`           \tab 1              \tab Pass                          \tab Data has passed quality control (QC) tests\cr
-#' `not_evaluated`  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
-#' `suspect`        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
-#' `fail`           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
-#' `missing`        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+#' \strong{Name}   \tab \strong{Value} \tab \strong{IOOS Name}          \tab \strong{Description}\cr
+#' `pass`          \tab 1              \tab Pass                        \tab Data has passed quality control (QC) tests\cr
+#' `not_evaluated` \tab 2              \tab Not Evaluated               \tab Data has not been QC tested\cr
+#' `suspect`       \tab 3              \tab Suspect or of High Interest \tab Data is considered to be of suspect or high interest\cr
+#' `fail`          \tab 4              \tab Fail                        \tab Data is considered to have failed on one or more QC tests\cr
+#' `missing`       \tab 9              \tab Missing Data                \tab Data are missing; using a palceholder\cr
 #' }
 #'
 #' @param directory The directory in which the delayed-mode SeaExplorer files are located.
 #'
 #' @param yo A numeric value (or vector) specifying the yo numbers to
-#'     read. If this is not provided, `read.glider.seaexplorer.delayed`
+#'     read. If this is not provided, [read.glider.seaexplorer.delayed()]
 #'     will read all yo numbers for which files are present in `dir`.
 #'
 #' @param level A numeric value specifying the processing level, 0 or
@@ -91,11 +90,11 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #'     is a logical value, then it indicates whether to show textual progress
 #'     with [txtProgressBar()].  If `progressBar` is the character value `"shiny"`,
 #'     then [shiny::setProgress()] and [shiny::incProgress()] will be used,
-#'     on the assumption that the call to `read.glider.seaexplorer.realtime()`
+#'     on the assumption that the call to [read.glider.seaexplorer.realtime()]
 #'     was made within the context of a call to [shiny::withProgress()].
 #'     The default is to use the value returned by [interactive()], i.e.
 #'     to use a textual progress indicator, but only in interactive mode.
-##'
+#'
 #' @template debug
 #'
 #' @template seaexplorer_names
@@ -113,7 +112,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @importFrom oce swSCTp processingLogAppend
 #' @importFrom stats approx median
 #' @importFrom utils read.delim flush.console head setTxtProgressBar tail txtProgressBar
-## @importFrom shiny incProgress setProgress
+#' @importFrom shiny incProgress setProgress
 #'
 #' @author Clark Richards and Dan Kelley
 #'
@@ -166,14 +165,14 @@ read.glider.seaexplorer.delayed <- function(directory, yo, level=1, interpolateT
     ##44 res@metadata$yo <- yo
     res@metadata$dataNamesOriginal <- list(glider=list(), payload1=list())
 
+    nfiles <- length(files)
     pld1 <- list()
     if (is.logical(progressBar) && progressBar) {
         cat('* Reading', length(files), 'files...\n')
         pb <- txtProgressBar(0, length(files), 0, style=3) # start at 0 to allow for a single yo
     } else if (is.character(progressBar) && progressBar == "shiny") {
-        shiny::setProgress(0, paste("reading", length(files), "files"))
+        shiny::setProgress(0, paste("reading", nfiles, "files"))
     }
-    nfiles <- length(files)
     for (i in seq_len(nfiles)) {
         if (is.logical(progressBar) && progressBar)
             setTxtProgressBar(pb, i)

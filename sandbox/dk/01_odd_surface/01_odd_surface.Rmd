@@ -30,7 +30,7 @@ what causes that?
 
 ```{r fig.cap="Some early data for sea019/m54.", fig.height=9, fig.width=7}
 library(oce)
-library(oceanglider)
+library(oceglider)
 g <- read.glider.seaexplorer.delayed("/data/glider/sea019/m54/all_data")
 look <- 2:2001
 t <- g[["time"]][look]

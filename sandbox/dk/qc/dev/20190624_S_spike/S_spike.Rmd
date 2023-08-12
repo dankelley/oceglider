@@ -45,7 +45,7 @@ data by pressure, for the running linear regression to work.
 
 The whole code is below, along with the output.
 ```{r}
-library(oceanglider)
+library(oceglider)
 
 N2criterion <- 0.005
 trialSpikeDetection <- FALSE

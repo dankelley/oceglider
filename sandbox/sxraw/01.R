@@ -25,7 +25,7 @@
 
 rm(list=ls())
 library(oce)
-library(oceanglider)
+library(oceglider)
 
 dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
 navfiles <- dir(dir, pattern='*gli*', full.names=TRUE)

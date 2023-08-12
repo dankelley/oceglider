@@ -35,7 +35,7 @@ colHist3SD <- "red"
 library(shiny)
 library(shinythemes)
 library(oce)
-library(oceanglider)
+library(oceglider)
 ##library(shinycssloaders)
 
 options(oceEOS="gsw")

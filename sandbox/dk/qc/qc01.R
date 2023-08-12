@@ -6,7 +6,7 @@ version <- "0.1.1"
 library(shiny)
 library(shinythemes)
 library(oce)
-library(oceanglider)
+library(oceglider)
 ##library(shinycssloaders)
 
 options(oceEOS="gsw")

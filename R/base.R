@@ -7,7 +7,7 @@
 #' as more datasets are examined by the author.
 #'
 #' @importFrom methods new
-#' @importFrom oce handleFlags oceDebug setFlags subset summary
+#' @importFrom oce handleFlags setFlags subset summary
 #' @docType package
 #' @name oceglider
 NULL
@@ -471,7 +471,7 @@ read.glider.netcdf <- function(file, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    oce::oceDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
+    gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {", unindent=1, sep="")
     if (missing(file))
         stop("must provide `file'")
     if (length(file) != 1)
@@ -498,16 +498,16 @@ read.glider.netcdf <- function(file, debug)
     #? if (!"time" %in% dataNames)
     #?     dataNamesOriginal$time <- "-"
     # Get all variables, except time, which is not listed in f$var
-    oce::oceDebug(debug, "reading and renaming data\n")
+    gliderDebug(debug, "reading and renaming data\n")
     for (i in seq_along(dataNames))  {
         newName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[newName]] <- dataNames[i]
         if (dataNames[i] == "time") {
             data[["time"]] <- numberAsPOSIXct(as.vector(ncdf4::ncvar_get(f, "time")))
-            oce::oceDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
+            gliderDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep="")
         } else {
             data[[newName]] <- as.vector(ncdf4::ncvar_get(f, dataNames[i]))
-            oce::oceDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
+            gliderDebug(debug, "i=", i, " ... data name \"", dataNames[i], "\" converted to \"", newName, "\"\n", sep="")
             dataNames[i] <- newName
         }
     }
@@ -517,7 +517,7 @@ read.glider.netcdf <- function(file, debug)
     # head(res@data$payload1$time)
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- list(payload1=dataNamesOriginal)
-    oce::oceDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
+    gliderDebug(debug, "} # read.glider.netcdf", unindent=1, sep="")
     res
 }
 
@@ -547,7 +547,7 @@ read.glider <- function(file, debug, ...)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)
-    oce::oceDebug(debug, 'read.glider() {', unindent=1, sep="")
+    gliderDebug(debug, 'read.glider() {', unindent=1, sep="")
     if (!is.character(file))
         stop("'file' must be a character value (or values) giving filename(s)")
     if (length(file) == 1 && length(grep(".nc$", file))) {
@@ -559,7 +559,7 @@ read.glider <- function(file, debug, ...)
     } else {
         stop("only .nc and .gz files handled")
     }
-    oce::oceDebug(debug, '} # read.glider()', unindent=1, sep="")
+    gliderDebug(debug, '} # read.glider()', unindent=1, sep="")
     res
 }
 

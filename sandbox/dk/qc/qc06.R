@@ -56,7 +56,7 @@ buffer, so next '<b>y</b>' key-press will graph that yo.  (Ignored in mission-fo
 library(shiny)
 library(shinythemes)
 library(oce)
-library(oceanglider)
+library(oceglider)
 ##library(shinycssloaders)
 
 options(oceEOS="gsw")

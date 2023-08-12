@@ -148,7 +148,7 @@ handleFlagsInternal <- function(object, flags, actions, where, debug)
 {
     if (missing(debug))
         debug <- 0
-    oce::oceDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
+    gliderDebug(debug, "handleFlagsInternal() {\n", sep="", unindent=1)
     if (missing(flags)) {
         warning("no flags supplied (internal error; report to developer)")
         return(object)
@@ -206,7 +206,7 @@ setMethod("setFlags",
 
 setFlagsInternaloceglider <- function(object, name=NULL, i=NULL, value=NULL, debug=getOption("gliderDebug", 0))
 {
-    oce::oceDebug(debug, "setFlagsInternaloceglider(object, name='", name, "', value=", value,
+    gliderDebug(debug, "setFlagsInternaloceglider(object, name='", name, "', value=", value,
         ", i=c(", paste(head(i), collapse=","), "...), debug=", debug, ") {\n", sep="",
         unindent=1)
     res <- object
@@ -250,7 +250,7 @@ setFlagsInternaloceglider <- function(object, name=NULL, i=NULL, value=NULL, deb
         paste("setFlags(object, name=\"", name, "\",",
             "i=c(", paste(head(i, collapse=",")), "...),",
             "value=", valueOrig, ")", collapse="", sep=""))
-    oce::oceDebug(debug, "} # setFlagsInternaloceglider\n", sep="", unindent=1)
+    gliderDebug(debug, "} # setFlagsInternaloceglider\n", sep="", unindent=1)
     res
 }
 

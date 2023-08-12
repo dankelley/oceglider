@@ -136,10 +136,10 @@ setMethod(f="plot",
     definition=function(x, which, col=1, colorby=NULL, colorbylim, debug, ...) # plot,glider-method
     {
         debug <- if (!missing(debug)) debug else getOption("gliderDebug",0)
-        oce::oceDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
+        gliderDebug(debug, "plot,glider-method {\n", sep="", unindent=1)
         dots <- list(...)
         dotsNames <- names(dots)
-        oce::oceDebug(debug, oce::vectorShow(dots))
+        gliderDebug(debug, oce::vectorShow(dots))
         cm <- NULL
         if (!is.null(colorby)) {
             z <- x[[colorby]]
@@ -152,11 +152,11 @@ setMethod(f="plot",
                 } else {
                     oce::colormap(x[[colorby]], col=oce::oceColorsTurbo, zlim=colorbylim, debug=debug-1)
                 }
-                oce::oceDebug(debug, "set col to indicate values of \"", colorby, "\"\n", sep="")
+                gliderDebug(debug, "set col to indicate values of \"", colorby, "\"\n", sep="")
             }
         }
         if (which == 0 || which == "map") {
-            oce::oceDebug(debug, "map plot\n", sep="")
+            gliderDebug(debug, "map plot\n", sep="")
             longitude <- x[["longitude"]]
             latitude <- x[["latitude"]]
             args <- list(
@@ -184,7 +184,7 @@ setMethod(f="plot",
             do.call("plot", args)
             par(mar=omar)
         } else if (which == 1 || which == "p") {
-            oce::oceDebug(debug, "pressure time-series plot\n", sep="")
+            gliderDebug(debug, "pressure time-series plot\n", sep="")
             t <- x[["time"]]
             p <- x[["pressure"]]
             args <- list(x=t, y=p, xlab="", ylab="Pressure [dbar]", col=col)
@@ -201,7 +201,7 @@ setMethod(f="plot",
             do.call("oce.plot.ts", args)
             par(mar=omar)
         } else if (which == 2 || which == "T") {
-            oce::oceDebug(debug, "temperature time-series plot\n", sep="")
+            gliderDebug(debug, "temperature time-series plot\n", sep="")
             t <- x[["time"]]
             T <- x[["temperature"]]
             args <- list(x=t, y=T, xlab="", ylab=expression("Temperature ["*degree*"C]"))
@@ -216,7 +216,7 @@ setMethod(f="plot",
             do.call("oce.plot.ts", args)
             par(mar=omar)
         } else if (which == 3 || which == "S") {
-            oce::oceDebug(debug, "salinity time-series plot\n", sep="")
+            gliderDebug(debug, "salinity time-series plot\n", sep="")
             t <- x[["time"]]
             S <- x[["salinity"]]
             args <- list(x=t, y=S, xlab="", ylab="Practical Salinity")
@@ -231,8 +231,8 @@ setMethod(f="plot",
             do.call("oce.plot.ts", args)
             par(mar=omar)
         } else if (which == 4 || which == "TS") {
-            oce::oceDebug(debug, "TS plot\n", sep="")
-            oce::oceDebug(debug, "salinity time-series plot\n", sep="")
+            gliderDebug(debug, "TS plot\n", sep="")
+            gliderDebug(debug, "salinity time-series plot\n", sep="")
             S <- x[["salinity"]]
             T <- x[["temperature"]]
             p <- x[["pressure"]]
@@ -251,7 +251,7 @@ setMethod(f="plot",
             do.call("plotTS", args)
             par(mar=omar)
         } else if (which == 5 || which == "navState") {
-            oce::oceDebug(debug, "navState plot\n", sep="")
+            gliderDebug(debug, "navState plot\n", sep="")
             ns <- navStateCodes(x)
             oce.plot.ts(x[["time"]], x[["navState"]], ylab="navState",
                 mar=c(2, 3, 1, 9), ...)
@@ -262,14 +262,13 @@ setMethod(f="plot",
             tmax <- par("usr")[2] + 0.00 * diff(par("usr")[1:2])
             for (ii in seq_along(ns)) {
                 text(tmax, ns[[ii]],
-                    sprintf(" %d: %s", ns[[ii]],
-                        names(ns[ii])),
+                    sprintf(" %d: %s", ns[[ii]], names(ns[ii])),
                     col="blue", cex=0.75, xpd=TRUE, pos=4)
             }
             par(xpd=oxpd)
         } else {
             stop("which=", which, " is not permitted; see ?\"plot,glider-method\"")
         }
-        oce::oceDebug(debug, "} # plot,glider-method\n", sep="", unindent=1)
+        gliderDebug(debug, "} # plot,glider-method\n", sep="", unindent=1)
     })
  

@@ -12,9 +12,8 @@ Suggests:
     ncdf4,
     RCurl,
     rmarkdown,
-    shiny,
     testthat
-Imports: methods
+Imports: methods, shiny
 BugReports: https://github.com/dankelley/oceglider
 Description: Provides tools for reading and analysing data from oceanographer gliders.
 License: GPL (>= 2)

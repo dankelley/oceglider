@@ -33,7 +33,7 @@ marTS <- c(fullmar, fullmar, 1, fullmar+2.5)
 library(shiny)
 ##library(shinythemes)
 library(oce)
-library(oceanglider)
+library(oceglider)
 ##library(shinycssloaders)
 
 options(oceEOS="gsw")

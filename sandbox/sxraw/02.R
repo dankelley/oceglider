@@ -1,6 +1,6 @@
-## Want to test out the new read.glider.seaexplorer.raw() function
+# Want to test out the new read.glider.seaexplorer.raw() function
 
-library(oceanglider)
+library(oceglider)
 
 dir <- '/data/archive/glider/2019/sx/sea021m49/raw'
 

@@ -149,21 +149,22 @@ for (ss in s) {
 }
 ```
 
-(Here, the UNESCO equation of state is used, because the newer TEOS10/GSW version requires
-longitude and latitude information to be valid, which is not the case in the
-present version of the package at the end of a dataset, owing to how
-[`read.glider.seaexplorer.delayed`](../help/read.glider.seaexplorer.delayed) is
-works.)
+In the above, the UNESCO equation of state is used, because the newer TEOS10/GSW
+version requires longitude and latitude information to be valid, which is not
+the case in the present version of the package at the end of a dataset, owing to
+how [`read.glider.seaexplorer.delayed()`]
+(../help/read.glider.seaexplorer.delayed) works.
 
-Note how there is a line connecting near-surface and deep data. To learn more
-about that, let's use an \CRANpkg{oce} function to create a ``scan'' plot, say
-with the last of these `ctd` objects just created.
+There is a problem with the graph just constructed, with a spurious-looking line
+connecting near-surface and deep data. To learn more about that, we may use an
+\CRANpkg{oce} function to create a "scan" plot, say of the last of these `ctd`
+objects just created.
 ```{r}
 plotScan(ctd, type="p")
 ```
 
-This makes it clear that the yo contains near-surface data, then skips to
-depth, and then returns to the surface. A more careful examination with
+The scan plot makes it clear that the yo contains near-surface data, then skips
+to depth, and then returns to the surface. A more careful examination with
 ```{r}
 par(mfrow=c(1, 2))
 plot(s[[1]][["time"]], s[[1]][["pressure"]], xlab="Time", ylab="Pressure")
@@ -173,7 +174,8 @@ plot(s[[1]][["time"]], s[[1]][["navState"]], xlab="Time", ylab="navState")
 reveals that if the desire was to obtain a simple upcast, we might consider
 subsetting by the value of the `navState` variable.
 
-Noting that the `navState` values are as follows:
+For reference, the `navState` values are as follows:
+
 * 105 means the glider is not navigating yet;
 * 115 means the glider is surfacing in preparation for communication;
 * 116 means the glider is at the surface, acquiring a GPS signal, and is communicating;
@@ -181,9 +183,8 @@ Noting that the `navState` values are as follows:
 * 100 means the glider has ballast set to be descending;
 * 118 means the glider has ballast adjusted to reduce density, so will be inflecting upward;
 * 117 means the glider has ballast set to be ascending.
-it may be sensible to select for 117, if the desire is to focus on the ascent
-portion of the yo. So, retracing our steps, we have
 
+For example, a focus on the ascending portions may be accomplished with the following.
 
 ```{r}
 g4 <- subset(g3, navState==117)
@@ -241,20 +242,22 @@ legend("bottomright", lwd=1, col=seq_along(s),
 ```
 
 At this stage, readers will likely have some ideas for doing more with this
-sample dataset, and ought to be aware that many of the steps here might not
-be appropriate for other datasets, e.g. those in which data were acquired on
-both ascent and descent, or only on descent.
-
+sample dataset, but they ought to bear in mind that aspects of the dataset may
+be quite different from other datasets.  It makes sense to explore things in
+detail, as has been done above, before moving on to final results.  This applies
+not just to Sea Explorer datasets, but to Slocum datasets as well (see the
+vignette on that data type).
 
 # References
 
-* Integrated Ocean Observing System (U.S.). “Manual for Quality Control of
-Temperature and Salinity Data Observations from Gliders. Version 1.0.” Report.
-U.S. Department of Commerce, National Oceanic and Atmospheric Administration,
-National Ocean Service, Integrated Ocean Observing System, U.S. Integrated
-Ocean Observing System, Glider Data Assembly Center, 2016.
-https://www.oceanbestpractices.net/handle/11329/289.
+1. Integrated Ocean Observing System (U.S.). “Manual for Quality Control of
+   Temperature and Salinity Data Observations from Gliders. Version 1.0.”
+   Report. U.S. Department of Commerce, National Oceanic and Atmospheric
+   Administration, National Ocean Service, Integrated Ocean Observing System,
+   U.S. Integrated Ocean Observing System, Glider Data Assembly Center, 2016.
+   https://www.oceanbestpractices.net/handle/11329/289.
 
-* Integrated Ocean Observing System (U.S.). “NGDAC NetCDF File Format Version
-2,” March 27, 2019.
-https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2.
+2. Integrated Ocean Observing System (U.S.). “NGDAC NetCDF File Format Version
+   2,” March 27, 2019.
+   https://github.com/ioos/ioosngdac/wiki/NGDAC-NetCDF-File-Format-Version-2.
+
