@@ -2,7 +2,7 @@
 #'
 #' This function provides names for the numerical `navState` codes
 #' used by various gliders, with the aim of making it easier to
-#' write self-explantory code (see \dQuote{Examples}).
+#' write self-explanatory code (see \dQuote{Examples}).
 #'
 #' The numerical values for `seaexplorer` are as follows.
 #' \tabular{lll}{

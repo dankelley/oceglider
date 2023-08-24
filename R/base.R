@@ -32,7 +32,7 @@ setMethod(f="initialize",
 #' Saturation of O2 in sea water
 #'
 #' Computes the solubility (saturation) of Oxygen in sea water. Based on the
-#' matlab function SW_SATO2 from the CSIRO seawater toolbox.
+#' Matlab function `SW_SATO2` from the CSIRO seawater toolbox.
 #'
 #' @author Chantelle Layton
 #' @param temperature temperature
@@ -265,11 +265,14 @@ setMethod(f="[[",
                     temperature <- x@data[[payloadName]]$temperature
                     pressure <- x@data[[payloadName]]$pressure
                     temperatureKelvin <- temperature + 273.16 # I see .15 in some codes
+                    # This Kelvin temperature is as used in swSatOw.  Note the
+                    # non-standard offset and the non-unity factor
+                    Tk <- 273.15 + temperature * 1.00024
                     res <- with(cal$calibrationCoefficients,
                         Soc * (oxygenFrequency + Foffset) *
                             (1.0 + A*T + B*T^2 + C*T^3) *
                             swSatO2(temperature=temperature, salinity=salinity)
-                        * exp(Enom*pressure/temperatureKelvin))
+                        * exp(Enom*pressure/Tk))
                     return(44.6591 * res) # the factor converts to umol/kg
                 } else {
                     return(NULL)
@@ -372,9 +375,15 @@ setMethod(f="[[",
 
 #' Convert a string from snake_case to camelCase
 #'
+#' Convert a snake-case string (i.e., one constructed
+#' with words separated by underlines) to a camel-case
+#' string (i.e. one in which the words are strung together,
+#' with upper-case for the first letter of all but the
+#' first word).  See \sQuote{Examples}.
+#'
 #' @param s character value to be converted.
 #'
-#' @return CamelCase version of `s`.
+#' @return [toCamelCase()] returns a camelCase version of `s`.
 #'
 #' @examples
 #' toCamelCase("profile_direction") # "profileDirection"
@@ -407,15 +416,16 @@ toCamelCase <- function(s)
 
 
 
-#' Convert lon and lat from a combined degree+minute formula
+#' Convert longitude and latitude from a combined degree+minute formula
 #'
-#' Data from Seaexplorers save longitude and latitude in a combined
-#' format, in which e.g. 45deg 30.1min is saved as 4530.100, as
-#' illustrated in the example.
+#' SeaExplorer gliders save longitude and latitude with e.g.
+#' 4530.100 standing for 45deg 30.1min (which is 45.50167
+#' in conventional decimal format).  This function converts SeaExplorer
+#' coordinate values to conventional decimal values.
 #'
 #' @param x Numerical value in degree+minute notation (see \dQuote{Examples}).
 #'
-#' @return Numerical value in decimal degrees.
+#' @return [degreeMinute()] returns a numerical value in decimal degrees.
 #'
 #' @examples
 #' degreeMinute(4530.100) # 45+30.100/60
@@ -449,7 +459,7 @@ degreeMinute <- function(x)
 #' @param \dots items to be supplied to [cat()], which does the
 #' printing.  Almost always, this should include a trailing newline.
 #'
-#' @param unindent Number of levels to un-indent, e.g. for start and end lines
+#' @param unindent Number of levels to unindent, e.g. for start and end lines
 #' from a called function.
 #'
 #' @author Dan Kelley

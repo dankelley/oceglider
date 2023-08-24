@@ -50,7 +50,7 @@ process can be controlled by setting \code{j} to either \code{"glider"}
 or \code{"payload1"}.  For example, both \code{x[["temperature"]]} and
 \code{x[["temperature","payload1"]]} retrieve values from
 the payload thermistor, while \code{x[["temperature","glider"]]} retrieves
-values from the glider thermister. For clarity of code, it might make
+values from the glider thermistor. For clarity of code, it might make
 sense to always specify \code{j}.
 
 In addition to retrieving data stored in the object, \verb{\[\[} can also

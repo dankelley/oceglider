@@ -28,7 +28,7 @@
 #'
 #' @param readAll logical value indicating whether to read all the data
 #' columns in the file.  The default, FALSE, means to only
-#' read columns that appear in `nameMap`.  Using FALSE can yield significate
+#' read columns that appear in `nameMap`.  Using FALSE can yield significant
 #' decreases in processing time and memory usage.  For the 2 Gb test file
 #' used during the coding of this function (which, admittedly, seems
 #' to have a great deal of duplication or near-duplication of data),

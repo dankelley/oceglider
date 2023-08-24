@@ -14,7 +14,7 @@ are treated like 4.}
 \item{\dots}{items to be supplied to \code{\link[=cat]{cat()}}, which does the
 printing.  Almost always, this should include a trailing newline.}
 
-\item{unindent}{Number of levels to un-indent, e.g. for start and end lines
+\item{unindent}{Number of levels to unindent, e.g. for start and end lines
 from a called function.}
 }
 \description{

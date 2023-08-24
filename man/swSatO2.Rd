@@ -15,7 +15,7 @@ DEK note: the result is in mL/L.}
 }
 \description{
 Computes the solubility (saturation) of Oxygen in sea water. Based on the
-matlab function SW_SATO2 from the CSIRO seawater toolbox.
+Matlab function `SW_SATO2` from the CSIRO seawater toolbox.
 }
 \author{
 Chantelle Layton

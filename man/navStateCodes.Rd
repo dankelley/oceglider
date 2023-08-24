@@ -22,7 +22,7 @@ given a brief name as indicated in the \dQuote{Details} section.
 \description{
 This function provides names for the numerical \code{navState} codes
 used by various gliders, with the aim of making it easier to
-write self-explantory code (see \dQuote{Examples}).
+write self-explanatory code (see \dQuote{Examples}).
 }
 \details{
 The numerical values for \code{seaexplorer} are as follows.

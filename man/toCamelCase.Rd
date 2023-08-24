@@ -10,10 +10,14 @@ toCamelCase(s)
 \item{s}{character value to be converted.}
 }
 \value{
-CamelCase version of \code{s}.
+\code{\link[=toCamelCase]{toCamelCase()}} returns a camelCase version of \code{s}.
 }
 \description{
-Convert a string from snake_case to camelCase
+Convert a snake-case string (i.e., one constructed
+with words separated by underlines) to a camel-case
+string (i.e. one in which the words are strung together,
+with upper-case for the first letter of all but the
+first word).  See \sQuote{Examples}.
 }
 \examples{
 toCamelCase("profile_direction") # "profileDirection"

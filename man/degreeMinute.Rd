@@ -2,7 +2,7 @@
 % Please edit documentation in R/base.R
 \name{degreeMinute}
 \alias{degreeMinute}
-\title{Convert lon and lat from a combined degree+minute formula}
+\title{Convert longitude and latitude from a combined degree+minute formula}
 \usage{
 degreeMinute(x)
 }
@@ -10,12 +10,13 @@ degreeMinute(x)
 \item{x}{Numerical value in degree+minute notation (see \dQuote{Examples}).}
 }
 \value{
-Numerical value in decimal degrees.
+\code{\link[=degreeMinute]{degreeMinute()}} returns a numerical value in decimal degrees.
 }
 \description{
-Data from Seaexplorers save longitude and latitude in a combined
-format, in which e.g. 45deg 30.1min is saved as 4530.100, as
-illustrated in the example.
+SeaExplorer gliders save longitude and latitude with e.g.
+4530.100 standing for 45deg 30.1min (which is 45.50167
+in conventional decimal format).  This function converts SeaExplorer
+coordinate values to conventional decimal values.
 }
 \examples{
 degreeMinute(4530.100) # 45+30.100/60

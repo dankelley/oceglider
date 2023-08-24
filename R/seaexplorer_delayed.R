@@ -76,7 +76,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @param interpolateToCTD A logical indicating whether all sensors should
 #'     be interpolated to the CTD times to obtain a common time base,
 #'     or whether all sensors should simply be interpolated for all
-#'     time stamps (which was the default behavious before 2019-12-08)
+#'     time stamps (which was the default behaviour before 2019-12-08)
 #'
 #' @param removeTimeSincePowerOn Amount of time to remove data after
 #'     the CTD is powered on. This is to remove spurious data that can

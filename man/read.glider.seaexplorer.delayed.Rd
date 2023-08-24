@@ -27,7 +27,7 @@ will read all yo numbers for which files are present in \code{dir}.}
 \item{interpolateToCTD}{A logical indicating whether all sensors should
 be interpolated to the CTD times to obtain a common time base,
 or whether all sensors should simply be interpolated for all
-time stamps (which was the default behavious before 2019-12-08)}
+time stamps (which was the default behaviour before 2019-12-08)}
 
 \item{removeTimeSincePowerOn}{Amount of time to remove data after
 the CTD is powered on. This is to remove spurious data that can
