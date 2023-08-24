@@ -37,9 +37,8 @@
 #'
 #' @param debug an integer controlling how much information is printed during
 #' processing.  If this is 0, then only errors and warnings will be printed.  If it
-#' is 1, then the function entry and exit are signalled, and a progress bar
-#' is shown.  If it exceeds 1, then detailed notes are provided (but the
-#' progress bar is not shown).
+#' is 1, then the function entry and exit are signalled, and a line
+#' is printed for each variable read.
 #'
 #' @return A glider object, i.e. one inheriting from [glider-class].
 #' (This class inherits from [oce::oce-class] in the
@@ -72,7 +71,7 @@ read.glider.slocum.netcdf <- function(file,
         profileLat="profile_lat",
         profileLon="profile_lon",
         density="density",
-        O2="oxygen_concentration",
+        oxygen="oxygen_concentration",
         u="u",
         v="v",
         vxi="glider_record/m_initial_water_vx",
@@ -82,13 +81,12 @@ read.glider.slocum.netcdf <- function(file,
         id="profile_id"),
     debug)
 {
-    if (missing(debug))
-        debug <- getOption("gliderDebug", default=0)
-    gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) {\n", unindent=1, sep="")
+    debug <- min(1L, max(0L, as.integer(debug))) # make 0L or 1L
     if (missing(file))
         stop("must provide `file'")
     if (length(file) != 1)
         stop("file must have length 1")
+    gliderDebug(debug, "read.glider.slocum.netcdf(file=\"", file, "\", ...) {\n", unindent=1, sep="")
     if (!requireNamespace("ncdf4", quietly=TRUE))
         stop("must install.packages(\"ncdf4\") to read this data type")
     capture.output({ # capture the output to silence warning about missing-value byte length
@@ -124,13 +122,15 @@ read.glider.slocum.netcdf <- function(file,
         nan <- is.nan(x)
         nnan <- sum(nan, na.rm=TRUE)
         if (nnan > 0L) {
-            gliderDebug(debug-1, "    ", nnan, " (", round(100*nnan/n, 4), "%) of values are NA\n", sep="")
+            gliderDebug(debug, "    ", nnan, " (", round(100*nnan/n, 4),
+                "%) of values are NA\n", sep="")
             x[nan] <- NA
         }
         is9999 <- x == 9999.00
         nis9999 <- sum(is9999, na.rm=TRUE)
         if (nis9999 > 0L) {
-            gliderDebug(debug-1, "    ", nis9999, " (", round(100*nis9999/n, 4), "%) of values to NA\n", sep="")
+            gliderDebug(debug, "    ", nis9999, " (", round(100*nis9999/n, 4),
+                "%) of values are 9999, so set to NA\n", sep="")
             x[is9999] <- NA
         }
         as.vector(x)
@@ -147,14 +147,11 @@ read.glider.slocum.netcdf <- function(file,
         dataNames <- dataNames[keep]
     }
     ndataNames <- length(dataNames)
-
-    if (debug == 1)
-        pb <- txtProgressBar(min=1, max=ndataNames, style=3)
     for (i in seq_len(ndataNames)) {
-        gliderDebug(debug-1, "netcdf item named \"", dataNames[i], "\":\n", sep="")
         # see if it is a remapped name
         w <- which(dataNames[i] == nameMap)
         newName <- if (length(w) > 0) names(nameMap)[w] else toCamelCase(dataNames[i])
+        gliderDebug(debug, "storing netcdf variable \"", dataNames[i], "\" as \"", newName, "\"\n", sep="")
         dataNamesOriginal[[newName]] <- dataNames[i]
         capture.output(d <- try(ncdf4::ncvar_get(f, dataNames[i]), silent=TRUE))
         capture.output(fillValue <- try(ncdf4::ncatt_get(f, dataNames[i])$"_FillValue", silent=TRUE))
@@ -162,7 +159,7 @@ read.glider.slocum.netcdf <- function(file,
             isTime <- grepl(".*[t,T]ime.*", newName) & !grepl(".*[q,Q]c.*", newName) & !grepl(".*[f,F]lag.*", newName)
             if (isTime) {
                 data[[newName]] <- numberAsPOSIXct(fixVector(d, fillValue = fillValue))
-                gliderDebug(debug-1, "    converted to POSIXct\n", sep="")
+                gliderDebug(debug, "    converted to POSIXct\n", sep="")
             } else {
                 if (grepl("^.*Qc$", newName)) {
                     if (!knowFlagScheme) {
@@ -234,16 +231,12 @@ read.glider.slocum.netcdf <- function(file,
         } else {
             message("Could not read \"", newName, "\", proceeding to next variable\"")
         }
-        if (debug == 1)
-            setTxtProgressBar(pb, i)
     }
-    if (debug == 1)
-        setTxtProgressBar(pb, i)
     inData <- names(dataNamesOriginal) %in% names(data)
     res@data <- as.data.frame(data) # FIXME: only do if items in list are same length
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- dataNamesOriginal[inData]
-    gliderDebug(debug, "} # read.glider.slocum.netcdf", unindent=1, sep="")
+    gliderDebug(debug, "} # read.glider.slocum.netcdf\n", unindent=1, sep="")
     ncdf4::nc_close(f)
     res@metadata$type <- "slocum"
     res

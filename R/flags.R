@@ -16,7 +16,7 @@
 #' sets `flags$payload1$salinity` to be a vector of length
 #' matching the data stored in `data$payload1$salinity`, and
 #' does the same for temperature and some other things that are typically
-#' assessed as part of quality-assessment procdures.  When these
+#' assessed as part of quality-assessment procedures.  When these
 #' things are set up, they are also assigned numerical values, one for
 #' each element in the data set.  The initial value is set to
 #' value 2, which means `not_evaluated`

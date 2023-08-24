@@ -29,6 +29,34 @@ setMethod(f="initialize",
         return(.Object)
     })
 
+#' Saturation of O2 in sea water
+#'
+#' Computes the solubility (saturation) of Oxygen in sea water. Based on the
+#' matlab function SW_SATO2 from the CSIRO seawater toolbox.
+#'
+#' @author Chantelle Layton
+#' @param temperature temperature
+#' @param salinity salinity
+#'
+#' DEK note: the result is in mL/L.
+swSatO2 <- function(temperature, salinity){
+    Tk <- 273.15 + temperature * 1.00024
+    # constants for Eqn (4) of Weiss 1970
+    a1 <- -173.4292
+    a2 <-  249.6339
+    a3 <-  143.3483
+    a4 <-  -21.8492
+    b1 <-   -0.033096
+    b2 <-    0.014259
+    b3 <-   -0.0017000
+    lnC <- a1 +
+        a2*(100/Tk) +
+        a3*log(Tk/100) +
+        a4*(Tk/100) +
+        salinity*(b1 + b2*(Tk/100) + b3*((Tk/100)^2))
+    exp(lnC)
+}
+
 #' Retrieve Part of a glider Object
 #'
 #' Retrieve something contained in a glider object, or something that can
@@ -64,7 +92,7 @@ setMethod(f="initialize",
 #' or `"payload1"`.  For example, both `x[["temperature"]]` and
 #' `x[["temperature","payload1"]]` retrieve values from
 #' the payload thermistor, while `x[["temperature","glider"]]` retrieves
-#' values from the glider thermister. For clarity of code, it might make
+#' values from the glider thermistor. For clarity of code, it might make
 #' sense to always specify `j`.
 #'
 #' In addition to retrieving data stored in the object, `\[\[` can also
@@ -93,7 +121,7 @@ setMethod(f="initialize",
 #' \item the Conservative Temperature is returned with e.g.
 #' `x[["CT"]]`. This is computed with
 #' [gsw::gsw_CT_from_t()], based on the water properties
-#' stoed in the object. (See also the item for Absolute Salinity.)
+#' stored in the object. (See also the item for Absolute Salinity.)
 #'
 #' \item the sigma0 density anomaly is returned with e.g.
 #' `x[["sigma0"]]`. This is computed with
@@ -139,11 +167,12 @@ setMethod(f="[[",
     signature(x="glider", i="ANY", j="ANY"),
     definition=function(x, i, j, ...) {
         #. message("in [[, i='", i, "'")
-        #.debug <- getOption("gliderDebug", default=0)
-        # gliderDebug(debug, "glider [[ {\n", unindent=1)
+        debug <- getOption("gliderDebug", default=0L)
+        gliderDebug(debug, "glider [[ {\n", unindent=1)
         if (missing(i))
             stop("Must name a glider item to retrieve, e.g. '[[\"temperature\"]]'", call.=FALSE)
-        i <- i[1]                # drop extras if more than one given
+        if (length(i) > 1L)
+            stop("can only access one item at a time", call.=FALSE)
         if (!is.character(i))
             stop("glider item must be specified by name", call.=FALSE)
         if (i == "filename")
@@ -169,23 +198,27 @@ setMethod(f="[[",
             return(if ("flags" %in% names(x@metadata)) x@metadata$flags[[where]][[gsub("Flag$", "", i)]] else NULL)
         }
         # FIXME (DK) recognize "Unit$" as done in oce.
-        if (i == "type")
+        if (i == "type") {
             return(type)
-        if (i == "sigmaTheta")
+        }
+        if (i == "sigmaTheta") {
             return(swSigmaTheta(salinity=x[["salinity"]],
                     temperature=x[["temperature"]],
                     pressure=x[["pressure"]],
                     longitude=x[["longitude"]],
                     latitude=x[["latitude"]]))
-        if (i == "sigma0")
+        }
+        if (i == "sigma0") {
             return(swSigma0(salinity=x[["salinity"]],
                     temperature=x[["temperature"]],
                     pressure=x[["pressure"]],
                     longitude=x[["longitude"]],
                     latitude=x[["latitude"]]))
-        if (i == "SA")
+        }
+        if (i == "SA") {
             return(gsw_SA_from_SP(SP=x[["salinity"]], p=x[["pressure"]],
                     longitude=x[["longitude"]], latitude=x[["latitude"]]))
+        }
         if (i == "CT") {
             t <- x[["temperature"]]
             SP <- x[["salinity"]] # stored as practical salinity
@@ -204,11 +237,108 @@ setMethod(f="[[",
             CT <- gsw_CT_from_t(SA, t, p)
             return(gsw_spiciness0(SA=SA, CT=CT))
         }
+        if (i == "oxygen") {
+            gliderDebug(debug, "seeking \"oxygen\"\n")
+            if (identical(x@metadata$type, "seaexplorer")) {
+                gliderDebug(debug, "object type is \"seaexplorer\"\n", sep="")
+                dataNames <- names(x@data)
+                # get payload name
+                w <- grep("payload", dataNames)
+                if (length(w) == 0L)
+                    stop("sea-explorer object has no payload")
+                if (length(w) > 1L)
+                    stop("sea-explorer object has more than one \"payload\"-type element")
+                payloadName <- dataNames[w]
+                dataNames <- names(x@data[[payloadName]])
+                if ("oxygen" %in% dataNames) {
+                    gliderDebug(debug, "returning \"oxygen\" directly\n")
+                    return(x@data[payloadName]$oxygen)
+                } else if ("oxygenFrequency" %in% dataNames) {
+                    gliderDebug(debug, "computing \"oxygen\" from \"oxygenFrequency\"\n")
+                    if (!"oxycalib" %in% names(x@metadata)) {
+                        warning("cannot compute oxygen, because metadata lacks an oxycalib item, with which to compute oxygen using data$payload1$oxygenFrequency")
+                        return(NULL)
+                    }
+                    cal <- x@metadata$oxycalib
+                    oxygenFrequency <- x@data[[payloadName]]$oxygenFrequency
+                    salinity <- x@data[[payloadName]]$salinity
+                    temperature <- x@data[[payloadName]]$temperature
+                    pressure <- x@data[[payloadName]]$pressure
+                    temperatureKelvin <- temperature + 273.16 # I see .15 in some codes
+                    res <- with(cal$calibrationCoefficients,
+                        Soc * (oxygenFrequency + Foffset) *
+                            (1.0 + A*T + B*T^2 + C*T^3) *
+                            swSatO2(temperature=temperature, salinity=salinity)
+                        * exp(Enom*pressure/temperatureKelvin))
+                    return(44.6591 * res) # the factor converts to umol/kg
+                } else {
+                    return(NULL)
+                }
+            } else if (identical(x@metadata$type, "slocum")) {
+                message("FIXME: get oxygen from slocum")
+                dataNames <- names(x@data)
+                # I don't know whether oxygen-frequency can be in such data,
+                # and I don't have docs on calibration formulae, so I return
+                # NULL in such a case; the user will need to do that work.
+                for (nickname in c("oxygen", "oxygenConcentration", "O2")) {
+                    if (nickname  %in% dataNames)
+                        return(x@data[[nickname]])
+                }
+                return(NULL)
+            } else {
+                stop("glider type must be either \"seaexplorer\" or \"slocum\"")
+            }
+        }
+        if (i == "?") {
+            dataNames <- names(x@data)
+            w <- grep("payload", dataNames)
+            if (length(w) > 1L) {
+                stop("cannot handle files with multiple 'payloadN' items")
+            } else if (length(w) == 1L) {
+                dataNames <- names(x@data[[dataNames[w]]])
+            }
+            # the next is patterned on oce:computableWaterProperties, which I
+            # will update to handle names as a parameter, but I don't want to
+            # make oceglider depend on a non-CRAN version of oce.
+            if (all(c("salinity", "temperature", "pressure") %in% dataNames)) {
+                dataNames <- c(dataNames, c("theta", paste("potential", "temperature"), "z",
+                        "depth", "spice", "Rrho", "RrhoSF", "sigmaTheta", "SP",
+                        "density", "N2", paste("sound", "speed")))
+            }
+            if (all(c("longitude", "latitude") %in% dataNames)) {
+                dataNames <- c(dataNames, "SR", "Sstar",
+                    paste0("sigma", 0:4),
+                    "SA", paste("Absolute", "Salinity"),
+                    "CT",  paste("Conservative", "Temperature"),
+                    paste0("spiciness", 0:2))
+            }
+            # It is possible to compute nitrate from NO2+NO3 and nitrite, if
+            # it's not stored in the object already.  This occurs in data(section).
+            # I also added a similar scheme for nitrite, although I don't know
+            # whether that condition ever happens, in practice.
+            if (!("nitrate" %in% dataNames) && ("NO2+NO3" %in% dataNames) && ("nitrite" %in% dataNames)) {
+                dataNames <- c(dataNames, "nitrate")
+            }
+            if (!("nitrite" %in% dataNames) && ("NO2+NO3" %in% dataNames) && ("nitrate" %in% dataNames)) {
+                dataNames <- c(dataNames, "nitrite")
+            }
+            return(sort(unique(dataNames)))
+        }
         #. message("it is a seaexplorer")
         if (i == "glider")
             return(x@data$glider)
-        if (i == "payload")
-            return(x@data$payload)
+        if (grepl("payload", i)) {
+            dataNames <- names(x@data)
+            w <- grep("payload", dataNames)
+            if (length(w) > 1L) {
+                stop("cannot handle files with multiple 'payloadN' items")
+            } else if (length(w) == 1L) {
+                #message("returning w=",w," i.e. ", dataNames[w])
+                return(x@data[[dataNames[w]]])
+            } else {
+                return(NULL)
+            }
+        }
         if (missing(j)) {
             #. message("j is missing")
             if (i %in% names(x@metadata)) {

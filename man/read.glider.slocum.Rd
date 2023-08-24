@@ -6,19 +6,18 @@
 \usage{
 read.glider.slocum(
   file,
-  debug,
   nameMap = list(conductivity = "sci_water_cond", temperature = "sci_water_temp",
     pressure = "sci_water_pressure", longitude = "lon", latitude = "lat", depth =
-    "i_depth")
+    "i_depth", debug = getOption("gliderDebug", default = 0))
 )
 }
 \arguments{
 \item{file}{A connection or a character string giving the name of the file to load.}
 
-\item{debug}{an integer controlling how much information is printed during
-processing.}
-
 \item{nameMap}{List used to rename data columns. See \dQuote{Details}.}
+
+\item{debug}{integer controlling the amount of debugging output
+printed. Use 0 for no output, 1 for some.}
 }
 \value{
 An oce object holding the data, with variables renamed as

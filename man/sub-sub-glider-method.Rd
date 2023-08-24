@@ -79,7 +79,7 @@ older UNESCO variant.
 \item the Conservative Temperature is returned with e.g.
 \code{x[["CT"]]}. This is computed with
 \code{\link[gsw:gsw_CT_from_t]{gsw::gsw_CT_from_t()}}, based on the water properties
-stoed in the object. (See also the item for Absolute Salinity.)
+stored in the object. (See also the item for Absolute Salinity.)
 
 \item the sigma0 density anomaly is returned with e.g.
 \code{x[["sigma0"]]}. This is computed with

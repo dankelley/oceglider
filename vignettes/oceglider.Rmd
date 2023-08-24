@@ -136,7 +136,7 @@ objects and plotting with functions from the \CRANpkg{oce} package.
 
 The individual yos can be examined by splitting the `payload` portion:
 ```{r}
-payload <- g3[["payload"]] # or [["payload1"]]
+payload <- g3[["payload"]]
 s <- split(payload, payload$yoNumber)
 par(mfrow=c(2, 3)) # we happen to know there are 3 significant yos
 for (ss in s) {

@@ -15,10 +15,10 @@
 #'
 #' @param file A connection or a character string giving the name of the file to load.
 #'
-#' @param debug an integer controlling how much information is printed during
-#' processing.
-#'
 #' @param nameMap List used to rename data columns. See \dQuote{Details}.
+#'
+#' @param debug integer controlling the amount of debugging output
+#' printed. Use 0 for no output, 1 for some.
 #'
 #' @return An oce object holding the data, with variables renamed as
 #' described in \dQuote{Details}, and with `salinity` added,
@@ -65,18 +65,21 @@
 #' @md
 #'
 #' @export
-read.glider.slocum <- function(file, debug,
+read.glider.slocum <- function(file,
     nameMap=list(conductivity="sci_water_cond",
         temperature="sci_water_temp",
         pressure="sci_water_pressure",
         longitude="lon",
         latitude="lat",
-        depth="i_depth"))
+        depth="i_depth",
+        debug=getOption("gliderDebug", default=0)))
 {
-    if (missing(debug))
-        debug <- getOption("gliderDebug", default=0)
+    debug <- min(1L, max(0L, as.integer(debug))) # make 0L or 1L
     if (missing(file))
         stop("must provide `file'")
+    if (length(file) != 1)
+        stop("file must have length 1")
+    gliderDebug(debug, "read.glider.slocum(file=\"", file, "\", ...) {\n", unindent=1, sep="")
     filename <- ""
     if (is.character(file)) {
         filename <- normalizePath(file)

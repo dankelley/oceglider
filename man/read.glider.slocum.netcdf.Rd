@@ -13,9 +13,9 @@ read.glider.slocum.netcdf(
     time = "glider_record/sci_rbrctd_timestamp", conductivity =
     "glider_record/sci_rbrctd_conductivity_00", latitude = "glider_record/m_gps_lat",
     longitude = "glider_record/m_gps_lon", profileLat = "profile_lat", profileLon =
-    "profile_lon", density = "density", O2 = "oxygen_concentration", 
-     u = "u", v =
-    "v", vxi = "glider_record/m_initial_water_vx", vyi =
+    "profile_lon", density = "density", oxygen = "oxygen_concentration", 
+     u = "u", v
+    = "v", vxi = "glider_record/m_initial_water_vx", vyi =
     "glider_record/m_initial_water_vy", vy = "glider_record/m_water_vy", vx =
     "glider_record/m_water_vx", id = "profile_id"),
   debug
@@ -43,9 +43,8 @@ value.}
 
 \item{debug}{an integer controlling how much information is printed during
 processing.  If this is 0, then only errors and warnings will be printed.  If it
-is 1, then the function entry and exit are signalled, and a progress bar
-is shown.  If it exceeds 1, then detailed notes are provided (but the
-progress bar is not shown).}
+is 1, then the function entry and exit are signalled, and a line
+is printed for each variable read.}
 }
 \value{
 A glider object, i.e. one inheriting from \linkS4class{glider}.

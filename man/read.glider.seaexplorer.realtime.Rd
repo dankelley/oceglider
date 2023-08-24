@@ -71,7 +71,7 @@ Table 2 of reference 1), as follows.
 \code{not_evaluated}  \tab 2              \tab Not Evaluated                 \tab Data has not been QC tested\cr
 \code{suspect}        \tab 3              \tab Suspect or of High Interest   \tab Data is considered to be of suspect or high interest\cr
 \code{fail}           \tab 4              \tab Fail                          \tab Data is considered to have failed on one or more QC tests\cr
-\code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a palceholder\cr
+\code{missing}        \tab 9              \tab Missing Data                  \tab Data are missing; using a placeholder\cr
 }
 }
 
