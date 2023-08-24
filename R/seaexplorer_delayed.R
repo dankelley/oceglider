@@ -102,7 +102,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @examples
 #' library(oceglider)
 #' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
-#' g <- read.glider.seaexplorer.delayed(directory)
+#' g <- read.glider.seaexplorer.delayed(directory, progressBar=FALSE)
 #' plot(g, which="p")
 #'
 #' @family functions for seaexplorer gliders

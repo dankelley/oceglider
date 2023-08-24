@@ -8,7 +8,7 @@ read.glider.seaexplorer.realtime(
   directory,
   yo,
   level = 1,
-  progressBar = interactive(),
+  progressBar = interactive,
   missingValue = 9999,
   debug
 )
@@ -151,7 +151,7 @@ authors, if you need to handle such files.
 \examples{
 library(oceglider)
 directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
-g <- read.glider.seaexplorer.realtime(directory)
+g <- read.glider.seaexplorer.realtime(directory, progressBar=FALSE)
 plot(g, which="navState")
 plot(g, which="S")
 plot(g, which="T")

@@ -47,7 +47,7 @@
 #' @examples
 #' # Use codes to identify upcasts, at least roughly (note the stray points)
 #' directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
-#' g <- read.glider.seaexplorer.delayed(directory)
+#' g <- read.glider.seaexplorer.delayed(directory, progressBar=FALSE)
 #' ns <- navStateCodes(g)
 #' plot(g, which="p")
 #' ga <- subset(g, navState == ns$ascending)

@@ -58,7 +58,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @examples
 #' library(oceglider)
 #' directory <- system.file("extdata/seaexplorer/sub", package="oceglider")
-#' g <- read.glider.seaexplorer.realtime(directory)
+#' g <- read.glider.seaexplorer.realtime(directory, progressBar=FALSE)
 #' plot(g, which="navState")
 #' plot(g, which="S")
 #' plot(g, which="T")
@@ -84,7 +84,7 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @md
 #'
 #' @export
-read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive(), missingValue=9999, debug)
+read.glider.seaexplorer.realtime <- function(directory, yo, level=1, progressBar=interactive, missingValue=9999, debug)
 {
     if (missing(debug))
         debug <- getOption("gliderDebug", default=0)

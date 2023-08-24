@@ -85,7 +85,7 @@ illustrated in the \dQuote{Examples} section.
 \examples{
 library(oceglider)
 directory <- system.file("extdata/seaexplorer/raw", package="oceglider")
-g <- read.glider.seaexplorer.delayed(directory)
+g <- read.glider.seaexplorer.delayed(directory, progressBar=FALSE)
 
 # The histogram motivates a crude limit for anomalously low salinity.
 par(mfrow=c(1, 2), mar=c(3, 3, 1, 1), mgp=c(2, 0.75, 0))
