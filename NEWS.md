@@ -1,6 +1,7 @@
 # oceglider 0.1.7
 
 * Change to `plot,glider-method()` fix map axis mix-up (issue 98).
+* Make `[["z"]]` and `[["?"]]` work.
 
 # oceglider 0.1.6
 

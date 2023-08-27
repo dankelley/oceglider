@@ -155,7 +155,7 @@ swSatO2 <- function(temperature, salinity){
 #' # Example 2: discover what can be retrieved from this object
 #' g[["?"]]
 #'
-#' @importFrom oce swSigmaTheta swSigma0 swSpice
+#' @importFrom oce swSigmaTheta swSigma0 swSpice swZ
 #' @importFrom gsw gsw_CT_from_t gsw_SA_from_SP gsw_spiciness0
 #'
 #' @export
@@ -216,6 +216,9 @@ setMethod(f="[[",
         if (i == "SA") {
             return(gsw_SA_from_SP(SP=x[["salinity"]], p=x[["pressure"]],
                     longitude=x[["longitude"]], latitude=x[["latitude"]]))
+        }
+        if (i == "z") {
+            return(swZ(x[["pressure"]], latitude=mean(x[["latitude"]], na.rm=TRUE)))
         }
         if (i == "CT") {
             t <- x[["temperature"]]
