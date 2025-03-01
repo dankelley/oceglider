@@ -98,7 +98,9 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' `system.file("extdata/dictionaries/seaexplorerDict.csv",package="oceglider")`
 #' or FALSE, meaning not to rename variables. (b) It can be the name of a CSV
 #' file that is in the same format as the file above-named file.  (c)
-#' It can be a data frame with columns named `gliderName` and `oceName`.
+#' It can be a two-column data frame in which column 1 holds
+#' variable names in the glider file and column 2 holds the corresponding
+#' names to be used in the return value.
 #'
 #' @param progressBar a logical value that controls whether to indicate the
 #' progress made in reading and interpreting the data.  This can be useful,
@@ -108,12 +110,6 @@ issue40 <- TRUE # read fractional seconds? (https://github.com/dankelley/oceglid
 #' @param missingValue numeric value that indicates bad data. Any data items
 #' equaling this value are converted to NA. The default is 9999. To avoid
 #' changing values to NA, call the function with `missingValue=NULL`.
-#'
-## @param rename optional logical value indicating whether to rename variables
-## from the values in the file to the oce convention, using [cnvName2oceName()]
-## for the translation. This is done by default, but setting `rename=FALSE` can
-## be helpful if there is a wish to control the renaming, either using a
-## built-in dictionary or using a dictionary set up by the user.
 #'
 #' @template debug
 #'
@@ -233,24 +229,21 @@ read.glider.seaexplorer.raw <- function(directory, pattern = "pld1.raw",
         pb <- txtProgressBar(0, length(files), 0, style = 3) # start at 0 to allow for a single yo
     }
     ds <- list() # stores one entry per file; we expand this at the bottom of the loop
-    # FIXME: in next, set up to read another csv file, or handle a data.frame;
-    # document the latter, which might be handy for users
+    # set up renaming convention
     if (is.character(rename)) {
         if (!file.exists(rename)) {
             stop("there is no file named '", rename, "'")
         }
-        nameDict <- read.csv(rename)
-        # discard user's name (why make them learn that)
-        names(nameDict) <- c("gliderName", "oceName")
+        nameDict <- read.csv(rename, header = FALSE, col.names = c("gliderName", "oceName"))
         rename <- TRUE
     } else if (is.data.frame(rename)) {
         nameDict <- rename
         names(nameDict) <- c("gliderName", "oceName")
         rename <- TRUE
     } else if (is.logical(rename)) {
-        nameDict <- read.csv(system.file("extdata/dictionaries/seaexplorerDict.csv", package = "oceglider"))
+        nameDict <- read.csv(system.file("extdata/dictionaries/seaexplorerDict.csv", package = "oceglider"), header = FALSE, col.names = c("gliderName", "oceName"))
     }
-    if (debug > 0 && rename) {
+    if (debug > 0 && !is.null(rename)) {
         cat("next is head(nameDict):\n")
         print(head(nameDict))
     }

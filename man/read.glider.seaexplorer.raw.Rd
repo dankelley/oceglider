@@ -50,7 +50,9 @@ logical, with TRUE (the default) meaning to use names as defined in
 \code{system.file("extdata/dictionaries/seaexplorerDict.csv",package="oceglider")}
 or FALSE, meaning not to rename variables. (b) It can be the name of a CSV
 file that is in the same format as the file above-named file.  (c)
-It can be a data frame with columns named \code{gliderName} and \code{oceName}.}
+It can be a two-column data frame in which column 1 holds
+variable names in the glider file and column 2 holds the corresponding
+names to be used in the return value.}
 
 \item{progressBar}{a logical value that controls whether to indicate the
 progress made in reading and interpreting the data.  This can be useful,

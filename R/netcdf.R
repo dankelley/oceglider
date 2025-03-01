@@ -220,6 +220,19 @@ getAtt <- function(f, varid = 0, attname = NULL, default = NULL) {
 #' read the entirety of the global attributes stored within the
 #' file into the `metadata` slot in a list named `globalAttributes`.
 #'
+#' @param rename an indication of how (or if) to rename variables. This is
+#' needed for most practical work in the oce package, which expects
+#' standardized names, such as `"temperature"`, as opposed to the names stored
+#' in glider files. There are three choices for `rename`. (a) It can be
+#' logical, with TRUE (the default) meaning to use names as defined in
+#' `system.file("extdata/dictionaries/seaexplorerDict.csv",package="oceglider")`
+#' or FALSE, meaning not to rename variables. (b) It can be the name of a CSV
+#' file that is in the same format as the file above-named file.  (c)
+#' It can be a two-column data frame in which column 1 holds
+#' variable names in the glider file and column 2 holds the corresponding
+#' names to be used in the return value.
+#'
+#'
 #' @template debug
 #'
 #' @return A glider object, i.e. one inheriting from [glider-class].
@@ -269,6 +282,7 @@ getAtt <- function(f, varid = 0, attname = NULL, default = NULL) {
 #'
 #' @export
 read.glider.netcdf <- function(file, saveGlobalAttributes = TRUE,
+                               rename = TRUE,
                                debug = getOption("gliderDebug", default = 0)) {
     gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) BEGIN\n", unindent = 1, sep = "")
     if (missing(file)) {
@@ -315,10 +329,39 @@ read.glider.netcdf <- function(file, saveGlobalAttributes = TRUE,
     # Get all variables, except time, which is not listed in f$var
     gliderDebug(debug, "reading and renaming data, plus collecting units\n")
     units <- list()
+    # set up renaming convention
+    if (is.character(rename)) {
+        if (!file.exists(rename)) {
+            stop("there is no file named '", rename, "'")
+        }
+        nameDict <- read.csv(rename, header = FALSE, col.names = c("gliderName", "oceName"))
+        rename <- TRUE
+    } else if (is.data.frame(rename)) {
+        nameDict <- rename
+        names(nameDict) <- c("gliderName", "oceName")
+        rename <- TRUE
+    } else if (is.logical(rename)) {
+        nameDict <- read.csv(system.file("extdata/dictionaries/cproofDict.csv", package = "oceglider"),
+            header = FALSE, col.names = c("gliderName", "oceName")
+        )
+    }
+    if (debug > 0 && !is.null(rename)) {
+        cat("next is head(nameDict):\n")
+        print(head(nameDict))
+    }
+
     for (i in seq_along(dataNames)) {
-        oceName <- toCamelCase(dataNames[i])
+        w <- which(dataNames[i] == nameDict$gliderName)
+        # gliderDebug(debug, "processing ", dataNames[i], "...\n")
+        if (length(w) == 1L) {
+            oceName <- nameDict$oceName[w]
+            # gliderDebug(debug, dataNames[i], " -> ", oceName, "\n")
+        } else {
+            oceName <- dataNames[i]
+        }
+        # oceName <- toCamelCase(dataNames[i])
         dataNamesOriginal[[oceName]] <- dataNames[i]
-        gliderDebug(debug, "preparing to read ", dataNames[i], " into @data$", oceName, "\n", sep = "")
+        gliderDebug(debug, "reading ", dataNames[i], " as ", oceName, "\n", sep = "")
         if (dataNames[i] == "time") {
             data[["time"]] <- numberAsPOSIXct(as.vector(ncdf4::ncvar_get(f, "time")))
             gliderDebug(debug, "i=", i, " ... time converted from integer to POSIXct\n", sep = "")
@@ -331,23 +374,7 @@ read.glider.netcdf <- function(file, saveGlobalAttributes = TRUE,
             } else {
                 list(unit = expression(), scale = "")
             }
-            # ?? # some local unit decoding
-            # ?? if (is.null(unit)) {
-            # ??     if (u == "Celsius") {
-            # ??         unit <- list(unit = expression(degree * C), scale = "")
-            # ??     }
-            # ?? }
-            # ?? # as a last resort, don't try to make an expression (this loses superscipts,
-            # ?? # for example)
-            # ?? if (is.null(unit)) {
-            # ??     unit <- list(unit = bquote(.(u)), scale = "")
-            # ?? }
-            if (debug > 0) {
-                cat("  original name = \"", dataNames[i], "\"\n", sep = "")
-                cat("    oce name = \"", oceName, "\"\n", sep = "")
-                # cat("    original unit = ", u, "\n", sep = "")
-                cat("    oce unit = ", as.character(unit$unit), "\n", sep = "")
-            }
+            gliderDebug(debug, "    unit: ", as.character(unit$unit), "\n", sep = "")
             units[[oceName]] <- unit
             dataNames[i] <- oceName
         }
@@ -357,6 +384,11 @@ read.glider.netcdf <- function(file, saveGlobalAttributes = TRUE,
     res@metadata$dataNamesOriginal <- list(payload1 = dataNamesOriginal)
     res@metadata$units <- units
     res@metadata$dataAreStreamed <- TRUE
+    res@processingLog <- processingLogAppend(
+        res@processingLog,
+        paste("read.glider.netcdf()", sep = "")
+    )
+
     gliderDebug(debug, "read.glider.netcdf() END", unindent = 1, sep = "")
     res
 }

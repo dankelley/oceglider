@@ -34,7 +34,7 @@ read.glider.netcdf.ioos <- function(file, debug) {
     if (missing(debug)) {
         debug <- getOption("gliderDebug", default = 0)
     }
-    gliderDebug(debug, "read.glider.netcdf(file=\"", file, "\", ...) START", unindent = 1, sep = "")
+    gliderDebug(debug, "read.glider.netcdf.ioos(file=\"", file, "\", ...) START", unindent = 1, sep = "")
     if (missing(file)) {
         stop("must provide `file'")
     }
@@ -218,9 +218,9 @@ read.glider.netcdf.ioos <- function(file, debug) {
     res@data <- as.data.frame(data)
     res@metadata$filename <- file
     res@metadata$dataNamesOriginal <- dataNamesOriginal[inData]
-    gliderDebug(debug, "read.glider.netcdf.ioos() END", unindent = 1, sep = "")
     ncdf4::nc_close(f)
     res@metadata$type <- "ioos"
     res@metadata$dataAreStreamed <- FALSE
+    gliderDebug(debug, "read.glider.netcdf.ioos() END", unindent = 1, sep = "")
     res
 }

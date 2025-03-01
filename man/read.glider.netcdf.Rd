@@ -7,6 +7,7 @@
 read.glider.netcdf(
   file,
   saveGlobalAttributes = TRUE,
+  rename = TRUE,
   debug = getOption("gliderDebug", default = 0)
 )
 }
@@ -17,6 +18,18 @@ that holds glider data.}
 \item{saveGlobalAttributes}{logical value indicating whether to
 read the entirety of the global attributes stored within the
 file into the \code{metadata} slot in a list named \code{globalAttributes}.}
+
+\item{rename}{an indication of how (or if) to rename variables. This is
+needed for most practical work in the oce package, which expects
+standardized names, such as \code{"temperature"}, as opposed to the names stored
+in glider files. There are three choices for \code{rename}. (a) It can be
+logical, with TRUE (the default) meaning to use names as defined in
+\code{system.file("extdata/dictionaries/seaexplorerDict.csv",package="oceglider")}
+or FALSE, meaning not to rename variables. (b) It can be the name of a CSV
+file that is in the same format as the file above-named file.  (c)
+It can be a two-column data frame in which column 1 holds
+variable names in the glider file and column 2 holds the corresponding
+names to be used in the return value.}
 
 \item{debug}{an integer specifying whether debugging information is
 to be printed during processing. If this is not provided, then
