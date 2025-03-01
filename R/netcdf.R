@@ -206,12 +206,10 @@ getAtt <- function(f, varid = 0, attname = NULL, default = NULL) {
 #' particular files available to the author.}
 #'
 #' The data are copied directly from the file, except that `time`
-#' is converted from an integer to a POSIX time. Variable names containing
-#' underscores are renamed as e.g. `profile_direction`
-#' to `profileDirection`, although the \code{\link{[[,glider-method}}
-#' mechanism works with either name, e.g. if `g` is a glider object, then
-#' `g[["profileDirection"]]` and
-#' `g[["profile_direction"]]` give the same result.
+#' is converted from an integer to a POSIX time, and variables
+#' may be renamed according to the `rename` parameter. The code
+#' was last tested on 2025-03-01 using the file downloaded
+#' from the URL given in Reference 1.
 #'
 #' @param file character value holding the name of a netcdf file
 #' that holds glider data.
@@ -231,7 +229,6 @@ getAtt <- function(f, varid = 0, attname = NULL, default = NULL) {
 #' It can be a two-column data frame in which column 1 holds
 #' variable names in the glider file and column 2 holds the corresponding
 #' names to be used in the return value.
-#'
 #'
 #' @template debug
 #'
@@ -279,6 +276,10 @@ getAtt <- function(f, varid = 0, attname = NULL, default = NULL) {
 #' @importFrom ncdf4 nc_close nc_open ncatt_get ncatt_get ncvar_get
 #'
 #' @md
+#'
+#' @references
+#' 1. <https://cproof.uvic.ca/gliderdata/deployments/dfo-marvin1003/dfo-marvin1003-20230929/L0-timeseries/dfo-marvin1003-20230929_delayed.nc>
+#'
 #'
 #' @export
 read.glider.netcdf <- function(file, saveGlobalAttributes = TRUE,

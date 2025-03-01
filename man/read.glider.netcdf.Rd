@@ -53,12 +53,15 @@ particular files available to the author.}
 }
 \details{
 The data are copied directly from the file, except that \code{time}
-is converted from an integer to a POSIX time. Variable names containing
-underscores are renamed as e.g. \code{profile_direction}
-to \code{profileDirection}, although the \code{\link{[[,glider-method}}
-mechanism works with either name, e.g. if \code{g} is a glider object, then
-\code{g[["profileDirection"]]} and
-\code{g[["profile_direction"]]} give the same result.
+is converted from an integer to a POSIX time, and variables
+may be renamed according to the \code{rename} parameter. The code
+was last tested on 2025-03-01 using the file downloaded
+from the URL given in Reference 1.
+}
+\references{
+\enumerate{
+\item \url{https://cproof.uvic.ca/gliderdata/deployments/dfo-marvin1003/dfo-marvin1003-20230929/L0-timeseries/dfo-marvin1003-20230929_delayed.nc}
+}
 }
 \seealso{
 Other functions to read glider data: 

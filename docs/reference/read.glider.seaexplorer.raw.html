@@ -19,7 +19,7 @@ degrees.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">oceglider</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.18</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.19</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,7 +122,9 @@ logical, with TRUE (the default) meaning to use names as defined in
 <code>system.file("extdata/dictionaries/seaexplorerDict.csv",package="oceglider")</code>
 or FALSE, meaning not to rename variables. (b) It can be the name of a CSV
 file that is in the same format as the file above-named file.  (c)
-It can be a data frame with columns named <code>gliderName</code> and <code>oceName</code>.</p></dd>
+It can be a two-column data frame in which column 1 holds
+variable names in the glider file and column 2 holds the corresponding
+names to be used in the return value.</p></dd>
 
 
 <dt id="arg-progressbar">progressBar<a class="anchor" aria-label="anchor" href="#arg-progressbar"></a></dt>

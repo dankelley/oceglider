@@ -1,3 +1,7 @@
+# oceglider 0.1.19
+
+* Change `read.glider.netcdf()` to handle `rename` argument, in accordance with issue #126.
+
 # oceglider 0.1.18
 
 * Change `read.glider.seaexplorer.raw()` to handle filename and data-frame
